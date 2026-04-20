@@ -10,10 +10,12 @@ from app.core.db.session import Base
 from app.core.models.mixins import Timestamped, UUIDPrimaryKey
 
 if TYPE_CHECKING:
+    from app.core.models.maintenance import Maintenance
     from app.core.models.monitor import Monitor
+    from app.core.models.notification_channel import NotificationChannel
 
 
-class AuthProvider(str, enum.Enum):
+class AuthProvider(enum.StrEnum):
     LOCAL = "local"
     OIDC = "oidc"
 
@@ -40,4 +42,14 @@ class User(UUIDPrimaryKey, Timestamped, Base):
         back_populates="owner",
         cascade="all, delete-orphan",
         lazy="selectin",
+    )
+    channels: Mapped[list[NotificationChannel]] = relationship(
+        back_populates="owner",
+        cascade="all, delete-orphan",
+        lazy="noload",
+    )
+    maintenances: Mapped[list[Maintenance]] = relationship(
+        back_populates="owner",
+        cascade="all, delete-orphan",
+        lazy="noload",
     )

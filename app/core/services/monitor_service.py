@@ -5,6 +5,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.models.monitor import Monitor
+from app.core.models.monitor_result import MonitorResult
 from app.core.schemas.monitor import MonitorCreate, MonitorUpdate
 
 
@@ -14,9 +15,7 @@ class MonitorService:
 
     async def list_for_owner(self, owner_id: uuid.UUID) -> Sequence[Monitor]:
         stmt = (
-            select(Monitor)
-            .where(Monitor.owner_id == owner_id)
-            .order_by(Monitor.created_at.desc())
+            select(Monitor).where(Monitor.owner_id == owner_id).order_by(Monitor.created_at.desc())
         )
         result = await self._session.execute(stmt)
         return result.scalars().all()
@@ -35,6 +34,8 @@ class MonitorService:
             type=data.type,
             url=data.url,
             interval=data.interval,
+            retries=data.retries,
+            retry_interval=data.retry_interval,
             owner_id=owner_id,
         )
         self._session.add(monitor)
@@ -56,3 +57,15 @@ class MonitorService:
     async def delete(self, monitor: Monitor) -> None:
         await self._session.delete(monitor)
         await self._session.commit()
+
+    async def list_results(
+        self, monitor_id: uuid.UUID, limit: int = 100
+    ) -> Sequence[MonitorResult]:
+        stmt = (
+            select(MonitorResult)
+            .where(MonitorResult.monitor_id == monitor_id)
+            .order_by(MonitorResult.checked_at.desc())
+            .limit(limit)
+        )
+        result = await self._session.execute(stmt)
+        return result.scalars().all()

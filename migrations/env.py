@@ -7,8 +7,11 @@ from sqlalchemy.ext.asyncio import async_engine_from_config
 
 from app.core.config import get_settings
 from app.core.db.session import Base
-from app.core.models import user as _user  # noqa: F401  (register mappers)
+from app.core.models import maintenance as _maintenance  # noqa: F401
 from app.core.models import monitor as _monitor  # noqa: F401
+from app.core.models import monitor_result as _monitor_result  # noqa: F401
+from app.core.models import notification_channel as _channel  # noqa: F401
+from app.core.models import user as _user  # noqa: F401  (register mappers)
 
 config = context.config
 if config.config_file_name is not None:

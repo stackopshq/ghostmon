@@ -1,0 +1,84 @@
+{% extends "base.html" %}
+
+{% block title %}{% if channel %}{{ channel.name }}{% else %}New channel{% endif %} · GhostMonitor{% endblock %}
+
+{% block page %}
+<main class="page-bg">
+  <div class="container">
+    <div class="hero">
+      <h1 class="hero-title">
+        <span class="terminal-prompt">~ $&nbsp;</span>{% if channel %}<span>ghostmon channel edit {{ channel.name }}</span>{% else %}<span>ghostmon channel create</span>{% endif %}<span class="terminal-cursor">▊</span>
+      </h1>
+    </div>
+
+    {% if error %}
+    <div class="flash flash-error">{{ error }}</div>
+    {% endif %}
+    {% if flash %}
+    <div class="flash flash-ok">{{ flash }}</div>
+    {% endif %}
+
+    <div class="card">
+      <form method="post" action="{% if channel %}/channels/{{ channel.id }}{% else %}/channels/new{% endif %}" class="stacked">
+        <label class="field">
+          <span>Name</span>
+          <input type="text" name="name" required maxlength="255"
+                 value="{{ form.name if form else (channel.name if channel else '') }}">
+        </label>
+
+        <label class="field">
+          <span>Type</span>
+          <select name="type" required>
+            {% for t in channel_types %}
+            <option value="{{ t }}" {% if (form and form.type == t) or (not form and channel and channel.type.value == t) %}selected{% endif %}>{{ t }}</option>
+            {% endfor %}
+          </select>
+        </label>
+
+        <fieldset class="field-group">
+          <legend>Email config (used when type = email)</legend>
+          <label class="field">
+            <span>To address</span>
+            <input type="email" name="email_to"
+                   value="{{ form.email_to if form else (channel.config.get('to') if channel and channel.type.value == 'email' else '') }}"
+                   placeholder="oncall@example.com">
+          </label>
+        </fieldset>
+
+        <fieldset class="field-group">
+          <legend>Webhook config (used when type = webhook)</legend>
+          <label class="field">
+            <span>URL</span>
+            <input type="url" name="webhook_url"
+                   value="{{ form.webhook_url if form else (channel.config.get('url') if channel and channel.type.value == 'webhook' else '') }}"
+                   placeholder="https://hooks.example.com/incoming">
+          </label>
+          <label class="field">
+            <span>Shared secret (optional, min 8 chars) — signs payloads with HMAC-SHA256</span>
+            <input type="text" name="webhook_secret"
+                   value="{{ form.webhook_secret if form else (channel.config.get('secret', '') if channel and channel.type.value == 'webhook' else '') }}">
+          </label>
+        </fieldset>
+
+        <label class="field inline">
+          <input type="checkbox" name="is_enabled"
+                 {% if (form and form.is_enabled) or (not form and (channel is none or channel.is_enabled)) %}checked{% endif %}>
+          <span>Enabled</span>
+        </label>
+
+        <div class="form-actions">
+          <a href="/channels" class="btn-new btn-muted">Cancel</a>
+          <button type="submit" class="btn-primary">{% if channel %}Save{% else %}Create{% endif %}</button>
+        </div>
+      </form>
+
+      {% if channel %}
+      <form method="post" action="/channels/{{ channel.id }}/delete" class="form-inline form-danger"
+            onsubmit="return confirm('Delete channel {{ channel.name }}?');">
+        <button type="submit" class="btn-danger">Delete channel</button>
+      </form>
+      {% endif %}
+    </div>
+  </div>
+</main>
+{% endblock %}

@@ -12,10 +12,13 @@ from app.core.db.session import Base
 from app.core.models.mixins import Timestamped, UUIDPrimaryKey
 
 if TYPE_CHECKING:
+    from app.core.models.maintenance import Maintenance
+    from app.core.models.monitor_result import MonitorResult
+    from app.core.models.notification_channel import NotificationChannel
     from app.core.models.user import User
 
 
-class MonitorType(str, enum.Enum):
+class MonitorType(enum.StrEnum):
     HTTP = "http"
     TCP = "tcp"
     PING = "ping"
@@ -23,7 +26,7 @@ class MonitorType(str, enum.Enum):
     DOCKER = "docker"
 
 
-class MonitorStatus(str, enum.Enum):
+class MonitorStatus(enum.StrEnum):
     UP = "up"
     DOWN = "down"
     PENDING = "pending"
@@ -34,9 +37,15 @@ class Monitor(UUIDPrimaryKey, Timestamped, Base):
     __tablename__ = "monitors"
 
     name: Mapped[str] = mapped_column(String(255), nullable=False)
-    type: Mapped[MonitorType] = mapped_column(Enum(MonitorType, name="monitor_type"), nullable=False)
+    type: Mapped[MonitorType] = mapped_column(
+        Enum(MonitorType, name="monitor_type"), nullable=False
+    )
     url: Mapped[str] = mapped_column(String(2048), nullable=False)
     interval: Mapped[int] = mapped_column(Integer, nullable=False, default=60)
+    retries: Mapped[int] = mapped_column(Integer, nullable=False, default=2, server_default="2")
+    retry_interval: Mapped[int] = mapped_column(
+        Integer, nullable=False, default=20, server_default="20"
+    )
     status: Mapped[MonitorStatus] = mapped_column(
         Enum(MonitorStatus, name="monitor_status"),
         nullable=False,
@@ -50,3 +59,18 @@ class Monitor(UUIDPrimaryKey, Timestamped, Base):
         index=True,
     )
     owner: Mapped[User] = relationship(back_populates="monitors", lazy="joined")
+    results: Mapped[list[MonitorResult]] = relationship(
+        back_populates="monitor",
+        cascade="all, delete-orphan",
+        lazy="noload",
+    )
+    channels: Mapped[list[NotificationChannel]] = relationship(
+        secondary="monitor_channels",
+        back_populates="monitors",
+        lazy="noload",
+    )
+    maintenances: Mapped[list[Maintenance]] = relationship(
+        secondary="maintenance_monitors",
+        back_populates="monitors",
+        lazy="noload",
+    )

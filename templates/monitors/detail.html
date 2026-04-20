@@ -1,0 +1,136 @@
+{% extends "base.html" %}
+
+{% block title %}{{ monitor.name }} · GhostMonitor{% endblock %}
+
+{% block page %}
+<main class="page-bg">
+  <div class="container">
+    <div class="hero">
+      <h1 class="hero-title">
+        <span class="terminal-prompt">~ $&nbsp;</span><span>{{ monitor.name }}</span><span class="terminal-cursor">▊</span>
+      </h1>
+      <div class="hero-sub">
+        <span class="status status-{{ monitor.status.value }}">{{ monitor.status.value }}</span>
+        · {{ monitor.type.value }} · every {{ monitor.interval }}s · retries {{ monitor.retries }}@{{ monitor.retry_interval }}s
+      </div>
+    </div>
+
+    {% if error %}
+    <div class="flash flash-error">{{ error }}</div>
+    {% endif %}
+
+    <div class="grid-two">
+      <section class="card">
+        <h2>Settings</h2>
+        <form method="post" action="/monitors/{{ monitor.id }}" class="stacked">
+          <label class="field">
+            <span>Name</span>
+            <input type="text" name="name" required maxlength="255" value="{{ monitor.name }}">
+          </label>
+          <label class="field">
+            <span>Type</span>
+            <select name="type" required>
+              {% for t in monitor_types %}
+              <option value="{{ t }}" {% if monitor.type.value == t %}selected{% endif %}>{{ t }}</option>
+              {% endfor %}
+            </select>
+          </label>
+          <label class="field">
+            <span>URL / target</span>
+            <input type="text" name="url" required maxlength="2048" value="{{ monitor.url }}">
+          </label>
+          <div class="field-row">
+            <label class="field">
+              <span>Interval</span>
+              <input type="number" name="interval" required min="10" max="86400" value="{{ monitor.interval }}">
+            </label>
+            <label class="field">
+              <span>Retries</span>
+              <input type="number" name="retries" required min="0" max="10" value="{{ monitor.retries }}">
+            </label>
+            <label class="field">
+              <span>Retry interval</span>
+              <input type="number" name="retry_interval" required min="5" max="3600" value="{{ monitor.retry_interval }}">
+            </label>
+          </div>
+          <label class="field">
+            <span>Status</span>
+            <select name="status" required>
+              {% for s in monitor_statuses %}
+              <option value="{{ s }}" {% if monitor.status.value == s %}selected{% endif %}>{{ s }}</option>
+              {% endfor %}
+            </select>
+          </label>
+          <div class="form-actions">
+            <a href="/" class="btn-new btn-muted">Back</a>
+            <button type="submit" class="btn-primary">Save</button>
+          </div>
+        </form>
+        <form method="post" action="/monitors/{{ monitor.id }}/delete" class="form-inline form-danger"
+              onsubmit="return confirm('Delete this monitor?');">
+          <button type="submit" class="btn-danger">Delete monitor</button>
+        </form>
+      </section>
+
+      <section class="card">
+        <h2>Notification channels</h2>
+        {% if attached_channels %}
+        <ul class="bare-list">
+          {% for c in attached_channels %}
+          <li class="list-row">
+            <div>
+              <strong>{{ c.name }}</strong>
+              <span class="muted">· {{ c.type.value }}{% if not c.is_enabled %} · disabled{% endif %}</span>
+            </div>
+            <form method="post" action="/monitors/{{ monitor.id }}/channels/{{ c.id }}/detach" class="form-inline">
+              <button type="submit" class="btn-new btn-muted">Detach</button>
+            </form>
+          </li>
+          {% endfor %}
+        </ul>
+        {% else %}
+        <p class="muted">No channels attached.</p>
+        {% endif %}
+
+        {% if available_channels %}
+        <form method="post" action="/monitors/{{ monitor.id }}/channels/attach" class="form-inline" style="margin-top: 12px;">
+          <select name="channel_id" required>
+            {% for c in available_channels %}
+            <option value="{{ c.id }}">{{ c.name }} ({{ c.type.value }})</option>
+            {% endfor %}
+          </select>
+          <button type="submit" class="btn-primary">Attach</button>
+        </form>
+        {% else %}
+        <p class="muted" style="margin-top: 12px;">
+          {% if not attached_channels %}No channels configured yet. <a href="/channels/new">Create one</a>.{% else %}All your channels are already attached.{% endif %}
+        </p>
+        {% endif %}
+      </section>
+    </div>
+
+    <section class="card" style="margin-top: 20px;">
+      <h2>Recent results <span class="count">{{ results|length }}</span></h2>
+      {% if results %}
+      <table class="table">
+        <thead>
+          <tr><th>When</th><th>Status</th><th>Latency</th><th>Error</th></tr>
+        </thead>
+        <tbody>
+          {% for r in results %}
+          <tr>
+            <td>{{ r.checked_at.strftime('%Y-%m-%d %H:%M:%S UTC') }}</td>
+            <td><span class="status status-{{ r.status.value }}">{{ r.status.value }}</span></td>
+            <td>{{ (r.latency_ms|string + ' ms') if r.latency_ms is not none else '—' }}</td>
+            <td class="muted">{{ r.error or '' }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+      {% else %}
+      <p class="muted">No probe has run yet.</p>
+      {% endif %}
+    </section>
+  </div>
+</main>
+{% endblock %}

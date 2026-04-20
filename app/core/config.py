@@ -33,6 +33,15 @@ class Settings(BaseSettings):
     argon2_memory_cost: int = 65536
     argon2_parallelism: int = 4
 
+    smtp_host: str | None = None
+    smtp_port: int = 587
+    smtp_username: str | None = None
+    smtp_password: str | None = None
+    smtp_from: str = "ghostmonitor@localhost"
+    smtp_starttls: bool = True
+
+    public_base_url: str = "http://localhost:8000"
+
 
 @lru_cache
 def get_settings() -> Settings:

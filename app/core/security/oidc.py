@@ -18,7 +18,9 @@ class OIDCProvider:
         self._oauth = OAuth()
 
         if self._enabled:
-            if not (settings.oidc_issuer and settings.oidc_client_id and settings.oidc_client_secret):
+            if not (
+                settings.oidc_issuer and settings.oidc_client_id and settings.oidc_client_secret
+            ):
                 raise OIDCNotConfiguredError(
                     "OIDC is enabled but issuer/client_id/client_secret are missing."
                 )

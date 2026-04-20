@@ -10,6 +10,13 @@
 <body class="fade-in">
   <header>
     <a href="/" class="logo">ghostmon</a>
+    {% if current_user %}
+    <nav class="top-nav">
+      <a href="/" class="nav-link{% if active_nav == 'dashboard' %} nav-active{% endif %}">Dashboard</a>
+      <a href="/channels" class="nav-link{% if active_nav == 'channels' %} nav-active{% endif %}">Channels</a>
+      <a href="/maintenances" class="nav-link{% if active_nav == 'maintenances' %} nav-active{% endif %}">Maintenances</a>
+    </nav>
+    {% endif %}
     <div class="header-actions">
       {% block header_actions %}
       {% if current_user %}

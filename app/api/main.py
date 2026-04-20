@@ -1,24 +1,38 @@
-from collections.abc import AsyncIterator
-from contextlib import asynccontextmanager
+from collections.abc import AsyncIterator, Callable
+from contextlib import AbstractAsyncContextManager, asynccontextmanager
 from pathlib import Path
 
 from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 from prometheus_fastapi_instrumentator import Instrumentator
+from starlette.middleware.sessions import SessionMiddleware
 
 from app.api.routes import api_router
 from app.api.routes.web import router as web_router
 from app.core.config import get_settings
+from app.tasks.scheduler import build_scheduler
 
 _PROJECT_ROOT = Path(__file__).resolve().parents[2]
 
+Lifespan = Callable[[FastAPI], AbstractAsyncContextManager[None]]
+
 
 @asynccontextmanager
-async def lifespan(_: FastAPI) -> AsyncIterator[None]:
+async def scheduler_lifespan(_: FastAPI) -> AsyncIterator[None]:
+    scheduler = build_scheduler()
+    await scheduler.start()
+    try:
+        yield
+    finally:
+        await scheduler.stop()
+
+
+@asynccontextmanager
+async def noop_lifespan(_: FastAPI) -> AsyncIterator[None]:
     yield
 
 
-def create_app() -> FastAPI:
+def create_app(*, lifespan: Lifespan = scheduler_lifespan) -> FastAPI:
     settings = get_settings()
     app = FastAPI(
         title="GhostMonitor",
@@ -29,6 +43,13 @@ def create_app() -> FastAPI:
         docs_url="/docs",
         redoc_url="/redoc",
         openapi_url="/openapi.json",
+    )
+
+    app.add_middleware(
+        SessionMiddleware,
+        secret_key=settings.app_secret_key,
+        same_site="lax",
+        https_only=settings.app_env == "production",
     )
 
     Instrumentator(

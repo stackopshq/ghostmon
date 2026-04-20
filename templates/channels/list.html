@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+
+{% block title %}Channels · GhostMonitor{% endblock %}
+
+{% block page %}
+<main class="page-bg">
+  <div class="container">
+    <div class="hero">
+      <h1 class="hero-title">
+        <span class="terminal-prompt">~ $&nbsp;</span><span>ghostmon channel list</span><span class="terminal-cursor">▊</span>
+      </h1>
+      <div class="hero-sub">Notification channels: email and signed webhooks.</div>
+    </div>
+
+    {% if flash %}
+    <div class="flash flash-ok">{{ flash }}</div>
+    {% endif %}
+
+    <div class="toolbar">
+      <div>
+        <h2>Channels<span class="count">{{ channels|length }} total</span></h2>
+      </div>
+      <div>
+        <a href="/channels/new" class="btn-new">+ New channel</a>
+      </div>
+    </div>
+
+    {% if channels %}
+    <table class="table">
+      <thead>
+        <tr><th>Name</th><th>Type</th><th>Enabled</th><th>Target</th><th></th></tr>
+      </thead>
+      <tbody>
+        {% for c in channels %}
+        <tr>
+          <td><a href="/channels/{{ c.id }}">{{ c.name }}</a></td>
+          <td>{{ c.type.value }}</td>
+          <td>{{ 'yes' if c.is_enabled else 'no' }}</td>
+          <td class="muted">
+            {% if c.type.value == 'email' %}{{ c.config.get('to', '') }}{% else %}{{ c.config.get('url', '') }}{% endif %}
+          </td>
+          <td class="row-actions">
+            <form method="post" action="/channels/{{ c.id }}/test" class="form-inline">
+              <button type="submit" class="btn-new btn-muted">Test</button>
+            </form>
+            <form method="post" action="/channels/{{ c.id }}/delete" class="form-inline"
+                  onsubmit="return confirm('Delete channel {{ c.name }}?');">
+              <button type="submit" class="btn-danger">Delete</button>
+            </form>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+    <div class="empty">
+      <h3>No channels yet</h3>
+      <p>Create a channel to be alerted when monitors go down.</p>
+      <p><a href="/channels/new" class="btn-new">+ New channel</a></p>
+    </div>
+    {% endif %}
+  </div>
+</main>
+{% endblock %}

@@ -2,6 +2,7 @@ import typer
 
 from app import __version__
 from app.cli.commands import monitor as monitor_cmd
+from app.cli.commands import user as user_cmd
 
 app = typer.Typer(
     name="ghostmon",
@@ -11,6 +12,7 @@ app = typer.Typer(
 )
 
 app.add_typer(monitor_cmd.app, name="monitor")
+app.add_typer(user_cmd.app, name="user")
 
 
 @app.command("version")

@@ -11,6 +11,18 @@ class MonitorBase(BaseModel):
     type: MonitorType
     url: str = Field(min_length=1, max_length=2048)
     interval: int = Field(default=60, ge=10, le=86400)
+    retries: int = Field(
+        default=2,
+        ge=0,
+        le=10,
+        description="Consecutive probe failures tolerated before flipping to DOWN.",
+    )
+    retry_interval: int = Field(
+        default=20,
+        ge=5,
+        le=3600,
+        description="Seconds to wait between retry probes after a failure.",
+    )
 
 
 class MonitorCreate(MonitorBase):
@@ -22,6 +34,8 @@ class MonitorUpdate(BaseModel):
     type: MonitorType | None = None
     url: str | None = Field(default=None, min_length=1, max_length=2048)
     interval: int | None = Field(default=None, ge=10, le=86400)
+    retries: int | None = Field(default=None, ge=0, le=10)
+    retry_interval: int | None = Field(default=None, ge=5, le=3600)
     status: MonitorStatus | None = None
 
 
@@ -33,3 +47,4 @@ class MonitorRead(MonitorBase):
     owner_id: uuid.UUID
     created_at: datetime
     updated_at: datetime
+    is_under_maintenance: bool = False

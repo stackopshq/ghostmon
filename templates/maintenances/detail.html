@@ -1,0 +1,122 @@
+{% extends "base.html" %}
+
+{% block title %}{{ maintenance.title }} · GhostMonitor{% endblock %}
+
+{% block page %}
+<main class="page-bg">
+  <div class="container">
+    <div class="hero">
+      <h1 class="hero-title">
+        <span class="terminal-prompt">~ $&nbsp;</span><span>{{ maintenance.title }}</span><span class="terminal-cursor">▊</span>
+      </h1>
+      <div class="hero-sub">
+        {{ maintenance.strategy.value }}
+        {% if maintenance.is_active %}· <span class="status status-up">enabled</span>{% else %}· <span class="status status-paused">disabled</span>{% endif %}
+      </div>
+    </div>
+
+    {% if error %}
+    <div class="flash flash-error">{{ error }}</div>
+    {% endif %}
+
+    <div class="grid-two">
+      <section class="card">
+        <h2>Settings</h2>
+        <form method="post" action="/maintenances/{{ maintenance.id }}" class="stacked">
+          <label class="field">
+            <span>Title</span>
+            <input type="text" name="title" required maxlength="255" value="{{ maintenance.title }}">
+          </label>
+          <label class="field">
+            <span>Description</span>
+            <textarea name="description" rows="3">{{ maintenance.description or '' }}</textarea>
+          </label>
+          <label class="field">
+            <span>Strategy</span>
+            <select name="strategy" required>
+              {% for s in strategies %}
+              <option value="{{ s }}" {% if maintenance.strategy.value == s %}selected{% endif %}>{{ s }}</option>
+              {% endfor %}
+            </select>
+          </label>
+          <div class="field-row">
+            <label class="field">
+              <span>Start (UTC)</span>
+              <input type="datetime-local" name="start_at"
+                     value="{% if maintenance.start_at %}{{ maintenance.start_at.strftime('%Y-%m-%dT%H:%M') }}{% endif %}">
+            </label>
+            <label class="field">
+              <span>End (UTC)</span>
+              <input type="datetime-local" name="end_at"
+                     value="{% if maintenance.end_at %}{{ maintenance.end_at.strftime('%Y-%m-%dT%H:%M') }}{% endif %}">
+            </label>
+          </div>
+          <div class="field-row">
+            <label class="field">
+              <span>Cron</span>
+              <input type="text" name="cron" value="{{ maintenance.cron or '' }}">
+            </label>
+            <label class="field">
+              <span>Duration (min)</span>
+              <input type="number" name="duration_minutes" min="1" max="20160"
+                     value="{{ maintenance.duration_minutes or '' }}">
+            </label>
+            <label class="field">
+              <span>Timezone</span>
+              <input type="text" name="timezone" maxlength="64" value="{{ maintenance.timezone }}">
+            </label>
+          </div>
+          <label class="field inline">
+            <input type="checkbox" name="is_active" {% if maintenance.is_active %}checked{% endif %}>
+            <span>Enabled</span>
+          </label>
+          <div class="form-actions">
+            <a href="/maintenances" class="btn-new btn-muted">Back</a>
+            <button type="submit" class="btn-primary">Save</button>
+          </div>
+        </form>
+        <form method="post" action="/maintenances/{{ maintenance.id }}/delete" class="form-inline form-danger"
+              onsubmit="return confirm('Delete maintenance {{ maintenance.title }}?');">
+          <button type="submit" class="btn-danger">Delete window</button>
+        </form>
+      </section>
+
+      <section class="card">
+        <h2>Affected monitors</h2>
+        {% if attached_monitors %}
+        <ul class="bare-list">
+          {% for m in attached_monitors %}
+          <li class="list-row">
+            <div>
+              <a href="/monitors/{{ m.id }}"><strong>{{ m.name }}</strong></a>
+              <span class="muted">· {{ m.type.value }} · {{ m.url }}</span>
+            </div>
+            <form method="post" action="/maintenances/{{ maintenance.id }}/monitors/{{ m.id }}/detach" class="form-inline">
+              <button type="submit" class="btn-new btn-muted">Detach</button>
+            </form>
+          </li>
+          {% endfor %}
+        </ul>
+        {% else %}
+        <p class="muted">No monitors attached.</p>
+        {% endif %}
+
+        {% if available_monitors %}
+        <form method="post" action="/maintenances/{{ maintenance.id }}/monitors/attach" class="form-inline" style="margin-top: 12px;">
+          <select name="monitor_id" required>
+            {% for m in available_monitors %}
+            <option value="{{ m.id }}">{{ m.name }} ({{ m.type.value }})</option>
+            {% endfor %}
+          </select>
+          <button type="submit" class="btn-primary">Attach</button>
+        </form>
+        {% else %}
+        <p class="muted" style="margin-top: 12px;">
+          {% if not attached_monitors %}No monitors yet. <a href="/monitors/new">Create one</a>.{% else %}All your monitors are already attached.{% endif %}
+        </p>
+        {% endif %}
+      </section>
+    </div>
+  </div>
+</main>
+{% endblock %}

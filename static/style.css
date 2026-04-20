@@ -496,3 +496,175 @@ footer a:hover { color: var(--brand-primary); }
 /* Fade in */
 .fade-in { animation: fadeIn 0.25s ease-out; }
 @keyframes fadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
+
+/* Top navigation */
+.top-nav {
+  display: flex;
+  gap: 6px;
+  margin: 0 18px;
+}
+.nav-link {
+  font-family: var(--font-mono);
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  text-decoration: none;
+  padding: 6px 12px;
+  border-radius: var(--radius-sm);
+  transition: color var(--transition), background var(--transition);
+}
+.nav-link:hover { color: var(--text); background: rgba(255,255,255,0.04); }
+.nav-active { color: var(--accent); background: var(--accent-dim); }
+
+/* Status: maintenance */
+.status-maintenance { color: #76b4ff; }
+.status-maintenance::before { background: #76b4ff; box-shadow: 0 0 8px #76b4ff; }
+
+/* Flash: success */
+.flash-ok {
+  padding: 10px 12px;
+  border-radius: var(--radius-sm);
+  font-size: 0.82rem;
+  margin-bottom: 12px;
+  background: rgba(163, 255, 0, 0.08);
+  border: 1px solid rgba(163, 255, 0, 0.3);
+  color: var(--brand-light);
+}
+
+/* Forms — layouts */
+.field-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 12px;
+}
+.field.inline {
+  flex-direction: row;
+  align-items: center;
+  gap: 8px;
+}
+.field-group {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 12px 14px;
+  margin-bottom: 12px;
+}
+.field-group legend {
+  padding: 0 8px;
+  color: var(--text-muted);
+  font-size: 0.8rem;
+  font-family: var(--font-mono);
+}
+.form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 8px;
+}
+.form-inline {
+  display: inline-flex;
+  gap: 8px;
+  align-items: center;
+}
+.form-danger { margin-top: 18px; }
+
+textarea {
+  width: 100%;
+  font-family: var(--font-mono);
+  font-size: 0.9rem;
+  padding: 8px 10px;
+  background: var(--code-bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text);
+  resize: vertical;
+}
+textarea:focus { outline: none; border-color: var(--border-focus); }
+
+select {
+  font-family: var(--font-mono);
+  font-size: 0.9rem;
+  padding: 8px 10px;
+  background: var(--code-bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text);
+}
+select:focus { outline: none; border-color: var(--border-focus); }
+
+/* Buttons — danger */
+.btn-danger {
+  font-family: var(--font-mono);
+  font-size: 0.85rem;
+  padding: 8px 14px;
+  background: rgba(255, 85, 85, 0.1);
+  border: 1px solid rgba(255, 85, 85, 0.35);
+  color: #ffb4b4;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: background var(--transition), border-color var(--transition);
+}
+.btn-danger:hover { background: rgba(255, 85, 85, 0.18); border-color: rgba(255, 85, 85, 0.55); }
+
+/* Two-column layout */
+.grid-two {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 20px;
+}
+
+/* Table */
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-family: var(--font-mono);
+  font-size: 0.85rem;
+}
+.table th, .table td {
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--border);
+  text-align: left;
+  vertical-align: middle;
+}
+.table th {
+  color: var(--text-muted);
+  font-weight: 500;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+.table a { color: var(--accent); text-decoration: none; }
+.table a:hover { color: var(--accent-hover); }
+
+/* Bare list */
+.bare-list { list-style: none; padding: 0; margin: 0; }
+.list-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--border);
+}
+.list-row:last-child { border-bottom: none; }
+
+/* Muted text */
+.muted { color: var(--text-muted); font-size: 0.82rem; }
+
+/* Row actions */
+.row-actions {
+  display: flex;
+  gap: 6px;
+  justify-content: flex-end;
+}
+
+/* Empty state */
+.empty {
+  text-align: center;
+  padding: 60px 20px;
+  color: var(--text-muted);
+}
+.empty h3 {
+  font-family: var(--font-mono);
+  color: var(--text);
+  margin-bottom: 8px;
+}
+.empty p { margin-bottom: 8px; }
