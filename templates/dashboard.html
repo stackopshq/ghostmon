@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+
+{% block page %}
+<main class="page-bg">
+  <div class="container">
+
+    <div class="hero">
+      <h1 class="hero-title">
+        <span class="terminal-prompt">~ $&nbsp;</span><span>ghostmon monitor list</span><span class="terminal-cursor">▊</span>
+      </h1>
+      <div class="hero-sub">Real-time view of your monitors.</div>
+    </div>
+
+    <div class="toolbar">
+      <div>
+        <h2>Monitors<span class="count">{{ monitors|length }} total</span></h2>
+      </div>
+      <div>
+        <a href="#" class="btn-new" aria-disabled="true" title="Coming soon">+ New monitor</a>
+      </div>
+    </div>
+
+    {% if monitors %}
+    <div class="monitor-grid">
+      {% for m in monitors %}
+      <article class="card monitor-card">
+        <div class="monitor-head">
+          <div class="monitor-name" title="{{ m.name }}">{{ m.name }}</div>
+          <span class="monitor-type">{{ m.type.value }}</span>
+        </div>
+        <div class="monitor-url" title="{{ m.url }}">{{ m.url }}</div>
+        <div class="monitor-foot">
+          <span class="status status-{{ m.status.value }}">{{ m.status.value }}</span>
+          <span class="monitor-interval">every {{ m.interval }}s</span>
+        </div>
+      </article>
+      {% endfor %}
+    </div>
+    {% else %}
+    <div class="empty">
+      <h3>No monitors yet</h3>
+      {% if current_user %}
+      <p>Create your first monitor to start watching an endpoint.</p>
+      {% else %}
+      <p><a href="/login">Sign in</a> to see your monitors.</p>
+      {% endif %}
+    </div>
+    {% endif %}
+
+  </div>
+</main>
+{% endblock %}

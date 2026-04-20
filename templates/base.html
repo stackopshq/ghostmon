@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}GhostMonitor — self-hosted uptime monitoring{% endblock %}</title>
+  <meta name="description" content="Self-hosted, modern uptime monitoring — HTTP, TCP, Ping, SSL, Docker.">
+  <link rel="stylesheet" href="/static/style.css?v={{ v }}">
+</head>
+<body class="fade-in">
+  <header>
+    <a href="/" class="logo">ghostmon</a>
+    <div class="header-actions">
+      {% block header_actions %}
+      {% if current_user %}
+      <span class="btn-new btn-muted" style="cursor: default;">{{ current_user.email }}</span>
+      <a href="/logout" class="btn-new btn-muted">Sign out</a>
+      {% else %}
+      <a href="/login" class="btn-new">Sign in</a>
+      {% endif %}
+      {% endblock %}
+    </div>
+  </header>
+
+  {% block page %}{% endblock %}
+
+  <footer>
+    <span>GhostMonitor · v{{ version }} · self-hosted uptime monitoring</span>
+  </footer>
+
+  {% block scripts %}{% endblock %}
+</body>
+</html>

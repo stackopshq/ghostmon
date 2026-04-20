@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+
+{% block title %}{{ code }} · GhostMonitor{% endblock %}
+
+{% block page %}
+<main class="page-bg">
+  <div class="err-wrap">
+    <div class="err-code">{{ code }}</div>
+    <div class="err-title">{{ title }}</div>
+    <div class="err-msg">{{ message }}</div>
+    <a href="/" class="btn-new" style="margin-top: 14px;">Back to dashboard</a>
+  </div>
+</main>
+{% endblock %}
