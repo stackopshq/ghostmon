@@ -11,9 +11,11 @@ from typer.testing import CliRunner
 from app.agent.metrics import (
     Sample,
     collect,
+    cpu_used_percent,
     disk_used_percent,
     parse_loadavg,
     parse_mem_used_percent,
+    read_cpu_times,
 )
 from app.cli.main import app
 
@@ -42,6 +44,19 @@ def test_parse_mem_used_percent_handles_empty() -> None:
 def test_disk_used_percent_in_range() -> None:
     pct = disk_used_percent("/")
     assert 0.0 <= pct <= 100.0
+
+
+def test_read_cpu_times() -> None:
+    # idle = idle(100) + iowait(10) = 110; total = sum = 230
+    idle, total = read_cpu_times("cpu  50 0 60 100 10 0 10 0 0 0\ncpu0 ...")
+    assert (idle, total) == (110, 230)
+
+
+def test_cpu_used_percent() -> None:
+    # idle moves 50, total moves 100 → 50% busy
+    assert cpu_used_percent((100, 200), (150, 300)) == 50.0
+    # no movement → 0
+    assert cpu_used_percent((100, 200), (100, 200)) == 0.0
 
 
 def test_collect_returns_samples() -> None:
