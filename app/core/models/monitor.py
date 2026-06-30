@@ -59,6 +59,13 @@ class Monitor(UUIDPrimaryKey, Timestamped, Base):
         nullable=False,
         index=True,
     )
+    # Backing host that carries this monitor's metrics as items (lazily provisioned
+    # on first probe). Part of the expand→migrate step toward the unified model.
+    host_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("hosts.id", ondelete="SET NULL"),
+        nullable=True,
+    )
     owner: Mapped[User] = relationship(back_populates="monitors", lazy="joined")
     results: Mapped[list[MonitorResult]] = relationship(
         back_populates="monitor",

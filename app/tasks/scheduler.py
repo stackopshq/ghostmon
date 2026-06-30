@@ -10,10 +10,12 @@ from apscheduler.triggers.interval import IntervalTrigger  # type: ignore[import
 from sqlalchemy import select
 
 from app.core.db.session import SessionLocal
+from app.core.models.metric_value import MetricValue
 from app.core.models.monitor import Monitor, MonitorStatus
 from app.core.models.monitor_result import MonitorResult, ProbeStatus
 from app.core.models.trigger import TriggerMetric
 from app.core.services.maintenance_service import MaintenanceService
+from app.core.services.monitor_host_bridge import ensure_backing_latency_item
 from app.core.services.trigger_service import TriggerService
 from app.tasks.notifications.dispatcher import schedule_dispatch
 from app.tasks.notifications.events import AlertEvent, TriggerAlertEvent
@@ -159,6 +161,15 @@ async def _run_probe_job(monitor_id: uuid.UUID) -> None:
             TriggerMetric.LATENCY_MS: final.latency_ms,
         }
         fired = await TriggerService(session).evaluate(monitor.id, metric_values, now)
+
+        # Mirror the latency into the host/item time-series history (migrate step).
+        if final.latency_ms is not None:
+            item = await ensure_backing_latency_item(session, monitor)
+            session.add(
+                MetricValue(item_id=item.id, value_num=float(final.latency_ms), collected_at=now)
+            )
+            await session.commit()
+
         trigger_alerts = [
             TriggerAlertEvent(
                 monitor_id=monitor.id,

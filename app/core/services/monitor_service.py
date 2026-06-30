@@ -4,6 +4,7 @@ from collections.abc import Sequence
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.models.host import Host
 from app.core.models.monitor import Monitor
 from app.core.models.monitor_result import MonitorResult
 from app.core.schemas.monitor import MonitorCreate, MonitorUpdate
@@ -55,7 +56,13 @@ class MonitorService:
         return monitor
 
     async def delete(self, monitor: Monitor) -> None:
+        # Also remove the backing host (its items/history cascade with it).
+        backing_host_id = monitor.host_id
         await self._session.delete(monitor)
+        if backing_host_id is not None:
+            host = await self._session.get(Host, backing_host_id)
+            if host is not None:
+                await self._session.delete(host)
         await self._session.commit()
 
     async def list_results(

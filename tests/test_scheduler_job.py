@@ -15,8 +15,10 @@ from typing import Any
 import pytest
 from sqlalchemy import select
 
+from app.core.models.host import Item
 from app.core.models.monitor import Monitor, MonitorStatus, MonitorType
 from app.core.models.monitor_result import MonitorResult, ProbeStatus
+from app.core.services.host_service import ItemService
 from app.tasks.probes import ProbeOutcome
 from app.tasks.scheduler import _run_probe_job
 
@@ -88,6 +90,68 @@ async def test_probe_job_flips_to_down_on_unreachable(session: Any, user: Any) -
     )
     assert len(results) == 1
     assert results[0].error is not None
+
+
+async def test_probe_job_mirrors_latency_into_item_history(
+    session: Any, user: Any, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monitor = Monitor(
+        id=uuid.uuid4(),
+        name="metered",
+        type=MonitorType.HTTP,
+        url="https://example.com",
+        interval=60,
+        retries=0,
+        retry_interval=5,
+        status=MonitorStatus.PENDING,
+        owner_id=user.id,
+    )
+    session.add(monitor)
+    await session.commit()
+
+    async def _fake(_: Monitor) -> ProbeOutcome:
+        return ProbeOutcome(ProbeStatus.UP, 137, None)
+
+    monkeypatch.setattr("app.tasks.scheduler.run_probe", _fake)
+    await _run_probe_job(monitor_id=monitor.id)
+
+    await session.refresh(monitor)
+    assert monitor.host_id is not None, "backing host provisioned lazily"
+    item = (
+        await session.execute(
+            select(Item).where(Item.host_id == monitor.host_id, Item.key == "latency_ms")
+        )
+    ).scalar_one()
+    values = await ItemService(session).list_values(item.id)
+    assert [v.value_num for v in values] == [137.0]
+
+
+async def test_down_probe_writes_no_history(
+    session: Any, user: Any, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monitor = Monitor(
+        id=uuid.uuid4(),
+        name="dark",
+        type=MonitorType.HTTP,
+        url="https://example.com",
+        interval=60,
+        retries=0,
+        retry_interval=5,
+        status=MonitorStatus.PENDING,
+        owner_id=user.id,
+    )
+    session.add(monitor)
+    await session.commit()
+
+    async def _fake(_: Monitor) -> ProbeOutcome:
+        return ProbeOutcome(ProbeStatus.DOWN, None, "timeout")
+
+    monkeypatch.setattr("app.tasks.scheduler.run_probe", _fake)
+    await _run_probe_job(monitor_id=monitor.id)
+
+    await session.refresh(monitor)
+    # No latency sample → no backing item provisioned, no history written.
+    assert monitor.host_id is None
 
 
 @pytest.fixture
