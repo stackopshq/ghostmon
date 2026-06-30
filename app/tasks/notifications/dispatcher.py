@@ -105,17 +105,17 @@ async def _deliver(event: Alert, channel: NotificationChannel) -> None:
     try:
         if channel.type == ChannelType.EMAIL:
             subject, body = _format_email(event)
-            to = config.get("to")
-            if not to:
+            raw_to = config.get("to")
+            if not raw_to:
                 raise DeliveryError("email channel config missing 'to'")
-            await send_email(get_settings(), to=to, subject=subject, body=body)
+            await send_email(get_settings(), to=decrypt_secret(raw_to), subject=subject, body=body)
         elif channel.type == ChannelType.WEBHOOK:
-            url = config.get("url")
-            if not url:
+            raw_url = config.get("url")
+            if not raw_url:
                 raise DeliveryError("webhook channel config missing 'url'")
             raw_secret = config.get("secret")
             secret = decrypt_secret(raw_secret) if raw_secret else None
-            await send_webhook(url=url, payload=event.payload(), secret=secret)
+            await send_webhook(url=decrypt_secret(raw_url), payload=event.payload(), secret=secret)
         else:  # pragma: no cover - exhaustive via StrEnum
             raise DeliveryError(f"unknown channel type: {channel.type}")
     except DeliveryError as exc:

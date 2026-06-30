@@ -8,17 +8,32 @@ from sqlalchemy.exc import IntegrityError
 
 from app.api.deps.db import DBSession
 from app.api.routes.web._shared import login_redirect, resolve_current_user, templates
-from app.core.models.notification_channel import ChannelType
+from app.core.models.notification_channel import ChannelType, NotificationChannel
 from app.core.schemas.notification_channel import (
     EmailChannelConfig,
     NotificationChannelCreate,
     NotificationChannelUpdate,
     WebhookChannelConfig,
 )
+from app.core.security.field_crypto import decrypt_secret
 from app.core.services.notification_channel_service import NotificationChannelService
 from app.tasks.notifications.dispatcher import send_test_notification
 
 router = APIRouter()
+
+
+def _edit_form(channel: NotificationChannel) -> dict[str, object]:
+    """Pre-fill the edit form from a stored channel, decrypting the alert target
+    (url/to) back to plaintext so the owner can see and edit it."""
+    cfg = channel.config or {}
+    return {
+        "name": channel.name,
+        "type": channel.type.value,
+        "email_to": decrypt_secret(cfg["to"]) if cfg.get("to") else "",
+        "webhook_url": decrypt_secret(cfg["url"]) if cfg.get("url") else "",
+        "webhook_secret": "",
+        "is_enabled": channel.is_enabled,
+    }
 
 
 @router.get("/channels", response_class=HTMLResponse, response_model=None)
@@ -152,6 +167,7 @@ async def channel_detail(
             "channel_types": [t.value for t in ChannelType],
             "error": None,
             "flash": request.query_params.get("flash"),
+            "form": _edit_form(channel),
         },
     )
 
@@ -176,6 +192,14 @@ async def update_channel(
     if channel is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Channel not found")
 
+    form_data = {
+        "name": name,
+        "type": type,
+        "email_to": email_to,
+        "webhook_url": webhook_url,
+        "webhook_secret": webhook_secret,
+        "is_enabled": is_enabled == "on",
+    }
     try:
         config: EmailChannelConfig | WebhookChannelConfig
         if type == ChannelType.EMAIL.value:
@@ -202,6 +226,7 @@ async def update_channel(
                 "channel": channel,
                 "channel_types": [t.value for t in ChannelType],
                 "error": str(exc),
+                "form": form_data,
             },
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
         )

@@ -1,6 +1,7 @@
 from typing import Any
 
 import httpx
+import pytest
 
 
 async def _create_webhook(
@@ -231,3 +232,103 @@ async def test_attach_unknown_channel_returns_404(
         headers=auth_headers,
     )
     assert response.status_code == 404
+
+
+# ── Alert targets encrypted at rest (url / email recipient) ─────────────────
+
+
+async def test_channel_targets_encrypted_at_rest_decrypted_on_read(
+    client: httpx.AsyncClient, auth_headers: dict[str, str], session: Any
+) -> None:
+    import uuid as _uuid
+
+    from app.core.models.notification_channel import NotificationChannel
+    from app.core.security.field_crypto import REDACTED, is_encrypted
+
+    hook = await client.post(
+        "/api/channels",
+        headers=auth_headers,
+        json={
+            "name": "hook-enc",
+            "config": {
+                "type": "webhook",
+                "url": "https://hooks.example.com/x",
+                "secret": "supersecret",
+            },
+        },
+    )
+    mail = await client.post(
+        "/api/channels",
+        headers=auth_headers,
+        json={"name": "mail-enc", "config": {"type": "email", "to": "oncall@example.com"}},
+    )
+    assert hook.status_code == 201 and mail.status_code == 201
+
+    # Read returns the owner's targets in clear, secret redacted.
+    assert hook.json()["config"]["url"].startswith("https://hooks.example.com")
+    assert hook.json()["config"]["secret"] == REDACTED
+    assert mail.json()["config"]["to"] == "oncall@example.com"
+
+    # At rest, the DB holds ciphertext for url, secret and the email recipient.
+    stored_hook = await session.get(NotificationChannel, _uuid.UUID(hook.json()["id"]))
+    stored_mail = await session.get(NotificationChannel, _uuid.UUID(mail.json()["id"]))
+    assert is_encrypted(stored_hook.config["url"])
+    assert is_encrypted(stored_hook.config["secret"])
+    assert is_encrypted(stored_mail.config["to"])
+    assert "hooks.example.com" not in stored_hook.config["url"]
+    assert "oncall@example.com" not in stored_mail.config["to"]
+
+
+async def test_dispatch_decrypts_targets(
+    session: Any, user: Any, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    from app.core.schemas.notification_channel import (
+        NotificationChannelCreate,
+        WebhookChannelConfig,
+    )
+    from app.core.services.notification_channel_service import NotificationChannelService
+    from app.tasks.notifications import dispatcher
+
+    channel = await NotificationChannelService(session).create(
+        NotificationChannelCreate(
+            name="hook-send",
+            config=WebhookChannelConfig(
+                url="https://hooks.example.com/deliver", secret="hmacsecret"
+            ),
+        ),
+        user.id,
+    )
+
+    captured: dict[str, Any] = {}
+
+    async def _capture(url: str, payload: Any, secret: str | None) -> None:
+        captured["url"] = url
+        captured["secret"] = secret
+
+    monkeypatch.setattr(dispatcher, "send_webhook", _capture)
+    await dispatcher.send_test_notification(channel)
+    # Delivery receives the decrypted url and secret, not the at-rest ciphertext.
+    assert captured["url"] == "https://hooks.example.com/deliver"
+    assert captured["secret"] == "hmacsecret"
+
+
+async def test_edit_form_shows_decrypted_target(
+    web_client: httpx.AsyncClient, user: Any, session: Any
+) -> None:
+    from app.core.schemas.notification_channel import (
+        NotificationChannelCreate,
+        WebhookChannelConfig,
+    )
+    from app.core.services.notification_channel_service import NotificationChannelService
+
+    channel = await NotificationChannelService(session).create(
+        NotificationChannelCreate(
+            name="hook-edit",
+            config=WebhookChannelConfig(url="https://hooks.example.com/edit", secret="hmacsecret"),
+        ),
+        user.id,
+    )
+    page = await web_client.get(f"/channels/{channel.id}")
+    assert page.status_code == 200
+    assert "https://hooks.example.com/edit" in page.text
+    assert "enc:v1:" not in page.text

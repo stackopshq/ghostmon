@@ -37,7 +37,7 @@
           <td>{{ c.type.value }}</td>
           <td>{{ 'yes' if c.is_enabled else 'no' }}</td>
           <td class="muted">
-            {% if c.type.value == 'email' %}{{ c.config.get('to', '') }}{% else %}{{ c.config.get('url', '') }}{% endif %}
+            {% if c.type.value == 'email' %}{{ c.config.get('to', '') | reveal }}{% else %}{{ c.config.get('url', '') | reveal }}{% endif %}
           </td>
           <td class="row-actions">
             <form method="post" action="/channels/{{ c.id }}/test" class="form-inline">
