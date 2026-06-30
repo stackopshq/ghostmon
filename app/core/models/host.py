@@ -96,6 +96,11 @@ class Item(UUIDPrimaryKey, Timestamped, Base):
     is_enabled: Mapped[bool] = mapped_column(
         Boolean, nullable=False, default=True, server_default="true"
     )
+    # Zero-knowledge: values are encrypted client-side; the server stores opaque
+    # ciphertext, never evaluates or decrypts them.
+    is_private: Mapped[bool] = mapped_column(
+        Boolean, nullable=False, default=False, server_default="false"
+    )
     source: Mapped[ItemSource] = mapped_column(
         Enum(ItemSource, name="item_source"),
         nullable=False,
