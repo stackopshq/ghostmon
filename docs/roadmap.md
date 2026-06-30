@@ -49,9 +49,11 @@ GhostMonitor's reason to exist over a plain Zabbix clone is privacy (ghost-suite
 - ✅ **Secrets encrypted at rest**: webhook signing secrets and SNMP communities are
   Fernet/AES-encrypted (key derived from `APP_SECRET_KEY`) and never returned in clear
   (write-only; redacted on read). A DB dump leaks no monitoring credentials.
-- *(next)* **Zero-knowledge "private items"**: items flagged private are encrypted
-  client-side; the server stores only ciphertext and never evaluates them; only the
-  user decrypts for display. (No server-side triggers on such items.)
+- 🚧 **Zero-knowledge "private items"** *(backend shipped)*: items flagged
+  `is_private` store client-encrypted ciphertext (AES-256-GCM); the server never
+  decrypts or evaluates them, and the key never reaches it. Reference CLI
+  `ghostmon zk genkey|encrypt|decrypt` (format interoperable with Web Crypto).
+  *(next)* in-browser decryption on the host page (key in URL fragment).
 - Baseline: no telemetry, no third-party calls, minimal alert payloads, hashed ingest
   tokens, bounded retention.
 

@@ -100,6 +100,7 @@ class ItemService:
             source=data.source,
             config=_seal_item_config(dict(data.config)),
             is_enabled=data.is_enabled,
+            is_private=data.is_private,
         )
         self._session.add(item)
         await self._session.commit()
@@ -127,7 +128,13 @@ class ItemService:
     async def record_value(
         self, item: Item, value: float | str, collected_at: datetime | None = None
     ) -> MetricValue:
-        value_num, value_text = _split_value(item.value_type, value)
+        value_num: float | None
+        value_text: str | None
+        if item.is_private:
+            # Zero-knowledge: store the client-encrypted token verbatim, opaque.
+            value_num, value_text = None, str(value)
+        else:
+            value_num, value_text = _split_value(item.value_type, value)
         sample = MetricValue(
             item_id=item.id,
             value_num=value_num,

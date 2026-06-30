@@ -50,6 +50,7 @@ async def _due_snmp_targets(session: AsyncSession, now: datetime) -> list[_PollT
         .outerjoin(MetricValue, MetricValue.item_id == Item.id)
         .where(
             Item.is_enabled.is_(True),
+            Item.is_private.is_(False),
             Item.source == ItemSource.SNMP,
             Host.address.is_not(None),
         )

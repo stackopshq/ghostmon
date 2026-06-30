@@ -46,6 +46,7 @@ class ItemBase(BaseModel):
     source: ItemSource = ItemSource.TRAPPER
     config: dict[str, Any] = Field(default_factory=dict)
     is_enabled: bool = True
+    is_private: bool = False
 
 
 class ItemCreate(ItemBase):
@@ -61,6 +62,7 @@ class ItemUpdate(BaseModel):
     source: ItemSource | None = None
     config: dict[str, Any] | None = None
     is_enabled: bool | None = None
+    is_private: bool | None = None
 
 
 class ItemRead(ItemBase):
