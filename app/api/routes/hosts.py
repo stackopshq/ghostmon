@@ -18,6 +18,8 @@ from app.core.schemas.host import (
 from app.core.schemas.notification_channel import NotificationChannelRead
 from app.core.services.host_service import HostService, ItemService
 from app.core.services.notification_channel_service import NotificationChannelService
+from app.core.services.trigger_service import TriggerService
+from app.tasks.notifications.dispatcher import schedule_item_trigger_alerts
 
 router = APIRouter(prefix="/hosts", tags=["hosts"])
 
@@ -146,7 +148,7 @@ async def ingest_value(
     session: DBSession,
     current_user: CurrentUser,
 ) -> MetricValueRead:
-    await _get_host_or_404(session, host_id, current_user.id)
+    host = await _get_host_or_404(session, host_id, current_user.id)
     item = await _get_item_or_404(session, item_id, host_id)
     try:
         sample = await ItemService(session).record_value(item, payload.value, payload.collected_at)
@@ -154,6 +156,10 @@ async def ingest_value(
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(exc)
         ) from exc
+    fired = await TriggerService(session).evaluate_item(
+        item.id, item.key, item.name, host.id, host.name, sample.value_num, sample.collected_at
+    )
+    schedule_item_trigger_alerts(fired, sample.collected_at)
     return MetricValueRead.model_validate(sample)
 
 

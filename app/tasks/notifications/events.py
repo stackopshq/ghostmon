@@ -64,7 +64,7 @@ class TriggerAlertEvent:
     monitor_url: str
     trigger_name: str
     severity: Severity
-    metric: TriggerMetric
+    metric: TriggerMetric | None
     operator: TriggerOperator
     threshold: float
     value: float
@@ -88,7 +88,44 @@ class TriggerAlertEvent:
             },
             "trigger": {
                 "name": self.trigger_name,
-                "metric": self.metric.value,
+                "metric": self.metric.value if self.metric else None,
+                "operator": self.operator.value,
+                "threshold": self.threshold,
+                "value": self.value,
+            },
+            "timestamp": self.timestamp.isoformat(),
+        }
+
+
+@dataclass(slots=True)
+class ItemTriggerAlertEvent:
+    """An item trigger crossing its threshold. Routed through the host's channels."""
+
+    host_id: uuid.UUID
+    host_name: str
+    item_key: str
+    item_name: str
+    trigger_name: str
+    severity: Severity
+    operator: TriggerOperator
+    threshold: float
+    value: float
+    new_state: TriggerState
+    timestamp: datetime
+
+    @property
+    def is_recovery(self) -> bool:
+        return self.new_state == TriggerState.OK
+
+    def payload(self) -> dict[str, Any]:
+        return {
+            "event": "item_trigger",
+            "severity": self.severity.value,
+            "state": self.new_state.value,
+            "host": {"id": str(self.host_id), "name": self.host_name},
+            "item": {"key": self.item_key, "name": self.item_name},
+            "trigger": {
+                "name": self.trigger_name,
                 "operator": self.operator.value,
                 "threshold": self.threshold,
                 "value": self.value,

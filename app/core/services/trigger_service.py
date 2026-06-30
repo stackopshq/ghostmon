@@ -20,7 +20,7 @@ from app.core.models.trigger import (
     TriggerOperator,
     TriggerState,
 )
-from app.core.schemas.trigger import TriggerCreate, TriggerUpdate
+from app.core.schemas.trigger import ItemTriggerCreate, TriggerCreate, TriggerUpdate
 from app.core.services.monitor_host_bridge import LATENCY_ITEM_KEY
 
 _AGGREGATE_FN: dict[TriggerAggregation, Any] = {
@@ -39,7 +39,25 @@ class TriggerFired:
     trigger_name: str
     monitor_id: uuid.UUID
     severity: Severity
-    metric: TriggerMetric
+    metric: TriggerMetric | None
+    operator: TriggerOperator
+    threshold: float
+    value: float
+    new_state: TriggerState
+
+
+@dataclass(slots=True)
+class ItemTriggerFired:
+    """An item trigger that just changed state. Carries host/item identity so the
+    alert can be routed through the host's channels."""
+
+    trigger_id: uuid.UUID
+    trigger_name: str
+    host_id: uuid.UUID
+    host_name: str
+    item_key: str
+    item_name: str
+    severity: Severity
     operator: TriggerOperator
     threshold: float
     value: float
@@ -87,6 +105,33 @@ class TriggerService:
             operator=data.operator,
             threshold=data.threshold,
             severity=data.severity,
+            aggregation=data.aggregation,
+            window_seconds=data.window_seconds,
+            is_enabled=data.is_enabled,
+        )
+        self._session.add(trigger)
+        await self._session.commit()
+        await self._session.refresh(trigger)
+        return trigger
+
+    async def list_for_item(self, item_id: uuid.UUID) -> Sequence[Trigger]:
+        stmt = select(Trigger).where(Trigger.item_id == item_id).order_by(Trigger.created_at.desc())
+        return (await self._session.execute(stmt)).scalars().all()
+
+    async def get_for_item(self, trigger_id: uuid.UUID, item_id: uuid.UUID) -> Trigger | None:
+        stmt = select(Trigger).where(Trigger.id == trigger_id, Trigger.item_id == item_id)
+        return (await self._session.execute(stmt)).scalar_one_or_none()
+
+    async def create_for_item(self, item_id: uuid.UUID, data: ItemTriggerCreate) -> Trigger:
+        trigger = Trigger(
+            item_id=item_id,
+            name=data.name,
+            metric=None,
+            operator=data.operator,
+            threshold=data.threshold,
+            severity=data.severity,
+            aggregation=data.aggregation,
+            window_seconds=data.window_seconds,
             is_enabled=data.is_enabled,
         )
         self._session.add(trigger)
@@ -162,6 +207,8 @@ class TriggerService:
     ) -> float | None:
         """The value a trigger compares to its threshold: the latest probe value
         (LAST / no window), or an aggregate over the backing item's history."""
+        if trigger.metric is None:
+            return None
         if trigger.aggregation == TriggerAggregation.LAST or trigger.window_seconds <= 0:
             return values.get(trigger.metric)
 
@@ -177,6 +224,70 @@ class TriggerService:
                 MetricValue.collected_at >= since,
                 MetricValue.value_num.is_not(None),
             )
+        )
+        result = (await self._session.execute(stmt)).scalar_one_or_none()
+        return float(result) if result is not None else None
+
+    async def evaluate_item(
+        self,
+        item_id: uuid.UUID,
+        item_key: str,
+        item_name: str,
+        host_id: uuid.UUID,
+        host_name: str,
+        latest_value: float | None,
+        now: datetime,
+    ) -> list[ItemTriggerFired]:
+        """Evaluate an item's enabled triggers against its latest value (or a
+        window of its history), persisting state changes and returning the flips."""
+        stmt = select(Trigger).where(Trigger.item_id == item_id, Trigger.is_enabled.is_(True))
+        triggers = (await self._session.execute(stmt)).scalars().all()
+
+        fired: list[ItemTriggerFired] = []
+        for trigger in triggers:
+            value = await self._observe_item(trigger, item_id, latest_value, now)
+            if value is None:
+                continue
+            new_state = (
+                TriggerState.PROBLEM
+                if _condition_met(trigger.operator, value, trigger.threshold)
+                else TriggerState.OK
+            )
+            if new_state == trigger.state:
+                continue
+            trigger.state = new_state
+            trigger.state_changed_at = now
+            fired.append(
+                ItemTriggerFired(
+                    trigger_id=trigger.id,
+                    trigger_name=trigger.name,
+                    host_id=host_id,
+                    host_name=host_name,
+                    item_key=item_key,
+                    item_name=item_name,
+                    severity=trigger.severity,
+                    operator=trigger.operator,
+                    threshold=trigger.threshold,
+                    value=value,
+                    new_state=new_state,
+                )
+            )
+
+        if fired:
+            await self._session.commit()
+        return fired
+
+    async def _observe_item(
+        self, trigger: Trigger, item_id: uuid.UUID, latest_value: float | None, now: datetime
+    ) -> float | None:
+        if trigger.aggregation == TriggerAggregation.LAST or trigger.window_seconds <= 0:
+            return latest_value
+        aggregate = _AGGREGATE_FN[trigger.aggregation]
+        since = now - timedelta(seconds=trigger.window_seconds)
+        stmt = select(aggregate(MetricValue.value_num)).where(
+            MetricValue.item_id == item_id,
+            MetricValue.collected_at >= since,
+            MetricValue.value_num.is_not(None),
         )
         result = (await self._session.execute(stmt)).scalar_one_or_none()
         return float(result) if result is not None else None

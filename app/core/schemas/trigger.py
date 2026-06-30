@@ -14,9 +14,10 @@ from app.core.models.trigger import (
 )
 
 
-class TriggerBase(BaseModel):
+class TriggerRuleBase(BaseModel):
+    """The threshold rule, shared by monitor triggers and item triggers."""
+
     name: str = Field(min_length=1, max_length=255)
-    metric: TriggerMetric = TriggerMetric.LATENCY_MS
     operator: TriggerOperator
     threshold: float
     severity: Severity
@@ -25,8 +26,14 @@ class TriggerBase(BaseModel):
     is_enabled: bool = True
 
 
-class TriggerCreate(TriggerBase):
-    pass
+class TriggerCreate(TriggerRuleBase):
+    """Create a monitor trigger (the metric selects the monitor signal)."""
+
+    metric: TriggerMetric = TriggerMetric.LATENCY_MS
+
+
+class ItemTriggerCreate(TriggerRuleBase):
+    """Create an item trigger — the item itself is the metric (no `metric`)."""
 
 
 class TriggerUpdate(BaseModel):
@@ -40,11 +47,13 @@ class TriggerUpdate(BaseModel):
     is_enabled: bool | None = None
 
 
-class TriggerRead(TriggerBase):
+class TriggerRead(TriggerRuleBase):
     model_config = ConfigDict(from_attributes=True)
 
     id: uuid.UUID
-    monitor_id: uuid.UUID
+    monitor_id: uuid.UUID | None
+    item_id: uuid.UUID | None
+    metric: TriggerMetric | None
     state: TriggerState
     state_changed_at: datetime | None
     created_at: datetime
