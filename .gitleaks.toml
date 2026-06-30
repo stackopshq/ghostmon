@@ -1,0 +1,10 @@
+# gitleaks configuration. Extends the default ruleset and allowlists test
+# fixtures, which intentionally contain fake secrets (and no real ones).
+[extend]
+useDefault = true
+
+[allowlist]
+description = "Test files use fake fixture secrets, not real credentials."
+paths = [
+  '''tests/.*''',
+]
