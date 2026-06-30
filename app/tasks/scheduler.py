@@ -15,6 +15,7 @@ from app.core.models.metric_value import MetricValue
 from app.core.models.monitor import Monitor, MonitorStatus
 from app.core.models.monitor_result import MonitorResult, ProbeStatus
 from app.core.models.trigger import TriggerMetric
+from app.core.observability import count_ingested, update_storage_metrics
 from app.core.services.discovery_service import DiscoveryService
 from app.core.services.escalation_service import EscalationService
 from app.core.services.maintenance_service import MaintenanceService
@@ -34,17 +35,20 @@ RETENTION_INTERVAL_SECONDS = 3600
 POLL_ITEMS_INTERVAL_SECONDS = 15
 ESCALATION_INTERVAL_SECONDS = 60
 DISCOVERY_INTERVAL_SECONDS = 60
+STORAGE_METRICS_INTERVAL_SECONDS = 300
 _RECONCILE_JOB_ID = "__reconcile__"
 _PRUNE_JOB_ID = "__prune__"
 _POLL_ITEMS_JOB_ID = "__poll_items__"
 _ESCALATION_JOB_ID = "__escalation__"
 _DISCOVERY_JOB_ID = "__discovery__"
+_STORAGE_METRICS_JOB_ID = "__storage_metrics__"
 _RESERVED_JOB_IDS = {
     _RECONCILE_JOB_ID,
     _PRUNE_JOB_ID,
     _POLL_ITEMS_JOB_ID,
     _ESCALATION_JOB_ID,
     _DISCOVERY_JOB_ID,
+    _STORAGE_METRICS_JOB_ID,
 }
 
 
@@ -79,6 +83,15 @@ class ProbeScheduler:
             id=_ESCALATION_JOB_ID,
             replace_existing=True,
             next_run_time=datetime.now(UTC) + timedelta(seconds=30),
+            max_instances=1,
+            coalesce=True,
+        )
+        self._scheduler.add_job(
+            _storage_metrics_job,
+            trigger=IntervalTrigger(seconds=STORAGE_METRICS_INTERVAL_SECONDS),
+            id=_STORAGE_METRICS_JOB_ID,
+            replace_existing=True,
+            next_run_time=datetime.now(UTC) + timedelta(seconds=20),
             max_instances=1,
             coalesce=True,
         )
@@ -226,6 +239,7 @@ async def _run_probe_job(monitor_id: uuid.UUID) -> None:
         # Mirror the probe signals into the host/item time-series history (migrate
         # step): status (1=up/0=down) every probe, latency and error when present.
         backing = await ensure_backing_items(session, monitor)
+        mirrored = 1  # status is recorded every probe
         session.add(
             MetricValue(
                 item_id=backing.status.id,
@@ -241,11 +255,14 @@ async def _run_probe_job(monitor_id: uuid.UUID) -> None:
                     collected_at=now,
                 )
             )
+            mirrored += 1
         if final.error:
             session.add(
                 MetricValue(item_id=backing.error.id, value_text=final.error, collected_at=now)
             )
+            mirrored += 1
         await session.commit()
+        count_ingested(mirrored)
 
         trigger_alerts = [
             TriggerAlertEvent(
@@ -344,6 +361,12 @@ async def _discovery_job() -> None:
                 await service.scan_rule(rule, now)
             except Exception:
                 logger.exception("discovery scan failed for rule %s", rule.id)
+
+
+async def _storage_metrics_job() -> None:
+    """Refresh the time-series storage-size gauges (cheap planner estimates)."""
+    async with SessionLocal() as session:
+        await update_storage_metrics(session)
 
 
 def build_scheduler() -> ProbeScheduler:

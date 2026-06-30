@@ -20,6 +20,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.db.session import SessionLocal
 from app.core.models.host import Host, Item, ItemSource, ItemValueType
 from app.core.models.metric_value import MetricValue
+from app.core.observability import count_ingested
 from app.core.security.field_crypto import decrypt_secret
 from app.core.services.trigger_service import TriggerService
 from app.tasks.notifications.dispatcher import schedule_item_trigger_alerts
@@ -115,6 +116,7 @@ async def _poll_one(target: _PollTarget, now: datetime) -> None:
             )
         )
         await session.commit()
+        count_ingested()
         fired = await TriggerService(session).evaluate_item(
             target.item_id,
             target.item_key,

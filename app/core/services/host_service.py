@@ -11,6 +11,7 @@ from app.core.models.host import Host, Item, ItemValueType
 from app.core.models.metric_trend import MetricTrend
 from app.core.models.metric_value import MetricValue
 from app.core.models.trigger import Severity, Trigger, TriggerState
+from app.core.observability import count_ingested
 from app.core.schemas.host import HostCreate, HostUpdate, ItemCreate, ItemUpdate
 from app.core.security.field_crypto import REDACTED, encrypt_secret
 
@@ -196,6 +197,7 @@ class ItemService:
         self._session.add(sample)
         await self._session.commit()
         await self._session.refresh(sample)
+        count_ingested()
         return sample
 
     async def list_values(self, item_id: uuid.UUID, limit: int = 100) -> Sequence[MetricValue]:

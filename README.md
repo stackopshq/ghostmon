@@ -131,7 +131,8 @@ open and unacknowledged:
 - **Maintenance windows** — one-shot or recurring (`cron`) alert silencing.
 - **Auth** — local accounts (argon2, JWT) and **OIDC SSO** (any OpenID Connect
   provider) on top, sharing the same session; SSO-only accounts need no password.
-- **Interfaces** — REST API (`/api`, OpenAPI at `/docs`), web UI, a `ghostmon` CLI, Prometheus metrics (`/metrics`), liveness/readiness (`/healthz`, `/readyz`).
+- **Network discovery** — scheduled CIDR scans (ping/TCP) that provision hosts for responsive addresses, applying a template; CIDR-capped and owner-scoped.
+- **Interfaces** — REST API (`/api`, OpenAPI at `/docs`), web UI, a `ghostmon` CLI, Prometheus metrics (`/metrics`, incl. ingestion throughput and time-series storage-size gauges), liveness/readiness (`/healthz`, `/readyz`).
 
 Stack: Python 3.12 · FastAPI · SQLAlchemy 2 (async) + asyncpg · PostgreSQL · APScheduler · Typer · Jinja2. Dependencies managed with [`uv`](https://docs.astral.sh/uv/). Containers built and run with **Podman**.
 

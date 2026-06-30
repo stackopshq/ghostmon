@@ -132,10 +132,14 @@ GhostMonitor's reason to exist over a plain Zabbix clone is privacy (ghost-suite
   CIDR capped (≤ 1024 hosts), bounded scan concurrency, dedupe by address, owner-scoped.
   REST CRUD + scan-now under `/api/discovery-rules`, and a `/discovery` web page to
   manage rules (create, scan-now, delete).
-- *(deferred — measure first)* Distributed collection (proxy/agent fan-in) and history
-  storage scaling (TimescaleDB / a dedicated TSDB). Deliberately not built yet: it is
-  premature without real load data. Add ingestion-volume/throughput metrics first so
-  the decision is evidence-driven.
+- ✅ **Scale observability (measure first)**: Prometheus metrics quantify the
+  time-series load — `ghostmon_values_ingested_total` (throughput via `rate()`) and
+  `ghostmon_table_rows_estimate{table=…}` (history/trends/results size, sampled from
+  `pg_class.reltuples` so it's instant, no `count(*)`). These make the scaling
+  decision evidence-driven.
+- *(deferred — now measurable)* Distributed collection (proxy/agent fan-in) and history
+  storage scaling (TimescaleDB / a dedicated TSDB / partitioning). Still not built:
+  premature until the metrics above show it's needed.
 
 ---
 
