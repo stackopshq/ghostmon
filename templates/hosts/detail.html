@@ -13,6 +13,7 @@
         {% if host.is_enabled %}enabled{% else %}disabled{% endif %}
         {% if host.description %} · {{ host.description }}{% endif %}
         · {{ item_views|length }} item(s)
+        · <a href="/hosts/{{ host.id }}/dashboard" class="nav-link" style="display:inline">dashboard</a>
       </div>
     </div>
 
