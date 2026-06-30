@@ -44,7 +44,7 @@
               <button type="submit" class="btn-new btn-muted">Test</button>
             </form>
             <form method="post" action="/channels/{{ c.id }}/delete" class="form-inline"
-                  onsubmit="return confirm('Delete channel {{ c.name }}?');">
+                  data-confirm="Delete channel {{ c.name }}?">
               <button type="submit" class="btn-danger">Delete</button>
             </form>
           </td>

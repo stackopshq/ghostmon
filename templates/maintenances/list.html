@@ -43,7 +43,7 @@
           <td>{{ 'yes' if m.is_active else 'no' }}</td>
           <td class="row-actions">
             <form method="post" action="/maintenances/{{ m.id }}/delete" class="form-inline"
-                  onsubmit="return confirm('Delete maintenance {{ m.title }}?');">
+                  data-confirm="Delete maintenance {{ m.title }}?">
               <button type="submit" class="btn-danger">Delete</button>
             </form>
           </td>

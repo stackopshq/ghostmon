@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <script>
+  <script nonce="{{ request.state.csp_nonce }}">
     // Apply the theme before CSS resolves so the page never flashes the wrong
     // palette. Stored choice wins; otherwise follow the OS preference, falling
     // back to dark (which is also what :root defaults to if JS is disabled).
@@ -58,5 +58,6 @@
 
   {% block scripts %}{% endblock %}
   <script src="/static/theme.js?v={{ v }}" defer></script>
+  <script src="/static/confirm.js?v={{ v }}" defer></script>
 </body>
 </html>
