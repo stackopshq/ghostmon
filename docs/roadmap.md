@@ -52,7 +52,8 @@ The foundational data-model shift (the core of ADR 0001), via expand → migrate
 - ✅ **Item templates**: reusable `Template` → `TemplateItem` sets, applied to a host
   to provision its items (idempotent re-apply). Trigger templates wait for triggers
   to move onto items (the contract step).
-- *(next)* CPU utilisation (delta sampling) and SNMP polling for network devices.
+- ✅ **CPU utilisation** in the agent via `/proc/stat` delta sampling.
+- *(next)* SNMP polling for network devices (adds a dependency).
 
 ## Phase 4 — Alerting escalation & dashboards
 
