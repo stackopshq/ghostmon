@@ -1,13 +1,26 @@
 # GhostMonitor
 
-Self-hosted uptime monitoring — a modern, lightweight alternative to Uptime-Kuma.
+Self-hosted infrastructure monitoring — a free alternative to Zabbix.
 
-GhostMonitor probes your endpoints on a schedule (HTTP, TCP, SSL certificate
-expiry, ICMP ping), records latency/availability history, and notifies you over
-email or webhooks when a monitor flips **UP ↔ DOWN**. It exposes both a JSON API
-and a server-rendered web UI, plus Prometheus metrics.
+> **Project status:** GhostMonitor is on its way there. Today it is a capable
+> agentless **uptime monitor**; the model is being grown toward full
+> Zabbix-style monitoring (hosts, metric items, history, triggers, templates,
+> agent/SNMP collection). See the [roadmap](docs/roadmap.md) and
+> [ADR 0001](docs/adr/0001-target-architecture-zabbix-alternative.md) for the
+> target architecture.
 
-## What
+Today, GhostMonitor probes your endpoints on a schedule (HTTP, TCP, SSL
+certificate expiry, ICMP ping), records latency/availability history, and
+notifies you over email or webhooks when a monitor flips **UP ↔ DOWN**. It
+exposes both a JSON API and a server-rendered web UI, plus Prometheus metrics.
+
+## Screenshots
+
+| Dark | Light |
+| --- | --- |
+| ![GhostMonitor sign-in, dark theme](docs/assets/login-dark.png) | ![GhostMonitor sign-in, light theme](docs/assets/login-light.png) |
+
+## What (today)
 
 - **Monitor types**: HTTP(S), TCP connect, SSL/TLS certificate expiry, ICMP ping.
 - **Scheduling**: per-monitor interval with configurable retries and retry interval.

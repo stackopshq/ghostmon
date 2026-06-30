@@ -5,7 +5,7 @@ build-backend = "hatchling.build"
 [project]
 name = "ghostmon"
 version = "0.1.0"
-description = "GhostMonitor - Self-hosted monitoring alternative to Uptime-Kuma"
+description = "GhostMonitor - Self-hosted infrastructure monitoring, a free Zabbix alternative"
 requires-python = ">=3.12"
 license = "MIT"
 license-files = ["LICENSE"]
