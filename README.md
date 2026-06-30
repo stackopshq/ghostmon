@@ -86,6 +86,11 @@ current value, and trigger status:
 
 ![Host dashboard with item cards](docs/assets/host-dashboard.png)
 
+**Problems timeline** — ongoing and resolved problem events (trigger state changes)
+with severity, duration, and one-click acknowledge:
+
+![Problems timeline with acknowledge](docs/assets/problems-timeline.png)
+
 **Host detail** — items with min/max and server-rendered history sparklines:
 
 | Dark | Light |

@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+
+{% block title %}Problems · GhostMonitor{% endblock %}
+
+{% block page %}
+<main class="page-bg">
+  <div class="container">
+    <div class="hero">
+      <h1 class="hero-title">
+        <span class="terminal-prompt">~ $&nbsp;</span><span>problems</span><span class="terminal-cursor">▊</span>
+      </h1>
+      <div class="hero-sub">
+        {% if ongoing %}{{ ongoing }} ongoing{% else %}no ongoing problems{% endif %} · {{ rows|length }} shown
+      </div>
+    </div>
+
+    {% if flash %}
+    <div class="flash flash-ok">{{ flash }}</div>
+    {% endif %}
+
+    <section class="card">
+      {% if rows %}
+      <table class="table">
+        <thead>
+          <tr><th>Severity</th><th>Subject</th><th>Trigger</th><th>Started (UTC)</th><th>Duration</th><th>Status</th><th></th></tr>
+        </thead>
+        <tbody>
+          {% for r in rows %}
+          <tr>
+            <td><span class="sev sev-{{ r.event.severity.value }}">{{ r.event.severity.value }}</span></td>
+            <td>{{ r.event.subject }}</td>
+            <td class="muted">{{ r.event.trigger_name }}{% if r.event.value is not none %} <span style="opacity:.7">({{ r.event.value }})</span>{% endif %}</td>
+            <td class="muted">{{ r.event.started_at.strftime('%Y-%m-%d %H:%M:%S') }}</td>
+            <td class="muted">{{ r.duration }}</td>
+            <td>
+              {% if r.ongoing %}<span class="tstate tstate-problem">ongoing</span>
+              {% else %}<span class="tstate tstate-ok">resolved</span>{% endif %}
+              {% if r.event.acknowledged_at %} · <span class="muted">ack’d</span>{% endif %}
+            </td>
+            <td class="row-actions">
+              {% if r.ongoing and not r.event.acknowledged_at %}
+              <form method="post" action="/problems/{{ r.event.id }}/ack" class="form-inline">
+                <button type="submit" class="btn-new btn-muted">Acknowledge</button>
+              </form>
+              {% endif %}
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+      {% else %}
+      <p class="muted">No problems recorded yet. Threshold triggers raise a problem here when they fire.</p>
+      {% endif %}
+    </section>
+  </div>
+</main>
+{% endblock %}

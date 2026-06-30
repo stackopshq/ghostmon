@@ -105,9 +105,11 @@ GhostMonitor's reason to exist over a plain Zabbix clone is privacy (ghost-suite
   sparklines). Geometry is a pure, unit-tested helper.
 - ✅ **Host dashboard**: an at-a-glance grid (`/hosts/{id}/dashboard`) of a host's
   items, each card showing a mini-chart, current value and worst trigger state.
+- ✅ **Problem timeline + acknowledge**: trigger OK↔PROBLEM transitions are persisted
+  as problem events (opened on a flip, resolved on recovery), shown on a `/problems`
+  timeline with severity, duration and one-click acknowledge. Read/ack REST API too.
 - *(next)* overview across hosts; long-range charts backed by trends.
 - Multi-step escalation actions (notify → wait → escalate → auto-remediate hooks).
-- Acknowledge / problem timeline.
 
 ## Phase 5 — Discovery & scale
 

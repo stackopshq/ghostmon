@@ -118,3 +118,34 @@ async def test_problems_api_list_and_ack(
 
     missing = await client.post(f"/api/problems/{uuid.uuid4()}/ack", headers=auth_headers)
     assert missing.status_code == 404
+
+
+async def test_problems_web_timeline_and_acknowledge(
+    web_client: httpx.AsyncClient, session: Any, user: Any
+) -> None:
+    _, _, trigger = await _host_item_trigger(session, user.id)
+    event = ProblemEvent(
+        trigger_id=trigger.id,
+        owner_id=user.id,
+        subject="web-01 / cpu",
+        trigger_name="hot cpu",
+        severity=Severity.HIGH,
+        value=95.0,
+        started_at=NOW,
+    )
+    session.add(event)
+    await session.commit()
+
+    page = await web_client.get("/problems")
+    assert page.status_code == 200
+    assert "web-01 / cpu" in page.text
+    assert "ongoing" in page.text
+    assert "Acknowledge" in page.text
+
+    ack = await web_client.post(f"/problems/{event.id}/ack")
+    assert ack.status_code in (200, 303)
+    await session.refresh(event)
+    assert event.acknowledged_at is not None
+
+    after = await web_client.get("/problems")
+    assert "Acknowledge" not in after.text  # button gone once acknowledged
