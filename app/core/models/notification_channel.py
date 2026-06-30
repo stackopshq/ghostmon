@@ -13,6 +13,7 @@ from app.core.models.mixins import Timestamped, UUIDPrimaryKey
 from app.core.models.trigger import Severity
 
 if TYPE_CHECKING:
+    from app.core.models.host import Host
     from app.core.models.monitor import Monitor
     from app.core.models.user import User
 
@@ -29,6 +30,24 @@ monitor_channels = Table(
         "monitor_id",
         UUID(as_uuid=True),
         ForeignKey("monitors.id", ondelete="CASCADE"),
+        primary_key=True,
+    ),
+    Column(
+        "channel_id",
+        UUID(as_uuid=True),
+        ForeignKey("notification_channels.id", ondelete="CASCADE"),
+        primary_key=True,
+    ),
+)
+
+
+host_channels = Table(
+    "host_channels",
+    Base.metadata,
+    Column(
+        "host_id",
+        UUID(as_uuid=True),
+        ForeignKey("hosts.id", ondelete="CASCADE"),
         primary_key=True,
     ),
     Column(
@@ -70,6 +89,11 @@ class NotificationChannel(UUIDPrimaryKey, Timestamped, Base):
     owner: Mapped[User] = relationship(back_populates="channels", lazy="joined")
     monitors: Mapped[list[Monitor]] = relationship(
         secondary=monitor_channels,
+        back_populates="channels",
+        lazy="noload",
+    )
+    hosts: Mapped[list[Host]] = relationship(
+        secondary=host_channels,
         back_populates="channels",
         lazy="noload",
     )

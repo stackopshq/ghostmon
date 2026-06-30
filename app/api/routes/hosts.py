@@ -1,6 +1,7 @@
 import uuid
 
 from fastapi import APIRouter, HTTPException, Query, Response, status
+from pydantic import BaseModel
 
 from app.api.deps import CurrentUser, DBSession
 from app.core.models.host import Host, Item
@@ -14,7 +15,9 @@ from app.core.schemas.host import (
     MetricValueIngest,
     MetricValueRead,
 )
+from app.core.schemas.notification_channel import NotificationChannelRead
 from app.core.services.host_service import HostService, ItemService
+from app.core.services.notification_channel_service import NotificationChannelService
 
 router = APIRouter(prefix="/hosts", tags=["hosts"])
 
@@ -170,3 +173,61 @@ async def list_values(
     await _get_item_or_404(session, item_id, host_id)
     values = await ItemService(session).list_values(item_id, limit=limit)
     return [MetricValueRead.model_validate(v) for v in values]
+
+
+# ── Notification channels ───────────────────────────────────────────────────
+
+
+class AttachChannelPayload(BaseModel):
+    channel_id: uuid.UUID
+
+
+@router.get(
+    "/{host_id}/channels",
+    response_model=list[NotificationChannelRead],
+    summary="List channels attached to a host",
+)
+async def list_host_channels(
+    host_id: uuid.UUID, session: DBSession, current_user: CurrentUser
+) -> list[NotificationChannelRead]:
+    await _get_host_or_404(session, host_id, current_user.id)
+    channels = await NotificationChannelService(session).channels_for_host(host_id)
+    return [NotificationChannelRead.model_validate(c) for c in channels]
+
+
+@router.post(
+    "/{host_id}/channels",
+    status_code=status.HTTP_204_NO_CONTENT,
+    summary="Attach a notification channel to a host",
+)
+async def attach_host_channel(
+    host_id: uuid.UUID,
+    payload: AttachChannelPayload,
+    session: DBSession,
+    current_user: CurrentUser,
+) -> Response:
+    await _get_host_or_404(session, host_id, current_user.id)
+    channel_svc = NotificationChannelService(session)
+    if await channel_svc.get(payload.channel_id, current_user.id) is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Channel not found")
+    await channel_svc.attach_host(host_id, payload.channel_id)
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
+
+
+@router.delete(
+    "/{host_id}/channels/{channel_id}",
+    status_code=status.HTTP_204_NO_CONTENT,
+    summary="Detach a notification channel from a host",
+)
+async def detach_host_channel(
+    host_id: uuid.UUID,
+    channel_id: uuid.UUID,
+    session: DBSession,
+    current_user: CurrentUser,
+) -> Response:
+    await _get_host_or_404(session, host_id, current_user.id)
+    channel_svc = NotificationChannelService(session)
+    if await channel_svc.get(channel_id, current_user.id) is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Channel not found")
+    await channel_svc.detach_host(host_id, channel_id)
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
