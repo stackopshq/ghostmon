@@ -98,10 +98,13 @@ GhostMonitor's reason to exist over a plain Zabbix clone is privacy (ghost-suite
   hosts gain an `address`. A scheduler cycle polls due SNMP items (any OID) and
   appends to history — arbitrary metrics collected server-side, the full Zabbix shape.
 
-## Phase 4 — Alerting escalation & dashboards
+## Phase 4 — Alerting escalation & dashboards *(in progress)*
 
+- ✅ **Time-series graphs**: a server-rendered SVG line chart over an item's history
+  on the item page (no JavaScript, no chart library — consistent with the inline
+  sparklines). Geometry is a pure, unit-tested helper.
+- *(next)* host/overview dashboards; long-range charts backed by trends.
 - Multi-step escalation actions (notify → wait → escalate → auto-remediate hooks).
-- Dashboards and time-series graphs over item history/trends.
 - Acknowledge / problem timeline.
 
 ## Phase 5 — Discovery & scale
