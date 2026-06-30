@@ -293,6 +293,7 @@ async def _item_detail_context(
         "item": item,
         "triggers": list(await TriggerService(session).list_for_item(item_id)),
         "values": list(await item_svc.list_values(item_id, limit=25)),
+        "trends": list(await item_svc.list_trends(item_id, limit=24)),
         "trigger_operators": [{"value": o.value, "label": s} for o, s in _OPERATOR_SYMBOLS.items()],
         "trigger_aggregations": [a.value for a in TriggerAggregation],
         "severities": [s.value for s in Severity],

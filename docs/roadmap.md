@@ -47,10 +47,15 @@ The foundational data-model shift (the core of ADR 0001), via expand → migrate
   history sparklines).
 - ✅ **History-aware triggers**: triggers can aggregate (`avg`/`min`/`max`) over a
   look-back window of item history instead of only the last probe value.
+- ✅ **Trends**: hourly min/avg/max rollups (`metric_trends`) downsample numeric
+  history so long-range data survives raw-sample retention. The maintenance job rolls
+  up before pruning (re-aggregating the last few hours so late data and missed runs
+  are caught), with a separate, longer trend retention. Read API
+  `GET /api/hosts/{h}/items/{i}/trends` and an "Hourly trends" table on the item page.
 - *(deferred)* **Contract**: retire the monitor-specific tables — held back until
   status/error are modelled as items, so it doesn't regress the uptime feature.
-- *(deferred)* Hourly `trends` (min/avg/max) — speculative until a long-range graph
-  consumes them; the UI reads raw history for now.
+  (Doing this now would drop a working feature; the safe path is to model monitor
+  status/error as items first — see the report, not started.)
 
 ## Privacy (the differentiator vs Zabbix)
 

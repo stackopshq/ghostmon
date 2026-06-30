@@ -12,6 +12,7 @@ from app.core.schemas.host import (
     ItemCreate,
     ItemRead,
     ItemUpdate,
+    MetricTrendRead,
     MetricValueIngest,
     MetricValueRead,
 )
@@ -179,6 +180,24 @@ async def list_values(
     await _get_item_or_404(session, item_id, host_id)
     values = await ItemService(session).list_values(item_id, limit=limit)
     return [MetricValueRead.model_validate(v) for v in values]
+
+
+@router.get(
+    "/{host_id}/items/{item_id}/trends",
+    response_model=list[MetricTrendRead],
+    summary="Read hourly min/avg/max trend rollups for an item (newest first)",
+)
+async def list_trends(
+    host_id: uuid.UUID,
+    item_id: uuid.UUID,
+    session: DBSession,
+    current_user: CurrentUser,
+    limit: int = Query(default=168, ge=1, le=8760),
+) -> list[MetricTrendRead]:
+    await _get_host_or_404(session, host_id, current_user.id)
+    await _get_item_or_404(session, item_id, host_id)
+    trends = await ItemService(session).list_trends(item_id, limit=limit)
+    return [MetricTrendRead.model_validate(t) for t in trends]
 
 
 # ── Notification channels ───────────────────────────────────────────────────

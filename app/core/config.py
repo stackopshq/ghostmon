@@ -46,6 +46,14 @@ class Settings(BaseSettings):
     # pruned hourly. 0 disables pruning (keep everything).
     history_retention_days: int = 30
 
+    # Hourly min/avg/max trend rollups downsample numeric history so long-range
+    # data survives `history_retention_days`. Trends keep their own (longer)
+    # retention; 0 disables trend pruning. The rollup re-aggregates the last
+    # `trends_rollup_lookback_hours` complete hours each run (catches late data
+    # and missed runs); 0 disables the rollup entirely.
+    trends_retention_days: int = 365
+    trends_rollup_lookback_hours: int = 6
+
 
 @lru_cache
 def get_settings() -> Settings:

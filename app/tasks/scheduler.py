@@ -23,6 +23,7 @@ from app.tasks.notifications.dispatcher import schedule_dispatch
 from app.tasks.notifications.events import AlertEvent, TriggerAlertEvent
 from app.tasks.probes import ProbeOutcome, run_probe
 from app.tasks.retention import prune_history
+from app.tasks.trends import prune_trends, rollup_trends
 
 logger = logging.getLogger(__name__)
 
@@ -52,7 +53,7 @@ class ProbeScheduler:
             kwargs={"scheduler": self._scheduler},
         )
         self._scheduler.add_job(
-            _prune_history_job,
+            _history_maintenance_job,
             trigger=IntervalTrigger(seconds=RETENTION_INTERVAL_SECONDS),
             id=_PRUNE_JOB_ID,
             replace_existing=True,
@@ -240,20 +241,36 @@ async def _run_probe_job(monitor_id: uuid.UUID) -> None:
         schedule_dispatch(trigger_alert)
 
 
-async def _prune_history_job() -> None:
-    retention_days = get_settings().history_retention_days
-    if retention_days <= 0:
-        return
-    cutoff = datetime.now(UTC) - timedelta(days=retention_days)
+async def _history_maintenance_job() -> None:
+    """Hourly: roll raw samples up into trends, *then* prune raw history (so the
+    rollup never loses data), then prune trends past their own retention."""
+    settings = get_settings()
+    now = datetime.now(UTC)
     async with SessionLocal() as session:
-        result = await prune_history(session, cutoff)
-    if result.metric_values or result.monitor_results:
-        logger.info(
-            "pruned history older than %s: %d samples, %d probe results",
-            cutoff.isoformat(),
-            result.metric_values,
-            result.monitor_results,
-        )
+        rolled = await rollup_trends(session, now, settings.trends_rollup_lookback_hours)
+        if rolled:
+            logger.info("rolled up %d trend bucket(s)", rolled)
+
+        retention_days = settings.history_retention_days
+        if retention_days > 0:
+            cutoff = now - timedelta(days=retention_days)
+            result = await prune_history(session, cutoff)
+            if result.metric_values or result.monitor_results:
+                logger.info(
+                    "pruned history older than %s: %d samples, %d probe results",
+                    cutoff.isoformat(),
+                    result.metric_values,
+                    result.monitor_results,
+                )
+
+        trends_days = settings.trends_retention_days
+        if trends_days > 0:
+            trend_cutoff = now - timedelta(days=trends_days)
+            pruned = await prune_trends(session, trend_cutoff)
+            if pruned:
+                logger.info(
+                    "pruned %d trend bucket(s) older than %s", pruned, trend_cutoff.isoformat()
+                )
 
 
 def build_scheduler() -> ProbeScheduler:

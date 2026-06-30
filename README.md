@@ -56,7 +56,9 @@ channels) with severity/state pills, plus recent values:
   with `info`→`disaster` severities and a problem/OK state machine.
 - **Hosts, items & history**: collect arbitrary metrics as items with append-only
   time-series history (bounded by retention), browsable with inline sparklines;
-  each monitor's latency is mirrored into this model automatically.
+  each monitor's latency is mirrored into this model automatically. Hourly **trend
+  rollups** (min/avg/max) downsample numeric history so long-range data survives
+  raw-sample retention.
 - **Agent ingestion**: per-owner ingest tokens and a token-authenticated
   `POST /api/ingest` (auto-creating "trapper" items) so external agents and scripts
   push metrics without a user login.
