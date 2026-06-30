@@ -303,3 +303,42 @@ async def test_api_rejects_remediation_on_non_webhook(
     )
     assert resp.status_code == 422
     assert "webhook" in resp.text.lower()
+
+
+async def test_due_escalations_skip_foreign_owner_channel(session: Any, user: Any) -> None:
+    from app.core.models.user import AuthProvider, User
+    from app.core.security.passwords import hash_password
+
+    bob = User(
+        email="bob@example.com",
+        full_name="Bob",
+        auth_provider=AuthProvider.LOCAL,
+        password_hash=hash_password("bob-secret-password"),
+        is_active=True,
+    )
+    session.add(bob)
+    await session.flush()
+    bob_channel = NotificationChannel(
+        name="bob-hook",
+        type=ChannelType.WEBHOOK,
+        config={"url": "https://hook.invalid/bob"},
+        owner_id=bob.id,
+        min_severity=Severity.INFO,
+    )
+    session.add(bob_channel)
+    await session.flush()
+
+    trig = await _trigger(session, user.id)
+    # Force a policy that targets another owner's channel (the API would reject this).
+    await EscalationService(session).create(
+        user.id,
+        EscalationPolicyCreate(
+            name="leaky",
+            steps=[EscalationStepCreate(step_order=1, delay_minutes=0, channel_id=bob_channel.id)],
+        ),
+    )
+    await _problem(session, user.id, trig.id, NOW - timedelta(minutes=1))
+    await session.commit()
+
+    # The engine must not route user A's problem through user B's channel.
+    assert await EscalationService(session).due_escalations(NOW) == []

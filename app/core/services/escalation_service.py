@@ -148,6 +148,9 @@ class EscalationService:
                 if elapsed_minutes < step.delay_minutes:
                     break  # later steps have larger delays
                 channel = await self._session.get(NotificationChannel, step.channel_id)
+                # Defense-in-depth: never deliver to a channel of a different owner.
+                if channel is not None and channel.owner_id != problem.owner_id:
+                    channel = None
                 if channel is not None and channel.is_enabled:
                     # Auto-remediation must reach a machine endpoint, never an inbox.
                     if step.action_command is not None and channel.type != ChannelType.WEBHOOK:
