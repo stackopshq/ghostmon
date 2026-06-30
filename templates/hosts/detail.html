@@ -1,0 +1,132 @@
+{% extends "base.html" %}
+
+{% block title %}{{ host.name }} · GhostMonitor{% endblock %}
+
+{% block page %}
+<main class="page-bg">
+  <div class="container">
+    <div class="hero">
+      <h1 class="hero-title">
+        <span class="terminal-prompt">~ $&nbsp;</span><span>{{ host.name }}</span><span class="terminal-cursor">▊</span>
+      </h1>
+      <div class="hero-sub">
+        {% if host.is_enabled %}enabled{% else %}disabled{% endif %}
+        {% if host.description %} · {{ host.description }}{% endif %}
+        · {{ item_views|length }} item(s)
+      </div>
+    </div>
+
+    {% if error %}
+    <div class="flash flash-error">{{ error }}</div>
+    {% endif %}
+
+    <div class="grid-two">
+      <section class="card">
+        <h2>Settings</h2>
+        <form method="post" action="/hosts/{{ host.id }}" class="stacked">
+          <label class="field">
+            <span>Name</span>
+            <input type="text" name="name" required maxlength="255" value="{{ host.name }}">
+          </label>
+          <label class="field">
+            <span>Description</span>
+            <input type="text" name="description" maxlength="2048" value="{{ host.description or '' }}">
+          </label>
+          <label class="field inline">
+            <input type="checkbox" name="is_enabled" {% if host.is_enabled %}checked{% endif %}>
+            <span>Enabled</span>
+          </label>
+          <div class="form-actions">
+            <a href="/hosts" class="btn-new btn-muted">Back</a>
+            <button type="submit" class="btn-primary">Save</button>
+          </div>
+        </form>
+        <form method="post" action="/hosts/{{ host.id }}/delete" class="form-inline form-danger"
+              onsubmit="return confirm('Delete host {{ host.name }} and all its items?');">
+          <button type="submit" class="btn-danger">Delete host</button>
+        </form>
+      </section>
+
+      <section class="card">
+        <h2>Add item</h2>
+        <form method="post" action="/hosts/{{ host.id }}/items/new" class="stacked">
+          <div class="field-row">
+            <label class="field">
+              <span>Key</span>
+              <input type="text" name="key" required maxlength="255" placeholder="system.cpu.util">
+            </label>
+            <label class="field">
+              <span>Name</span>
+              <input type="text" name="name" required maxlength="255" placeholder="CPU util">
+            </label>
+          </div>
+          <div class="field-row">
+            <label class="field">
+              <span>Type</span>
+              <select name="value_type" required>
+                {% for vt in value_types %}<option value="{{ vt }}">{{ vt }}</option>{% endfor %}
+              </select>
+            </label>
+            <label class="field">
+              <span>Units</span>
+              <input type="text" name="units" maxlength="32" placeholder="%">
+            </label>
+            <label class="field">
+              <span>Interval (s)</span>
+              <input type="number" name="interval" min="1" max="86400" value="60">
+            </label>
+          </div>
+          <div class="form-actions">
+            <button type="submit" class="btn-primary">Add item</button>
+          </div>
+        </form>
+      </section>
+    </div>
+
+    <section class="card" style="margin-top: 20px;">
+      <h2>Items <span class="count">{{ item_views|length }}</span></h2>
+      {% if item_views %}
+      <table class="table">
+        <thead>
+          <tr><th>Item</th><th>Key</th><th>Latest</th><th>Min / Max</th><th>History</th><th></th></tr>
+        </thead>
+        <tbody>
+          {% for iv in item_views %}
+          <tr>
+            <td>{{ iv.item.name }}{% if not iv.item.is_enabled %} <span class="muted">· disabled</span>{% endif %}</td>
+            <td class="muted">{{ iv.item.key }}</td>
+            <td>
+              {% if iv.latest is none %}<span class="muted">—</span>
+              {% elif iv.latest.value_num is not none %}{{ iv.latest.value_num }}{{ ' ' ~ iv.item.units if iv.item.units }}
+              {% else %}{{ iv.latest.value_text }}{% endif %}
+            </td>
+            <td class="muted">
+              {% if iv.min is not none %}{{ iv.min }} / {{ iv.max }}{% else %}—{% endif %}
+            </td>
+            <td>
+              {% if iv.spark %}
+              <svg class="spark" viewBox="0 0 {{ spark_w }} {{ spark_h }}" width="{{ spark_w }}" height="{{ spark_h }}" preserveAspectRatio="none" role="img" aria-label="{{ iv.item.name }} trend">
+                <polyline points="{{ iv.spark }}" fill="none" stroke="currentColor" stroke-width="1.5" />
+              </svg>
+              {% else %}
+              <span class="muted">{{ iv.count }} sample(s)</span>
+              {% endif %}
+            </td>
+            <td class="row-actions">
+              <form method="post" action="/hosts/{{ host.id }}/items/{{ iv.item.id }}/delete" class="form-inline"
+                    onsubmit="return confirm('Delete item {{ iv.item.key }}?');">
+                <button type="submit" class="btn-new btn-muted">Delete</button>
+              </form>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+      {% else %}
+      <p class="muted">No items yet. Add one above, then push values via the API
+        (<code>POST /api/hosts/{{ host.id }}/items/&lt;item&gt;/values</code>).</p>
+      {% endif %}
+    </section>
+  </div>
+</main>
+{% endblock %}

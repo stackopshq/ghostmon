@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+
+{% block title %}New host · GhostMonitor{% endblock %}
+
+{% block page %}
+<main class="page-bg">
+  <div class="container">
+    <div class="hero">
+      <h1 class="hero-title">
+        <span class="terminal-prompt">~ $&nbsp;</span><span>ghostmon host new</span><span class="terminal-cursor">▊</span>
+      </h1>
+    </div>
+
+    {% if error %}
+    <div class="flash flash-error">{{ error }}</div>
+    {% endif %}
+
+    <section class="card" style="max-width: 560px; margin: 0 auto;">
+      <form method="post" action="/hosts/new" class="stacked">
+        <label class="field">
+          <span>Name</span>
+          <input type="text" name="name" required maxlength="255" placeholder="web-01">
+        </label>
+        <label class="field">
+          <span>Description</span>
+          <input type="text" name="description" maxlength="2048" placeholder="Edge node (optional)">
+        </label>
+        <div class="form-actions">
+          <a href="/hosts" class="btn-new btn-muted">Back</a>
+          <button type="submit" class="btn-primary">Create host</button>
+        </div>
+      </form>
+    </section>
+  </div>
+</main>
+{% endblock %}
