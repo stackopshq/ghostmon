@@ -104,3 +104,47 @@ async def test_discovery_api_crud_and_scan(
 
     deleted = await client.delete(f"/api/discovery-rules/{rule_id}", headers=auth_headers)
     assert deleted.status_code == 204
+
+
+async def test_discovery_web_create_scan_delete(
+    web_client: httpx.AsyncClient, session: Any, user: Any, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    created = await web_client.post(
+        "/discovery/new",
+        data={
+            "name": "lan",
+            "cidr": "10.9.9.0/30",
+            "method": "ping",
+            "interval_seconds": "3600",
+            "is_enabled": "on",
+        },
+    )
+    assert created.status_code in (200, 303)
+    rules = list(await DiscoveryService(session).list_for_owner(user.id))
+    assert [r.name for r in rules] == ["lan"]
+
+    page = await web_client.get("/discovery")
+    assert "lan" in page.text and "10.9.9.0/30" in page.text
+
+    async def fake_reachable(address: str, method: Any, port: Any) -> bool:
+        return True
+
+    monkeypatch.setattr(ds, "check_reachable", fake_reachable)
+    scan = await web_client.post(f"/discovery/{rules[0].id}/scan")
+    assert scan.status_code in (200, 303)
+
+    hosts = list(await HostService(session).list_for_owner(user.id))
+    assert {"10.9.9.1", "10.9.9.2"} <= {h.address for h in hosts}
+
+    deleted = await web_client.post(f"/discovery/{rules[0].id}/delete")
+    assert deleted.status_code in (200, 303)
+    assert list(await DiscoveryService(session).list_for_owner(user.id)) == []
+
+
+async def test_discovery_web_rejects_huge_cidr(web_client: httpx.AsyncClient) -> None:
+    resp = await web_client.post(
+        "/discovery/new",
+        data={"name": "huge", "cidr": "10.0.0.0/8", "method": "ping", "interval_seconds": "3600"},
+    )
+    assert resp.status_code == 422
+    assert "max is" in resp.text

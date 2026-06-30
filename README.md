@@ -101,6 +101,11 @@ open and unacknowledged:
 
 ![Escalation policy ladder](docs/assets/escalation.png)
 
+**Network discovery** — scan a CIDR on a schedule; responsive addresses become hosts
+(with a template applied):
+
+![Discovery rules](docs/assets/discovery.png)
+
 **Host detail** — items with min/max and server-rendered history sparklines:
 
 | Dark | Light |
