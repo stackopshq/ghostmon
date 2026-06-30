@@ -10,6 +10,7 @@ from app.core.db.session import Base
 from app.core.models import host as _host  # noqa: F401
 from app.core.models import ingestion_token as _ingestion_token  # noqa: F401
 from app.core.models import maintenance as _maintenance  # noqa: F401
+from app.core.models import metric_trend as _metric_trend  # noqa: F401
 from app.core.models import metric_value as _metric_value  # noqa: F401
 from app.core.models import monitor as _monitor  # noqa: F401
 from app.core.models import monitor_result as _monitor_result  # noqa: F401

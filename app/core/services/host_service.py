@@ -8,6 +8,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.models.host import Host, Item, ItemValueType
+from app.core.models.metric_trend import MetricTrend
 from app.core.models.metric_value import MetricValue
 from app.core.schemas.host import HostCreate, HostUpdate, ItemCreate, ItemUpdate
 from app.core.security.field_crypto import REDACTED, encrypt_secret
@@ -151,6 +152,15 @@ class ItemService:
             select(MetricValue)
             .where(MetricValue.item_id == item_id)
             .order_by(MetricValue.collected_at.desc())
+            .limit(limit)
+        )
+        return (await self._session.execute(stmt)).scalars().all()
+
+    async def list_trends(self, item_id: uuid.UUID, limit: int = 168) -> Sequence[MetricTrend]:
+        stmt = (
+            select(MetricTrend)
+            .where(MetricTrend.item_id == item_id)
+            .order_by(MetricTrend.bucket.desc())
             .limit(limit)
         )
         return (await self._session.execute(stmt)).scalars().all()

@@ -98,3 +98,14 @@ class MetricValueRead(BaseModel):
     value_num: float | None
     value_text: str | None
     collected_at: datetime
+
+
+class MetricTrendRead(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    item_id: uuid.UUID
+    bucket: datetime
+    value_min: float
+    value_avg: float
+    value_max: float
+    sample_count: int

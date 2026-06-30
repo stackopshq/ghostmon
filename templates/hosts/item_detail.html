@@ -98,6 +98,29 @@
       </form>
     </section>
 
+    {% if trends %}
+    <section class="card" style="margin-top: 20px;">
+      <h2>Hourly trends <span class="count">{{ trends|length }}</span></h2>
+      <p class="muted" style="margin-bottom: 12px;">
+        Min/avg/max rollups — downsampled history kept beyond raw-sample retention.
+      </p>
+      <table class="table">
+        <thead><tr><th>Hour (UTC)</th><th>Min</th><th>Avg</th><th>Max</th><th>Samples</th></tr></thead>
+        <tbody>
+          {% for t in trends %}
+          <tr>
+            <td>{{ t.bucket.strftime('%Y-%m-%d %H:00') }}</td>
+            <td>{{ '%.2f'|format(t.value_min) }}{{ ' ' ~ item.units if item.units }}</td>
+            <td>{{ '%.2f'|format(t.value_avg) }}{{ ' ' ~ item.units if item.units }}</td>
+            <td>{{ '%.2f'|format(t.value_max) }}{{ ' ' ~ item.units if item.units }}</td>
+            <td class="muted">{{ t.sample_count }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </section>
+    {% endif %}
+
     <section class="card" style="margin-top: 20px;">
       <h2>Recent values <span class="count">{{ values|length }}</span></h2>
       {% if values %}
