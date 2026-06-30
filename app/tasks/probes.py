@@ -174,6 +174,7 @@ async def _probe_ping(url: str) -> ProbeOutcome:
             "1",
             "-W",
             str(int(DEFAULT_TIMEOUT_SECONDS)),
+            "--",  # end of options: a target starting with '-' can't be read as a flag
             target,
             stdout=asyncio.subprocess.PIPE,
             stderr=asyncio.subprocess.PIPE,

@@ -18,7 +18,10 @@ from app.core.security.zk import (
     is_passphrase_token,
 )
 
-runner = CliRunner()
+# Clear the zk env-var fallbacks so an inherited GHOSTMON_ZK_* (which would make a
+# `--key` invocation also see a passphrase, tripping the mutual-exclusion check)
+# can't make these CLI tests order-dependent.
+runner = CliRunner(env={"GHOSTMON_ZK_KEY": None, "GHOSTMON_ZK_PASSPHRASE": None})
 
 
 def test_crypto_roundtrip_and_wrong_key() -> None:

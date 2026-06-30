@@ -9,6 +9,7 @@ from sqlalchemy import select
 
 from app.core.config import get_settings
 from app.core.db.session import SessionLocal
+from app.core.models.host import Host
 from app.core.models.monitor import Monitor
 from app.core.models.notification_channel import (
     ChannelType,
@@ -150,9 +151,12 @@ async def _channels_for_monitor(monitor_id: uuid.UUID) -> list[NotificationChann
         stmt = (
             select(NotificationChannel)
             .join(monitor_channels, monitor_channels.c.channel_id == NotificationChannel.id)
+            .join(Monitor, Monitor.id == monitor_channels.c.monitor_id)
             .where(
                 monitor_channels.c.monitor_id == monitor_id,
                 NotificationChannel.is_enabled.is_(True),
+                # Defense-in-depth: only ever route to the monitor owner's channels.
+                NotificationChannel.owner_id == Monitor.owner_id,
             )
         )
         result = await session.execute(stmt)
@@ -164,9 +168,12 @@ async def _channels_for_host(host_id: uuid.UUID) -> list[NotificationChannel]:
         stmt = (
             select(NotificationChannel)
             .join(host_channels, host_channels.c.channel_id == NotificationChannel.id)
+            .join(Host, Host.id == host_channels.c.host_id)
             .where(
                 host_channels.c.host_id == host_id,
                 NotificationChannel.is_enabled.is_(True),
+                # Defense-in-depth: only ever route to the host owner's channels.
+                NotificationChannel.owner_id == Host.owner_id,
             )
         )
         result = await session.execute(stmt)

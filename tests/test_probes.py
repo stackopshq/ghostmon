@@ -291,3 +291,33 @@ async def test_probe_snmp_invalid_target() -> None:
     outcome = await _probe_snmp("")
     assert outcome.status == ProbeStatus.DOWN
     assert "invalid snmp target" in (outcome.error or "")
+
+
+async def test_ping_inserts_argv_separator_before_target(monkeypatch: pytest.MonkeyPatch) -> None:
+    import asyncio as _asyncio
+
+    from app.tasks import probes
+
+    captured: dict[str, tuple[str, ...]] = {}
+
+    class _FakeProc:
+        returncode = 0
+
+        async def communicate(self) -> tuple[bytes, bytes]:
+            return (b"64 bytes time=1.2 ms", b"")
+
+        def kill(self) -> None:  # pragma: no cover
+            pass
+
+    async def _fake_exec(*args: str, **_: object) -> _FakeProc:
+        captured["args"] = args
+        return _FakeProc()
+
+    monkeypatch.setattr(_asyncio, "create_subprocess_exec", _fake_exec)
+    outcome = await probes._probe_ping("8.8.8.8")
+    assert outcome.status is ProbeStatus.UP
+
+    args = captured["args"]
+    # "--" must precede the (user-controlled) target so a '-x' target can't be a flag.
+    assert "--" in args
+    assert args.index("--") < args.index("8.8.8.8")
