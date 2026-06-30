@@ -29,7 +29,9 @@
   --brand-glow:     drop-shadow(0 0 8px rgba(163, 255, 0, 0.6)) drop-shadow(0 0 20px rgba(163, 255, 0, 0.35));
 }
 
-:root {
+/* ── Dark theme (default) ───────────────────────────────────────────────────── */
+:root,
+[data-theme="dark"] {
   --bg-page:      #21222c;
   --card:         #282a36;
   --card-2:       #323445;
@@ -43,12 +45,65 @@
   --accent-hover: #CFFF5E;
   --accent-dim:   rgba(163, 255, 0, 0.15);
   --danger:       #ff5555;
+  --danger-text:  #ffb4b4;
   --toggle-off:   #44475a;
   --toggle-on:    #A3FF00;
   --shadow-card:  0 4px 20px rgba(0,0,0,0.55), 0 0 0 1px rgba(255,255,255,0.04);
   --header-bg:    rgba(10, 16, 12, 0.85);
 
   --bg-gradient: linear-gradient(150deg, #0A140D 0%, #0b1a14 45%, #08120f 75%, #0a0f0a 100%);
+
+  /* The lime wordmark/CTA gradient. Themed so it stays legible on light. */
+  --logo-gradient: linear-gradient(135deg, #A3FF00 0%, #CFFF5E 60%, #EFFFD1 100%);
+
+  /* Themed translucent overlays. They used to be hardcoded rgba(255,255,255,…)
+     which silently broke on a light surface (white-on-white). Centralised here
+     so both palettes get sensible values. */
+  --border-soft:    var(--border-soft);  /* thin borders on cards/inputs/dividers */
+  --border-strong:  rgba(255, 255, 255, 0.20);  /* hover borders */
+  --overlay-soft:   rgba(255, 255, 255, 0.05);   /* subtle surface fills, hovers */
+  --overlay-faint:  rgba(255, 255, 255, 0.02);   /* barely-there fills (empty states) */
+  --surface-sunken: rgba(0, 0, 0, 0.35);         /* inset panels (hero terminal) */
+  --text-faint:     rgba(248, 248, 242, 0.45);   /* de-emphasised captions */
+}
+
+/* ── Light theme ────────────────────────────────────────────────────────────── */
+/* The lime identity is kept, but #A3FF00 is illegible on white — so the brand
+   tones drop to deeper greens for text/accents while surfaces flip to light. */
+[data-theme="light"] {
+  --bg-page:      #f6f7fb;
+  --card:         #ffffff;
+  --card-2:       #f0f1f7;
+  --code-bg:      #eceff7;
+  --border:       #d6d8e3;
+  --border-focus: #5BA300;
+  --text:         #1c1e2a;
+  --text-muted:   #5b6480;
+  --text-sub:     #404662;
+  --accent:       #4E8C00;
+  --accent-hover: #3f7300;
+  --accent-dim:   rgba(91, 163, 0, 0.12);
+  --danger:       #d23;
+  --danger-text:  #b3261e;
+  --toggle-off:   #c3c9d8;
+  --toggle-on:    #5BA300;
+  --shadow-card:  0 4px 20px rgba(40, 44, 60, 0.08), 0 0 0 1px rgba(40, 44, 60, 0.06);
+  --header-bg:    rgba(255, 255, 255, 0.88);
+
+  --bg-gradient: linear-gradient(150deg, #f8f9fc 0%, #eef0fa 45%, #e8eef8 75%, #e3e7f1 100%);
+
+  /* Brand tones, darkened so the green stays legible on a light surface. */
+  --brand-primary: #5BA300;
+  --brand-light:   #6FB400;
+  --brand-gradient: linear-gradient(135deg, #5BA300 0%, #7FCC00 100%);
+  --logo-gradient:  linear-gradient(135deg, #4E8C00 0%, #6FB400 55%, #8FD400 100%);
+
+  --border-soft:    rgba(28, 30, 42, 0.12);
+  --border-strong:  rgba(28, 30, 42, 0.28);
+  --overlay-soft:   rgba(28, 30, 42, 0.05);
+  --overlay-faint:  rgba(28, 30, 42, 0.025);
+  --surface-sunken: rgba(28, 30, 42, 0.04);
+  --text-faint:     rgba(40, 44, 60, 0.55);
 }
 
 html { height: 100%; }
@@ -83,7 +138,7 @@ header {
   background: var(--header-bg);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
-  border-bottom: 1px solid rgba(255,255,255,0.06);
+  border-bottom: 1px solid var(--border-soft);
 }
 
 .logo {
@@ -96,7 +151,7 @@ header {
   align-items: center;
   gap: 10px;
 
-  background: linear-gradient(135deg, #A3FF00 0%, #CFFF5E 60%, #EFFFD1 100%);
+  background: var(--logo-gradient);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -119,6 +174,13 @@ header {
 
 .header-actions { display: flex; align-items: center; gap: 8px; }
 
+/* Theme toggle — dark shows the sun (→ switch to light), light shows the moon. */
+.btn-theme { padding: 6px 9px; }
+.btn-theme svg { display: block; }
+.icon-moon { display: none; }
+[data-theme="light"] .icon-sun { display: none; }
+[data-theme="light"] .icon-moon { display: block; }
+
 .btn-new {
   background: rgba(163, 255, 0, 0.12);
   border: 1px solid rgba(163, 255, 0, 0.3);
@@ -139,10 +201,10 @@ header {
 
 .btn-muted {
   background: transparent;
-  border: 1px solid rgba(255,255,255,0.1);
+  border: 1px solid var(--border-soft);
   color: var(--text-muted);
 }
-.btn-muted:hover { border-color: rgba(255,255,255,0.2); color: var(--text); background: rgba(255,255,255,0.03); }
+.btn-muted:hover { border-color: var(--border-strong); color: var(--text); background: var(--overlay-soft); }
 
 /* Main container */
 .container {
@@ -161,8 +223,8 @@ header {
   font-size: clamp(1rem, 2vw, 1.15rem);
   display: inline-flex;
   align-items: center;
-  background: rgba(0, 0, 0, 0.35);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: var(--surface-sunken);
+  border: 1px solid var(--border-soft);
   border-radius: var(--radius-sm);
   padding: 10px 18px;
   gap: 2px;
@@ -185,7 +247,7 @@ header {
 .hero-sub {
   margin-top: 12px;
   font-size: 0.9rem;
-  color: rgba(248, 248, 242, 0.45);
+  color: var(--text-faint);
 }
 
 /* Toolbar */
@@ -214,7 +276,7 @@ header {
   border-radius: var(--radius);
   padding: 20px;
   box-shadow: var(--shadow-card);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  border: 1px solid var(--border-soft);
 }
 
 /* Monitor grid */
@@ -256,7 +318,7 @@ header {
   text-transform: uppercase;
   padding: 3px 8px;
   border-radius: 999px;
-  background: rgba(255, 255, 255, 0.05);
+  background: var(--overlay-soft);
   color: var(--text-muted);
   letter-spacing: 0.08em;
 }
@@ -310,9 +372,9 @@ header {
   text-align: center;
   padding: 60px 24px;
   color: var(--text-muted);
-  border: 1px dashed rgba(255, 255, 255, 0.08);
+  border: 1px dashed var(--border-soft);
   border-radius: var(--radius);
-  background: rgba(255, 255, 255, 0.015);
+  background: var(--overlay-faint);
 }
 .empty h3 { color: var(--text); font-size: 1rem; margin-bottom: 6px; }
 .empty p { font-size: 0.88rem; }
@@ -368,7 +430,7 @@ input[type="text"],
 input[type="email"],
 input[type="password"] {
   background: var(--card-2);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  border: 1px solid var(--border-soft);
   border-radius: var(--radius-sm);
   color: var(--text);
   font-family: var(--font-mono);
@@ -417,7 +479,7 @@ input:focus {
   content: "";
   flex: 1;
   height: 1px;
-  background: rgba(255, 255, 255, 0.08);
+  background: var(--border-soft);
 }
 
 .btn-oidc {
@@ -457,7 +519,7 @@ input:focus {
 .flash-error {
   background: rgba(255, 85, 85, 0.08);
   border: 1px solid rgba(255, 85, 85, 0.3);
-  color: #ffb4b4;
+  color: var(--danger-text);
 }
 
 /* Footer */
@@ -512,7 +574,7 @@ footer a:hover { color: var(--brand-primary); }
   border-radius: var(--radius-sm);
   transition: color var(--transition), background var(--transition);
 }
-.nav-link:hover { color: var(--text); background: rgba(255,255,255,0.04); }
+.nav-link:hover { color: var(--text); background: var(--overlay-soft); }
 .nav-active { color: var(--accent); background: var(--accent-dim); }
 
 /* Status: maintenance */
@@ -597,7 +659,7 @@ select:focus { outline: none; border-color: var(--border-focus); }
   padding: 8px 14px;
   background: rgba(255, 85, 85, 0.1);
   border: 1px solid rgba(255, 85, 85, 0.35);
-  color: #ffb4b4;
+  color: var(--danger-text);
   border-radius: var(--radius-sm);
   cursor: pointer;
   transition: background var(--transition), border-color var(--transition);
