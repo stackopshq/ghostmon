@@ -81,6 +81,11 @@ library) over an item's history:
 
 ![Server-rendered item history chart](docs/assets/item-history-chart.png)
 
+**Long-range trends** — an average line with a min/max band over hourly rollups, so
+long-term shape survives raw-sample retention:
+
+![Long-range trend chart with min/max band](docs/assets/longrange-chart.png)
+
 **Hosts overview** — every host's health at a glance (item count, ongoing problems
 and worst severity), problem hosts first:
 

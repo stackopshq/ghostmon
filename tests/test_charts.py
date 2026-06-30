@@ -65,3 +65,15 @@ async def test_item_detail_page_renders_chart(
     assert "<h2>History</h2>" in page.text
     assert 'class="chart"' in page.text
     assert "chart-line" in page.text
+
+
+def test_band_chart_empty_and_geometry() -> None:
+    from app.api.routes.web.charts import band_chart
+
+    assert band_chart([]).empty
+    series = [(BASE + timedelta(hours=i), float(i), float(i) + 1, float(i) + 2) for i in range(4)]
+    cv = band_chart(series)
+    assert not cv.empty
+    assert len(cv.line.split()) == 4  # avg polyline
+    assert len(cv.band.split()) == 8  # max edge (4) + min edge (4)
+    assert [label for _, label in cv.y_ticks] == ["0", "2.50", "5"]  # band spans min(0)..max(5)
