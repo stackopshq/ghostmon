@@ -88,11 +88,16 @@ async def list_hosts(request: Request, session: DBSession) -> HTMLResponse | Red
     user = await resolve_current_user(request, session)
     if user is None:
         return login_redirect()
-    hosts = list(await HostService(session).list_for_owner(user.id))
+    overview = await HostService(session).overview_for_owner(user.id)
     return templates.TemplateResponse(
         request,
         "hosts/list.html",
-        context={"current_user": user, "active_nav": "hosts", "hosts": hosts},
+        context={
+            "current_user": user,
+            "active_nav": "hosts",
+            "overview": overview,
+            "problem_hosts": sum(1 for v in overview if v["problem_count"]),
+        },
     )
 
 

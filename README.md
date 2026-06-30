@@ -81,6 +81,11 @@ library) over an item's history:
 
 ![Server-rendered item history chart](docs/assets/item-history-chart.png)
 
+**Hosts overview** — every host's health at a glance (item count, ongoing problems
+and worst severity), problem hosts first:
+
+![Hosts overview with health](docs/assets/hosts-overview.png)
+
 **Host dashboard** — an at-a-glance grid of a host's items, each with a mini-chart,
 current value, and trigger status:
 

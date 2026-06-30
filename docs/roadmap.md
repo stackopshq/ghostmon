@@ -111,8 +111,11 @@ GhostMonitor's reason to exist over a plain Zabbix clone is privacy (ghost-suite
 - ✅ **Multi-step escalation**: an ordered policy notifies channels at increasing
   delays while a problem stays open and unacknowledged (ack/resolve stop it).
   Per-minute engine + REST CRUD + a web page to manage the ladder.
-- *(next)* overview across hosts; long-range charts backed by trends;
-  auto-remediation hooks as an escalation action.
+- ✅ **Hosts overview**: the host list shows each host's health (item count, ongoing
+  problem count and worst severity), problem hosts sorted first — aggregated in two
+  grouped queries (no N+1).
+- *(next)* long-range charts backed by trends; auto-remediation hooks as an
+  escalation action.
 
 ## Phase 5 — Discovery & scale
 
