@@ -13,6 +13,8 @@ from app.core.schemas.ingestion_token import (
 )
 from app.core.services.host_service import HostService, ItemService
 from app.core.services.ingestion_token_service import IngestionTokenService
+from app.core.services.trigger_service import TriggerService
+from app.tasks.notifications.dispatcher import schedule_item_trigger_alerts
 
 router = APIRouter(tags=["ingest"])
 
@@ -92,4 +94,11 @@ async def ingest(payload: IngestPayload, session: DBSession, owner: IngestOwner)
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(exc)
         ) from exc
+
+    # Evaluate the item's triggers on the new value and alert via the host's
+    # channels. value_num is None for text/private items → no numeric eval.
+    fired = await TriggerService(session).evaluate_item(
+        item.id, item.key, item.name, host.id, host.name, sample.value_num, sample.collected_at
+    )
+    schedule_item_trigger_alerts(fired, sample.collected_at)
     return MetricValueRead.model_validate(sample)

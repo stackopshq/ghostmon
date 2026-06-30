@@ -21,6 +21,8 @@ from app.core.db.session import SessionLocal
 from app.core.models.host import Host, Item, ItemSource, ItemValueType
 from app.core.models.metric_value import MetricValue
 from app.core.security.field_crypto import decrypt_secret
+from app.core.services.trigger_service import TriggerService
+from app.tasks.notifications.dispatcher import schedule_item_trigger_alerts
 from app.tasks.probes import SnmpError, _snmp_get
 
 logger = logging.getLogger(__name__)
@@ -29,6 +31,10 @@ logger = logging.getLogger(__name__)
 @dataclass(slots=True)
 class _PollTarget:
     item_id: uuid.UUID
+    item_key: str
+    item_name: str
+    host_id: uuid.UUID
+    host_name: str
     value_type: ItemValueType
     address: str
     config: dict[str, Any]
@@ -45,7 +51,7 @@ def _coerce(value_type: ItemValueType, raw: str) -> tuple[float | None, str | No
 
 async def _due_snmp_targets(session: AsyncSession, now: datetime) -> list[_PollTarget]:
     stmt = (
-        select(Item, Host.address, func.max(MetricValue.collected_at))
+        select(Item, Host.id, Host.name, Host.address, func.max(MetricValue.collected_at))
         .join(Host, Host.id == Item.host_id)
         .outerjoin(MetricValue, MetricValue.item_id == Item.id)
         .where(
@@ -54,12 +60,23 @@ async def _due_snmp_targets(session: AsyncSession, now: datetime) -> list[_PollT
             Item.source == ItemSource.SNMP,
             Host.address.is_not(None),
         )
-        .group_by(Item.id, Host.address)
+        .group_by(Item.id, Host.id, Host.name, Host.address)
     )
     targets: list[_PollTarget] = []
-    for item, address, last_at in (await session.execute(stmt)).all():
+    for item, host_id, host_name, address, last_at in (await session.execute(stmt)).all():
         if last_at is None or last_at <= now - timedelta(seconds=item.interval):
-            targets.append(_PollTarget(item.id, item.value_type, address, item.config or {}))
+            targets.append(
+                _PollTarget(
+                    item_id=item.id,
+                    item_key=item.key,
+                    item_name=item.name,
+                    host_id=host_id,
+                    host_name=host_name,
+                    value_type=item.value_type,
+                    address=address,
+                    config=item.config or {},
+                )
+            )
     return targets
 
 
@@ -89,6 +106,16 @@ async def _poll_one(target: _PollTarget, now: datetime) -> None:
             )
         )
         await session.commit()
+        fired = await TriggerService(session).evaluate_item(
+            target.item_id,
+            target.item_key,
+            target.item_name,
+            target.host_id,
+            target.host_name,
+            value_num,
+            now,
+        )
+    schedule_item_trigger_alerts(fired, now)
 
 
 async def poll_due_items() -> None:

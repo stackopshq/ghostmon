@@ -5,7 +5,16 @@ import uuid
 from datetime import datetime
 from typing import TYPE_CHECKING
 
-from sqlalchemy import Boolean, DateTime, Enum, Float, ForeignKey, Integer, String
+from sqlalchemy import (
+    Boolean,
+    CheckConstraint,
+    DateTime,
+    Enum,
+    Float,
+    ForeignKey,
+    Integer,
+    String,
+)
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -64,17 +73,32 @@ class TriggerState(enum.StrEnum):
 
 class Trigger(UUIDPrimaryKey, Timestamped, Base):
     __tablename__ = "triggers"
+    # A trigger is attached to exactly one of a monitor or an item.
+    __table_args__ = (
+        CheckConstraint(
+            "(monitor_id IS NULL) <> (item_id IS NULL)",
+            name="ck_triggers_monitor_xor_item",
+        ),
+    )
 
     name: Mapped[str] = mapped_column(String(255), nullable=False)
-    monitor_id: Mapped[uuid.UUID] = mapped_column(
+    monitor_id: Mapped[uuid.UUID | None] = mapped_column(
         UUID(as_uuid=True),
         ForeignKey("monitors.id", ondelete="CASCADE"),
-        nullable=False,
+        nullable=True,
+        index=True,
+    )
+    item_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("items.id", ondelete="CASCADE"),
+        nullable=True,
         index=True,
     )
 
-    metric: Mapped[TriggerMetric] = mapped_column(
-        Enum(TriggerMetric, name="trigger_metric"), nullable=False
+    # Monitor-trigger metric (which collected signal). Null for item triggers,
+    # where the item itself is the metric.
+    metric: Mapped[TriggerMetric | None] = mapped_column(
+        Enum(TriggerMetric, name="trigger_metric"), nullable=True
     )
     operator: Mapped[TriggerOperator] = mapped_column(
         Enum(TriggerOperator, name="trigger_operator"), nullable=False

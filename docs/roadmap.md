@@ -24,6 +24,15 @@ A problem-detection layer on top of the metrics already collected.
 - Follow-ups: aggregate expressions over history (`avg(metric, 5m) > x`), more
   metrics, and a web UI for managing triggers.
 
+## Triggers on items
+
+- ✅ Triggers can attach to an **item** (not just a monitor): a `Trigger` references
+  exactly one of `monitor_id` / `item_id` (DB-enforced). Item triggers evaluate the
+  item's latest value or a window of its history, and alert through the **host's**
+  notification channels (host↔channel attachment from earlier). Evaluated on every
+  value write (ingest API, user push, SNMP poll). Private items are skipped.
+- *(next)* a web UI to manage item triggers on the host/item page.
+
 ## Phase 2 — Hosts, Items & history *(in progress)*
 
 The foundational data-model shift (the core of ADR 0001), via expand → migrate → contract.

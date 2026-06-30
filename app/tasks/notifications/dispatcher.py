@@ -3,6 +3,7 @@ from __future__ import annotations
 import asyncio
 import logging
 import uuid
+from datetime import datetime
 
 from sqlalchemy import select
 
@@ -12,20 +13,26 @@ from app.core.models.monitor import Monitor
 from app.core.models.notification_channel import (
     ChannelType,
     NotificationChannel,
+    host_channels,
     monitor_channels,
 )
 from app.core.models.trigger import TriggerOperator
 from app.core.security.field_crypto import decrypt_secret
+from app.core.services.trigger_service import ItemTriggerFired
 from app.tasks.notifications.delivery import (
     DeliveryError,
     send_email,
     send_webhook,
 )
-from app.tasks.notifications.events import AlertEvent, TriggerAlertEvent
+from app.tasks.notifications.events import (
+    AlertEvent,
+    ItemTriggerAlertEvent,
+    TriggerAlertEvent,
+)
 
 logger = logging.getLogger(__name__)
 
-Alert = AlertEvent | TriggerAlertEvent
+Alert = AlertEvent | TriggerAlertEvent | ItemTriggerAlertEvent
 
 _OPERATOR_SYMBOL = {
     TriggerOperator.GT: ">",
@@ -35,9 +42,8 @@ _OPERATOR_SYMBOL = {
 }
 
 
-def _monitor_link(monitor_id: uuid.UUID) -> str:
-    base = get_settings().public_base_url.rstrip("/")
-    return f"{base}/?monitor={monitor_id}"
+def _base_url() -> str:
+    return get_settings().public_base_url.rstrip("/")
 
 
 def _format_email(event: Alert) -> tuple[str, str]:
@@ -54,25 +60,43 @@ def _format_email(event: Alert) -> tuple[str, str]:
             lines.append(f"Latency: {event.latency_ms} ms")
         if event.error:
             lines.append(f"Error: {event.error}")
-    else:
+        link = f"{_base_url()}/?monitor={event.monitor_id}"
+    elif isinstance(event, TriggerAlertEvent):
         state = "cleared" if event.is_recovery else "PROBLEM"
         subject = (
             f"[GhostMonitor] {event.severity.value.upper()} "
             f"{event.monitor_name}: {event.trigger_name} {state}"
         )
-        symbol = _OPERATOR_SYMBOL[event.operator]
+        metric = event.metric.value if event.metric else "value"
         lines = [
             f"Monitor: {event.monitor_name} ({event.monitor_type.value})",
             f"URL: {event.monitor_url}",
             f"Trigger: {event.trigger_name} [{event.severity.value}]",
-            f"Condition: {event.metric.value} {symbol} {event.threshold}",
+            f"Condition: {metric} {_OPERATOR_SYMBOL[event.operator]} {event.threshold}",
             f"Value: {event.value}",
             f"State: {event.new_state.value}",
             f"Time: {event.timestamp.isoformat()}",
         ]
+        link = f"{_base_url()}/?monitor={event.monitor_id}"
+    else:
+        state = "cleared" if event.is_recovery else "PROBLEM"
+        subject = (
+            f"[GhostMonitor] {event.severity.value.upper()} "
+            f"{event.host_name} · {event.item_key}: {event.trigger_name} {state}"
+        )
+        lines = [
+            f"Host: {event.host_name}",
+            f"Item: {event.item_name} ({event.item_key})",
+            f"Trigger: {event.trigger_name} [{event.severity.value}]",
+            f"Condition: {event.item_key} {_OPERATOR_SYMBOL[event.operator]} {event.threshold}",
+            f"Value: {event.value}",
+            f"State: {event.new_state.value}",
+            f"Time: {event.timestamp.isoformat()}",
+        ]
+        link = f"{_base_url()}/hosts/{event.host_id}"
 
     lines.append("")
-    lines.append(f"Details: {_monitor_link(event.monitor_id)}")
+    lines.append(f"Details: {link}")
     return subject, "\n".join(lines)
 
 
@@ -117,8 +141,25 @@ async def _channels_for_monitor(monitor_id: uuid.UUID) -> list[NotificationChann
         return list(result.scalars().all())
 
 
+async def _channels_for_host(host_id: uuid.UUID) -> list[NotificationChannel]:
+    async with SessionLocal() as session:
+        stmt = (
+            select(NotificationChannel)
+            .join(host_channels, host_channels.c.channel_id == NotificationChannel.id)
+            .where(
+                host_channels.c.host_id == host_id,
+                NotificationChannel.is_enabled.is_(True),
+            )
+        )
+        result = await session.execute(stmt)
+        return list(result.scalars().all())
+
+
 async def dispatch_alert(event: Alert) -> None:
-    channels = await _channels_for_monitor(event.monitor_id)
+    if isinstance(event, ItemTriggerAlertEvent):
+        channels = await _channels_for_host(event.host_id)
+    else:
+        channels = await _channels_for_monitor(event.monitor_id)
     # Severity routing: a channel only receives alerts at or above its threshold.
     eligible = [c for c in channels if c.min_severity.rank <= event.severity.rank]
     if not eligible:
@@ -145,6 +186,26 @@ async def send_test_notification(
         timestamp=datetime.now(UTC),
     )
     await _deliver(event, channel)
+
+
+def schedule_item_trigger_alerts(fired: list[ItemTriggerFired], timestamp: datetime) -> None:
+    """Fire-and-forget an alert for each item trigger that just changed state."""
+    for f in fired:
+        schedule_dispatch(
+            ItemTriggerAlertEvent(
+                host_id=f.host_id,
+                host_name=f.host_name,
+                item_key=f.item_key,
+                item_name=f.item_name,
+                trigger_name=f.trigger_name,
+                severity=f.severity,
+                operator=f.operator,
+                threshold=f.threshold,
+                value=f.value,
+                new_state=f.new_state,
+                timestamp=timestamp,
+            )
+        )
 
 
 def schedule_dispatch(event: Alert) -> None:
