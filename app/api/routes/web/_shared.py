@@ -53,7 +53,12 @@ async def resolve_current_user(request: Request, session: AsyncSession) -> User 
         user_id = uuid.UUID(sub)
     except ValueError:
         return None
-    return await UserService(session).get_by_id(user_id)
+    user = await UserService(session).get_by_id(user_id)
+    # Mirror the API check: a deactivated account must lose access immediately,
+    # not linger until the cookie's JWT expires.
+    if user is None or not user.is_active:
+        return None
+    return user
 
 
 def login_redirect() -> RedirectResponse:

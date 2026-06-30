@@ -41,16 +41,17 @@ def create_app(*, lifespan: Lifespan = scheduler_lifespan) -> FastAPI:
         version="0.1.0",
         debug=settings.app_debug,
         lifespan=lifespan,
-        docs_url="/docs",
-        redoc_url="/redoc",
-        openapi_url="/openapi.json",
+        # Don't expose the interactive API explorer / schema in production.
+        docs_url="/docs" if settings.app_env != "production" else None,
+        redoc_url="/redoc" if settings.app_env != "production" else None,
+        openapi_url="/openapi.json" if settings.app_env != "production" else None,
     )
 
     app.add_middleware(
         SessionMiddleware,
         secret_key=settings.app_secret_key,
         same_site="lax",
-        https_only=settings.app_env == "production",
+        https_only=settings.cookie_secure,
     )
     add_security_headers(app)
 

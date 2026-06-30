@@ -25,3 +25,17 @@ def verify_password(plain: str, hashed: str) -> bool:
         return _hasher.verify(hashed, plain)
     except VerifyMismatchError:
         return False
+
+
+# A throwaway hash so a login attempt costs the same whether or not the account
+# exists — removes the user-enumeration timing oracle.
+_DUMMY_HASH = _hasher.hash("ghostmon-timing-equalizer")
+
+
+def dummy_verify(plain: str) -> None:
+    """Run a hash verification against a constant hash (always fails) to equalise
+    timing when there is no real password hash to check."""
+    try:
+        _hasher.verify(_DUMMY_HASH, plain)
+    except VerifyMismatchError:
+        pass
