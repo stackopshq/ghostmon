@@ -7,6 +7,7 @@ from sqlalchemy.ext.asyncio import async_engine_from_config
 
 from app.core.config import get_settings
 from app.core.db.session import Base
+from app.core.models import escalation as _escalation  # noqa: F401
 from app.core.models import host as _host  # noqa: F401
 from app.core.models import ingestion_token as _ingestion_token  # noqa: F401
 from app.core.models import maintenance as _maintenance  # noqa: F401

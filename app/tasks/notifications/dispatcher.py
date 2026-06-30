@@ -26,13 +26,17 @@ from app.tasks.notifications.delivery import (
 )
 from app.tasks.notifications.events import (
     AlertEvent,
+    EscalationAlertEvent,
     ItemTriggerAlertEvent,
     TriggerAlertEvent,
 )
 
 logger = logging.getLogger(__name__)
 
-Alert = AlertEvent | TriggerAlertEvent | ItemTriggerAlertEvent
+# Events routed to an entity's channels (monitor/host) by `dispatch_alert`.
+RoutedAlert = AlertEvent | TriggerAlertEvent | ItemTriggerAlertEvent
+# All deliverable events — escalation is delivered to a specific channel, not routed.
+Alert = RoutedAlert | EscalationAlertEvent
 
 _OPERATOR_SYMBOL = {
     TriggerOperator.GT: ">",
@@ -78,7 +82,7 @@ def _format_email(event: Alert) -> tuple[str, str]:
             f"Time: {event.timestamp.isoformat()}",
         ]
         link = f"{_base_url()}/?monitor={event.monitor_id}"
-    else:
+    elif isinstance(event, ItemTriggerAlertEvent):
         state = "cleared" if event.is_recovery else "PROBLEM"
         subject = (
             f"[GhostMonitor] {event.severity.value.upper()} "
@@ -94,6 +98,20 @@ def _format_email(event: Alert) -> tuple[str, str]:
             f"Time: {event.timestamp.isoformat()}",
         ]
         link = f"{_base_url()}/hosts/{event.host_id}"
+    else:
+        subject = (
+            f"[GhostMonitor] ESCALATION step {event.step_order} — "
+            f"{event.severity.value.upper()} {event.subject}: {event.trigger_name}"
+        )
+        lines = [
+            f"Escalation step: {event.step_order}",
+            f"Subject: {event.subject}",
+            f"Trigger: {event.trigger_name} [{event.severity.value}]",
+            f"Value: {event.value}",
+            f"Problem since: {event.started_at.isoformat()}",
+            f"Time: {event.timestamp.isoformat()}",
+        ]
+        link = f"{_base_url()}/problems"
 
     lines.append("")
     lines.append(f"Details: {link}")
@@ -155,7 +173,7 @@ async def _channels_for_host(host_id: uuid.UUID) -> list[NotificationChannel]:
         return list(result.scalars().all())
 
 
-async def dispatch_alert(event: Alert) -> None:
+async def dispatch_alert(event: RoutedAlert) -> None:
     if isinstance(event, ItemTriggerAlertEvent):
         channels = await _channels_for_host(event.host_id)
     else:
@@ -208,7 +226,7 @@ def schedule_item_trigger_alerts(fired: list[ItemTriggerFired], timestamp: datet
         )
 
 
-def schedule_dispatch(event: Alert) -> None:
+def schedule_dispatch(event: RoutedAlert) -> None:
     """Fire-and-forget dispatch on the current event loop.
 
     Probe jobs call this after committing a status transition; we do not
@@ -216,6 +234,14 @@ def schedule_dispatch(event: Alert) -> None:
     """
     loop = asyncio.get_event_loop()
     task = loop.create_task(dispatch_alert(event))
+    task.add_done_callback(_log_task_exception)
+
+
+def schedule_escalation(event: EscalationAlertEvent, channel: NotificationChannel) -> None:
+    """Fire-and-forget delivery of an escalation step to one specific channel
+    (the operator chose it for this step, so severity routing is bypassed)."""
+    loop = asyncio.get_event_loop()
+    task = loop.create_task(_deliver(event, channel))
     task.add_done_callback(_log_task_exception)
 
 
