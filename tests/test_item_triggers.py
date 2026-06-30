@@ -130,3 +130,42 @@ async def test_item_trigger_alert_routes_to_host_channel(
     )
     await dispatcher.dispatch_alert(event)
     assert delivered == ["ops"]
+
+
+# ── Web UI ──────────────────────────────────────────────────────────────────
+
+
+async def test_item_trigger_web_ui_create_and_delete(
+    web_client: httpx.AsyncClient, user: Any, session: Any
+) -> None:
+    from app.core.services.trigger_service import TriggerService
+
+    host, item = await _host_with_item(session, user.id)
+    base = f"/hosts/{host.id}/items/{item.id}"
+
+    detail = await web_client.get(base)
+    assert detail.status_code == 200
+    assert "Triggers" in detail.text
+
+    created = await web_client.post(
+        f"{base}/triggers/new",
+        data={
+            "name": "hot",
+            "operator": "gt",
+            "threshold": "90",
+            "severity": "high",
+            "aggregation": "last",
+            "window_seconds": "0",
+        },
+    )
+    assert created.status_code in (200, 303)
+    triggers = list(await TriggerService(session).list_for_item(item.id))
+    assert [t.name for t in triggers] == ["hot"]
+
+    detail = await web_client.get(base)
+    assert "hot" in detail.text
+    assert "sev-high" in detail.text
+
+    deleted = await web_client.post(f"{base}/triggers/{triggers[0].id}/delete")
+    assert deleted.status_code in (200, 303)
+    assert list(await TriggerService(session).list_for_item(item.id)) == []
