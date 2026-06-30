@@ -10,7 +10,9 @@ class OIDCNotConfiguredError(RuntimeError):
 
 
 class OIDCProvider:
-    """Scaffolding for OIDC auth. Wire with a real IdP via env vars."""
+    """OIDC SSO via authlib. Discovery, code exchange and ID-token validation
+    (signature against the provider JWKS, plus state/nonce stored in the session)
+    are handled by authlib; configure a real IdP through the OIDC_* env vars."""
 
     def __init__(self) -> None:
         settings = get_settings()
