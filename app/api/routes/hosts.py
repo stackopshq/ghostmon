@@ -158,7 +158,14 @@ async def ingest_value(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(exc)
         ) from exc
     fired = await TriggerService(session).evaluate_item(
-        item.id, item.key, item.name, host.id, host.name, sample.value_num, sample.collected_at
+        item.id,
+        item.key,
+        item.name,
+        host.id,
+        host.name,
+        sample.value_num,
+        sample.collected_at,
+        owner_id=host.owner_id,
     )
     schedule_item_trigger_alerts(fired, sample.collected_at)
     return MetricValueRead.model_validate(sample)

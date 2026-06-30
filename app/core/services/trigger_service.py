@@ -22,6 +22,7 @@ from app.core.models.trigger import (
 )
 from app.core.schemas.trigger import ItemTriggerCreate, TriggerCreate, TriggerUpdate
 from app.core.services.monitor_host_bridge import LATENCY_ITEM_KEY
+from app.core.services.problem_event_service import ProblemEventService
 
 _AGGREGATE_FN: dict[TriggerAggregation, Any] = {
     TriggerAggregation.AVG: func.avg,
@@ -155,11 +156,17 @@ class TriggerService:
         monitor_id: uuid.UUID,
         values: dict[TriggerMetric, float | None],
         now: datetime,
+        *,
+        owner_id: uuid.UUID | None = None,
+        subject: str | None = None,
     ) -> list[TriggerFired]:
         """Evaluate the monitor's enabled triggers against freshly collected
         metric values and persist any state change. Returns the triggers whose
         state flipped (OK<->PROBLEM) so the caller can alert. Triggers whose
-        metric has no value this round are left untouched (no-data, not OK)."""
+        metric has no value this round are left untouched (no-data, not OK).
+
+        When `owner_id`/`subject` are given, state changes are also recorded as
+        problem events for the timeline."""
         stmt = select(Trigger).where(
             Trigger.monitor_id == monitor_id,
             Trigger.is_enabled.is_(True),
@@ -180,6 +187,8 @@ class TriggerService:
                 continue
             trigger.state = new_state
             trigger.state_changed_at = now
+            if owner_id is not None and subject is not None:
+                await self._record_problem(trigger, new_state, owner_id, subject, value, now)
             fired.append(
                 TriggerFired(
                     trigger_id=trigger.id,
@@ -197,6 +206,29 @@ class TriggerService:
         if fired:
             await self._session.commit()
         return fired
+
+    async def _record_problem(
+        self,
+        trigger: Trigger,
+        new_state: TriggerState,
+        owner_id: uuid.UUID,
+        subject: str,
+        value: float,
+        now: datetime,
+    ) -> None:
+        events = ProblemEventService(self._session)
+        if new_state is TriggerState.PROBLEM:
+            events.open(
+                trigger_id=trigger.id,
+                owner_id=owner_id,
+                subject=subject,
+                trigger_name=trigger.name,
+                severity=trigger.severity,
+                value=value,
+                now=now,
+            )
+        else:
+            await events.close(trigger.id, now)
 
     async def _observe(
         self,
@@ -237,9 +269,14 @@ class TriggerService:
         host_name: str,
         latest_value: float | None,
         now: datetime,
+        *,
+        owner_id: uuid.UUID | None = None,
     ) -> list[ItemTriggerFired]:
         """Evaluate an item's enabled triggers against its latest value (or a
-        window of its history), persisting state changes and returning the flips."""
+        window of its history), persisting state changes and returning the flips.
+
+        When `owner_id` is given, state changes are also recorded as problem events
+        for the timeline (subject = host / item key)."""
         stmt = select(Trigger).where(Trigger.item_id == item_id, Trigger.is_enabled.is_(True))
         triggers = (await self._session.execute(stmt)).scalars().all()
 
@@ -257,6 +294,10 @@ class TriggerService:
                 continue
             trigger.state = new_state
             trigger.state_changed_at = now
+            if owner_id is not None:
+                await self._record_problem(
+                    trigger, new_state, owner_id, f"{host_name} / {item_key}", value, now
+                )
             fired.append(
                 ItemTriggerFired(
                     trigger_id=trigger.id,
