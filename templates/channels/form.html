@@ -54,9 +54,10 @@
                    placeholder="https://hooks.example.com/incoming">
           </label>
           <label class="field">
-            <span>Shared secret (optional, min 8 chars) — signs payloads with HMAC-SHA256</span>
-            <input type="text" name="webhook_secret"
-                   value="{{ form.webhook_secret if form else (channel.config.get('secret', '') if channel and channel.type.value == 'webhook' else '') }}">
+            <span>Shared secret (optional, min 8 chars) — signs payloads with HMAC-SHA256.
+              Stored encrypted, never shown again{% if channel %}; leave blank to keep the current one{% endif %}.</span>
+            <input type="password" name="webhook_secret" autocomplete="new-password"
+                   value="{{ form.webhook_secret if form else '' }}">
           </label>
         </fieldset>
 

@@ -4,10 +4,11 @@ import uuid
 from datetime import datetime
 from typing import Annotated, Any, Literal
 
-from pydantic import BaseModel, ConfigDict, EmailStr, Field, HttpUrl, TypeAdapter
+from pydantic import BaseModel, ConfigDict, EmailStr, Field, HttpUrl, TypeAdapter, field_validator
 
 from app.core.models.notification_channel import ChannelType
 from app.core.models.trigger import Severity
+from app.core.security.field_crypto import REDACTED
 
 
 class EmailChannelConfig(BaseModel):
@@ -65,3 +66,11 @@ class NotificationChannelRead(NotificationChannelBase):
     owner_id: uuid.UUID
     created_at: datetime
     updated_at: datetime
+
+    @field_validator("config")
+    @classmethod
+    def _redact_secret(cls, value: dict[str, Any]) -> dict[str, Any]:
+        # The webhook secret is encrypted at rest and never returned in clear.
+        if value.get("secret"):
+            return {**value, "secret": REDACTED}
+        return value

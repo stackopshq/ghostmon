@@ -10,6 +10,17 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.models.host import Host, Item, ItemValueType
 from app.core.models.metric_value import MetricValue
 from app.core.schemas.host import HostCreate, HostUpdate, ItemCreate, ItemUpdate
+from app.core.security.field_crypto import REDACTED, encrypt_secret
+
+
+def _seal_item_config(config: dict) -> dict:  # type: ignore[type-arg]
+    """Encrypt the SNMP community at rest (idempotent)."""
+    community = config.get("community")
+    if not community or community == REDACTED:
+        config.pop("community", None)
+    else:
+        config["community"] = encrypt_secret(str(community))
+    return config
 
 
 class HostService:
@@ -87,7 +98,7 @@ class ItemService:
             units=data.units,
             interval=data.interval,
             source=data.source,
-            config=data.config,
+            config=_seal_item_config(dict(data.config)),
             is_enabled=data.is_enabled,
         )
         self._session.add(item)
@@ -96,7 +107,14 @@ class ItemService:
         return item
 
     async def update(self, item: Item, data: ItemUpdate) -> Item:
-        for field, value in data.model_dump(exclude_unset=True).items():
+        payload = data.model_dump(exclude_unset=True)
+        if "config" in payload and payload["config"] is not None:
+            new_config = dict(payload["config"])
+            # Blank or redacted community on update → keep the existing (encrypted) one.
+            if new_config.get("community") in (None, "", REDACTED) and item.config.get("community"):
+                new_config["community"] = item.config["community"]
+            payload["config"] = _seal_item_config(new_config)
+        for field, value in payload.items():
             setattr(item, field, value)
         await self._session.commit()
         await self._session.refresh(item)

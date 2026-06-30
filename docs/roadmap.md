@@ -42,6 +42,19 @@ The foundational data-model shift (the core of ADR 0001), via expand → migrate
 - *(deferred)* Hourly `trends` (min/avg/max) — speculative until a long-range graph
   consumes them; the UI reads raw history for now.
 
+## Privacy (the differentiator vs Zabbix)
+
+GhostMonitor's reason to exist over a plain Zabbix clone is privacy (ghost-suite ethos).
+
+- ✅ **Secrets encrypted at rest**: webhook signing secrets and SNMP communities are
+  Fernet/AES-encrypted (key derived from `APP_SECRET_KEY`) and never returned in clear
+  (write-only; redacted on read). A DB dump leaks no monitoring credentials.
+- *(next)* **Zero-knowledge "private items"**: items flagged private are encrypted
+  client-side; the server stores only ciphertext and never evaluates them; only the
+  user decrypts for display. (No server-side triggers on such items.)
+- Baseline: no telemetry, no third-party calls, minimal alert payloads, hashed ingest
+  tokens, bounded retention.
+
 ## Phase 3 — Templates & richer collection *(in progress)*
 
 - ✅ **Ingestion tokens**: long-lived per-owner tokens (SHA-256 stored, shown once)

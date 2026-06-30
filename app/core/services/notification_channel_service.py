@@ -18,6 +18,17 @@ from app.core.schemas.notification_channel import (
     NotificationChannelCreate,
     NotificationChannelUpdate,
 )
+from app.core.security.field_crypto import REDACTED, encrypt_secret
+
+
+def _seal_channel_config(config: dict) -> dict:  # type: ignore[type-arg]
+    """Encrypt the webhook signing secret at rest (idempotent)."""
+    secret = config.get("secret")
+    if not secret or secret == REDACTED:
+        config.pop("secret", None)
+    else:
+        config["secret"] = encrypt_secret(str(secret))
+    return config
 
 
 class NotificationChannelService:
@@ -47,7 +58,7 @@ class NotificationChannelService:
         channel = NotificationChannel(
             name=data.name,
             type=data.config.type,
-            config=data.config.model_dump(mode="json", exclude={"type"}),
+            config=_seal_channel_config(data.config.model_dump(mode="json", exclude={"type"})),
             is_enabled=data.is_enabled,
             min_severity=data.min_severity,
             owner_id=owner_id,
@@ -68,8 +79,12 @@ class NotificationChannelService:
         if "min_severity" in payload:
             channel.min_severity = payload["min_severity"]
         if data.config is not None:
+            new_config = data.config.model_dump(mode="json", exclude={"type"})
+            # Blank or redacted secret on update → keep the existing (encrypted) one.
+            if new_config.get("secret") in (None, "", REDACTED) and channel.config.get("secret"):
+                new_config["secret"] = channel.config["secret"]
             channel.type = data.config.type
-            channel.config = data.config.model_dump(mode="json", exclude={"type"})
+            channel.config = _seal_channel_config(new_config)
         await self._session.commit()
         await self._session.refresh(channel)
         return channel

@@ -15,6 +15,7 @@ from app.core.models.notification_channel import (
     monitor_channels,
 )
 from app.core.models.trigger import TriggerOperator
+from app.core.security.field_crypto import decrypt_secret
 from app.tasks.notifications.delivery import (
     DeliveryError,
     send_email,
@@ -88,7 +89,9 @@ async def _deliver(event: Alert, channel: NotificationChannel) -> None:
             url = config.get("url")
             if not url:
                 raise DeliveryError("webhook channel config missing 'url'")
-            await send_webhook(url=url, payload=event.payload(), secret=config.get("secret"))
+            raw_secret = config.get("secret")
+            secret = decrypt_secret(raw_secret) if raw_secret else None
+            await send_webhook(url=url, payload=event.payload(), secret=secret)
         else:  # pragma: no cover - exhaustive via StrEnum
             raise DeliveryError(f"unknown channel type: {channel.type}")
     except DeliveryError as exc:
