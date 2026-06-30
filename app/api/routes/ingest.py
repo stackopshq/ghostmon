@@ -98,7 +98,14 @@ async def ingest(payload: IngestPayload, session: DBSession, owner: IngestOwner)
     # Evaluate the item's triggers on the new value and alert via the host's
     # channels. value_num is None for text/private items → no numeric eval.
     fired = await TriggerService(session).evaluate_item(
-        item.id, item.key, item.name, host.id, host.name, sample.value_num, sample.collected_at
+        item.id,
+        item.key,
+        item.name,
+        host.id,
+        host.name,
+        sample.value_num,
+        sample.collected_at,
+        owner_id=host.owner_id,
     )
     schedule_item_trigger_alerts(fired, sample.collected_at)
     return MetricValueRead.model_validate(sample)

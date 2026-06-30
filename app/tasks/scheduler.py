@@ -189,7 +189,9 @@ async def _run_probe_job(monitor_id: uuid.UUID) -> None:
         metric_values: dict[TriggerMetric, float | None] = {
             TriggerMetric.LATENCY_MS: final.latency_ms,
         }
-        fired = await TriggerService(session).evaluate(monitor.id, metric_values, now)
+        fired = await TriggerService(session).evaluate(
+            monitor.id, metric_values, now, owner_id=monitor.owner_id, subject=monitor.name
+        )
 
         # Mirror the probe signals into the host/item time-series history (migrate
         # step): status (1=up/0=down) every probe, latency and error when present.

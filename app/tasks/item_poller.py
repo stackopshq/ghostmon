@@ -35,6 +35,7 @@ class _PollTarget:
     item_name: str
     host_id: uuid.UUID
     host_name: str
+    owner_id: uuid.UUID
     value_type: ItemValueType
     address: str
     config: dict[str, Any]
@@ -51,7 +52,14 @@ def _coerce(value_type: ItemValueType, raw: str) -> tuple[float | None, str | No
 
 async def _due_snmp_targets(session: AsyncSession, now: datetime) -> list[_PollTarget]:
     stmt = (
-        select(Item, Host.id, Host.name, Host.address, func.max(MetricValue.collected_at))
+        select(
+            Item,
+            Host.id,
+            Host.name,
+            Host.owner_id,
+            Host.address,
+            func.max(MetricValue.collected_at),
+        )
         .join(Host, Host.id == Item.host_id)
         .outerjoin(MetricValue, MetricValue.item_id == Item.id)
         .where(
@@ -60,10 +68,10 @@ async def _due_snmp_targets(session: AsyncSession, now: datetime) -> list[_PollT
             Item.source == ItemSource.SNMP,
             Host.address.is_not(None),
         )
-        .group_by(Item.id, Host.id, Host.name, Host.address)
+        .group_by(Item.id, Host.id, Host.name, Host.owner_id, Host.address)
     )
     targets: list[_PollTarget] = []
-    for item, host_id, host_name, address, last_at in (await session.execute(stmt)).all():
+    for item, host_id, host_name, owner_id, address, last_at in (await session.execute(stmt)).all():
         if last_at is None or last_at <= now - timedelta(seconds=item.interval):
             targets.append(
                 _PollTarget(
@@ -72,6 +80,7 @@ async def _due_snmp_targets(session: AsyncSession, now: datetime) -> list[_PollT
                     item_name=item.name,
                     host_id=host_id,
                     host_name=host_name,
+                    owner_id=owner_id,
                     value_type=item.value_type,
                     address=address,
                     config=item.config or {},
@@ -114,6 +123,7 @@ async def _poll_one(target: _PollTarget, now: datetime) -> None:
             target.host_name,
             value_num,
             now,
+            owner_id=target.owner_id,
         )
     schedule_item_trigger_alerts(fired, now)
 
