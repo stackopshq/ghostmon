@@ -604,6 +604,10 @@ footer a:hover { color: var(--brand-primary); }
 /* Server-rendered metric sparkline */
 .spark { color: var(--accent); display: block; overflow: visible; }
 
+/* Zero-knowledge private values (decrypted in-browser) */
+.zk { font-family: var(--font-mono); font-size: 0.82rem; }
+.zk-unlocked { color: var(--accent); }
+
 /* Flash: success */
 .flash-ok {
   padding: 10px 12px;

@@ -202,6 +202,7 @@ async def create_item_form(
     source: str = Form("trapper"),
     oid: str | None = Form(None),
     community: str | None = Form(None),
+    is_private: str | None = Form(None),
 ) -> HTMLResponse | RedirectResponse:
     user = await resolve_current_user(request, session)
     if user is None:
@@ -220,6 +221,7 @@ async def create_item_form(
             interval=interval,
             source=ItemSource(source),
             config=config,
+            is_private=is_private == "on",
         )
     except (ValueError, TypeError) as exc:
         context = await _host_detail_context(session, user, host_id, error=str(exc))
