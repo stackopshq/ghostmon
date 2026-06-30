@@ -2,10 +2,10 @@ from __future__ import annotations
 
 import enum
 import uuid
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from sqlalchemy import Boolean, Enum, ForeignKey, Integer, String, Text, UniqueConstraint
-from sqlalchemy.dialects.postgresql import UUID
+from sqlalchemy.dialects.postgresql import JSONB, UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.core.db.session import Base
@@ -28,6 +28,17 @@ class ItemValueType(enum.StrEnum):
         return self in (ItemValueType.FLOAT, ItemValueType.UNSIGNED)
 
 
+class ItemSource(enum.StrEnum):
+    """How an item's values are collected.
+
+    TRAPPER values are pushed in (agent / ingest API / monitor mirror); SNMP items
+    are polled server-side from the host on their interval.
+    """
+
+    TRAPPER = "trapper"
+    SNMP = "snmp"
+
+
 class Host(UUIDPrimaryKey, Timestamped, Base):
     """A monitored entity (server, device, service). Owns items."""
 
@@ -36,6 +47,8 @@ class Host(UUIDPrimaryKey, Timestamped, Base):
 
     name: Mapped[str] = mapped_column(String(255), nullable=False)
     description: Mapped[str | None] = mapped_column(Text, nullable=True)
+    # Network address (hostname/IP) used by server-side pollers (e.g. SNMP).
+    address: Mapped[str | None] = mapped_column(String(255), nullable=True)
     is_enabled: Mapped[bool] = mapped_column(
         Boolean, nullable=False, default=True, server_default="true"
     )
@@ -76,6 +89,16 @@ class Item(UUIDPrimaryKey, Timestamped, Base):
     interval: Mapped[int] = mapped_column(Integer, nullable=False, default=60, server_default="60")
     is_enabled: Mapped[bool] = mapped_column(
         Boolean, nullable=False, default=True, server_default="true"
+    )
+    source: Mapped[ItemSource] = mapped_column(
+        Enum(ItemSource, name="item_source"),
+        nullable=False,
+        default=ItemSource.TRAPPER,
+        server_default="TRAPPER",
+    )
+    # Source-specific parameters, e.g. {"oid": "...", "community": "public"} for SNMP.
+    config: Mapped[dict[str, Any]] = mapped_column(
+        JSONB, nullable=False, default=dict, server_default="{}"
     )
 
     host: Mapped[Host] = relationship(back_populates="items", lazy="noload")

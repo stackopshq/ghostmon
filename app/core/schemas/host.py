@@ -2,15 +2,17 @@ from __future__ import annotations
 
 import uuid
 from datetime import datetime
+from typing import Any
 
 from pydantic import BaseModel, ConfigDict, Field
 
-from app.core.models.host import ItemValueType
+from app.core.models.host import ItemSource, ItemValueType
 
 
 class HostBase(BaseModel):
     name: str = Field(min_length=1, max_length=255)
     description: str | None = None
+    address: str | None = Field(default=None, max_length=255)
     is_enabled: bool = True
 
 
@@ -21,6 +23,7 @@ class HostCreate(HostBase):
 class HostUpdate(BaseModel):
     name: str | None = Field(default=None, min_length=1, max_length=255)
     description: str | None = None
+    address: str | None = Field(default=None, max_length=255)
     is_enabled: bool | None = None
 
 
@@ -39,6 +42,8 @@ class ItemBase(BaseModel):
     value_type: ItemValueType
     units: str | None = Field(default=None, max_length=32)
     interval: int = Field(default=60, ge=1, le=86400)
+    source: ItemSource = ItemSource.TRAPPER
+    config: dict[str, Any] = Field(default_factory=dict)
     is_enabled: bool = True
 
 
@@ -52,6 +57,8 @@ class ItemUpdate(BaseModel):
     value_type: ItemValueType | None = None
     units: str | None = Field(default=None, max_length=32)
     interval: int | None = Field(default=None, ge=1, le=86400)
+    source: ItemSource | None = None
+    config: dict[str, Any] | None = None
     is_enabled: bool | None = None
 
 

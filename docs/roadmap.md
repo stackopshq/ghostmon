@@ -53,8 +53,10 @@ The foundational data-model shift (the core of ADR 0001), via expand → migrate
   to provision its items (idempotent re-apply). Trigger templates wait for triggers
   to move onto items (the contract step).
 - ✅ **CPU utilisation** in the agent via `/proc/stat` delta sampling.
-- ✅ **SNMP** reachability monitor type (SNMPv2c GET via `pysnmp`). Polling arbitrary
-  OIDs into items needs a server-side item poller — a later step.
+- ✅ **SNMP** reachability monitor type (SNMPv2c GET via `pysnmp`).
+- ✅ **Server-side item poller**: items gain a `source` (trapper | snmp) + `config`;
+  hosts gain an `address`. A scheduler cycle polls due SNMP items (any OID) and
+  appends to history — arbitrary metrics collected server-side, the full Zabbix shape.
 
 ## Phase 4 — Alerting escalation & dashboards
 

@@ -18,6 +18,7 @@ from app.core.models.trigger import TriggerMetric
 from app.core.services.maintenance_service import MaintenanceService
 from app.core.services.monitor_host_bridge import ensure_backing_latency_item
 from app.core.services.trigger_service import TriggerService
+from app.tasks.item_poller import poll_due_items
 from app.tasks.notifications.dispatcher import schedule_dispatch
 from app.tasks.notifications.events import AlertEvent, TriggerAlertEvent
 from app.tasks.probes import ProbeOutcome, run_probe
@@ -27,9 +28,11 @@ logger = logging.getLogger(__name__)
 
 RECONCILE_INTERVAL_SECONDS = 15
 RETENTION_INTERVAL_SECONDS = 3600
+POLL_ITEMS_INTERVAL_SECONDS = 15
 _RECONCILE_JOB_ID = "__reconcile__"
 _PRUNE_JOB_ID = "__prune__"
-_RESERVED_JOB_IDS = {_RECONCILE_JOB_ID, _PRUNE_JOB_ID}
+_POLL_ITEMS_JOB_ID = "__poll_items__"
+_RESERVED_JOB_IDS = {_RECONCILE_JOB_ID, _PRUNE_JOB_ID, _POLL_ITEMS_JOB_ID}
 
 
 class ProbeScheduler:
@@ -54,6 +57,15 @@ class ProbeScheduler:
             id=_PRUNE_JOB_ID,
             replace_existing=True,
             next_run_time=datetime.now(UTC) + timedelta(seconds=60),
+            max_instances=1,
+            coalesce=True,
+        )
+        self._scheduler.add_job(
+            poll_due_items,
+            trigger=IntervalTrigger(seconds=POLL_ITEMS_INTERVAL_SECONDS),
+            id=_POLL_ITEMS_JOB_ID,
+            replace_existing=True,
+            next_run_time=datetime.now(UTC) + timedelta(seconds=5),
             max_instances=1,
             coalesce=True,
         )

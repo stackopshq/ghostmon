@@ -1,4 +1,4 @@
-from app.core.models.host import Host, Item, ItemValueType
+from app.core.models.host import Host, Item, ItemSource, ItemValueType
 from app.core.models.ingestion_token import IngestionToken
 from app.core.models.maintenance import (
     Maintenance,
@@ -30,6 +30,7 @@ __all__ = [
     "Host",
     "IngestionToken",
     "Item",
+    "ItemSource",
     "ItemValueType",
     "Maintenance",
     "MaintenanceStrategy",

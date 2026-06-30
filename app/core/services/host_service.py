@@ -32,6 +32,7 @@ class HostService:
         host = Host(
             name=data.name,
             description=data.description,
+            address=data.address,
             is_enabled=data.is_enabled,
             owner_id=owner_id,
         )
@@ -85,6 +86,8 @@ class ItemService:
             value_type=data.value_type,
             units=data.units,
             interval=data.interval,
+            source=data.source,
+            config=data.config,
             is_enabled=data.is_enabled,
         )
         self._session.add(item)
