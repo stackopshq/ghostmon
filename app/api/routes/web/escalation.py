@@ -1,12 +1,14 @@
 from __future__ import annotations
 
 import uuid
+from itertools import zip_longest
 
 from fastapi import APIRouter, Form, HTTPException, Request, status
 from fastapi.responses import HTMLResponse, RedirectResponse
 
 from app.api.deps.db import DBSession
 from app.api.routes.web._shared import login_redirect, resolve_current_user, templates
+from app.core.models.notification_channel import ChannelType
 from app.core.models.user import User
 from app.core.schemas.escalation import EscalationPolicyCreate, EscalationStepCreate
 from app.core.services.escalation_service import EscalationService
@@ -57,9 +59,12 @@ async def create_escalation_form(
     form = await request.form()
     delay_minutes = [str(v) for v in form.getlist("delay_minutes")]
     channel_id = [str(v) for v in form.getlist("channel_id")]
+    action_command = [str(v) for v in form.getlist("action_command")]
     steps: list[EscalationStepCreate] = []
     order = 0
-    for delay, channel in zip(delay_minutes, channel_id, strict=False):
+    for delay, channel, command in zip_longest(
+        delay_minutes, channel_id, action_command, fillvalue=""
+    ):
         if not channel:
             continue
         order += 1
@@ -69,6 +74,7 @@ async def create_escalation_form(
                     step_order=order,
                     delay_minutes=int(delay or 0),
                     channel_id=uuid.UUID(channel),
+                    action_command=command.strip() or None,
                 )
             )
         except (ValueError, TypeError):
@@ -84,9 +90,14 @@ async def create_escalation_form(
 
     if not steps:
         return await _error("Add at least one step with a channel.")
-    owned = await service.channels_owned_by(user.id, {s.channel_id for s in steps})
-    if owned != {s.channel_id for s in steps}:
+    wanted = {s.channel_id for s in steps}
+    if await service.channels_owned_by(user.id, wanted) != wanted:
         return await _error("One or more selected channels are not yours.")
+    remediation_channels = {s.channel_id for s in steps if s.action_command}
+    if remediation_channels:
+        types = await service.channel_types(user.id, remediation_channels)
+        if any(types.get(cid) != ChannelType.WEBHOOK for cid in remediation_channels):
+            return await _error("Auto-remediation steps must target a webhook channel.")
     try:
         payload = EscalationPolicyCreate(name=name, is_enabled=(is_enabled == "on"), steps=steps)
     except (ValueError, TypeError) as exc:

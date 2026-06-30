@@ -147,14 +147,20 @@ class EscalationAlertEvent:
     value: float | None
     started_at: datetime
     timestamp: datetime
+    # When set, this step is an auto-remediation action (not a plain notification).
+    action_command: str | None = None
 
     @property
     def is_recovery(self) -> bool:
         return False
 
+    @property
+    def is_remediation(self) -> bool:
+        return self.action_command is not None
+
     def payload(self) -> dict[str, Any]:
-        return {
-            "event": "escalation",
+        body: dict[str, Any] = {
+            "event": "remediation" if self.is_remediation else "escalation",
             "severity": self.severity.value,
             "step": self.step_order,
             "subject": self.subject,
@@ -163,3 +169,6 @@ class EscalationAlertEvent:
             "started_at": self.started_at.isoformat(),
             "timestamp": self.timestamp.isoformat(),
         }
+        if self.action_command is not None:
+            body["action"] = {"command": self.action_command}
+        return body

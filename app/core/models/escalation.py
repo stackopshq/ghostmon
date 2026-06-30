@@ -58,6 +58,11 @@ class EscalationStep(UUIDPrimaryKey, Base):
         ForeignKey("notification_channels.id", ondelete="CASCADE"),
         nullable=False,
     )
+    # When set, this is an auto-remediation step: instead of a plain notification it
+    # POSTs a structured remediation intent (this command + the problem context) to
+    # its webhook channel, for an external runbook to act on. The server never runs
+    # commands itself.
+    action_command: Mapped[str | None] = mapped_column(String(500), nullable=True)
 
     policy: Mapped[EscalationPolicy] = relationship(back_populates="steps")
     channel: Mapped[NotificationChannel] = relationship(lazy="noload")

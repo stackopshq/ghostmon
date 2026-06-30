@@ -3,6 +3,7 @@ import uuid
 from fastapi import APIRouter, HTTPException, Response, status
 
 from app.api.deps import CurrentUser, DBSession
+from app.core.models.notification_channel import ChannelType
 from app.core.schemas.escalation import EscalationPolicyCreate, EscalationPolicyRead
 from app.core.services.escalation_service import EscalationService
 
@@ -20,6 +21,16 @@ async def _validate_channels(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
             detail=f"unknown or unowned channel(s): {', '.join(str(m) for m in missing)}",
         )
+    # Auto-remediation steps must target a webhook (a machine endpoint).
+    remediation_channels = {s.channel_id for s in payload.steps if s.action_command}
+    if remediation_channels:
+        types = await service.channel_types(owner_id, remediation_channels)
+        non_webhook = [cid for cid in remediation_channels if types.get(cid) != ChannelType.WEBHOOK]
+        if non_webhook:
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                detail="auto-remediation steps must target a webhook channel",
+            )
 
 
 @router.get("", response_model=list[EscalationPolicyRead], summary="List escalation policies")

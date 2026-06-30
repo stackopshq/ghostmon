@@ -114,8 +114,11 @@ GhostMonitor's reason to exist over a plain Zabbix clone is privacy (ghost-suite
 - ✅ **Hosts overview**: the host list shows each host's health (item count, ongoing
   problem count and worst severity), problem hosts sorted first — aggregated in two
   grouped queries (no N+1).
-- *(next)* long-range charts backed by trends; auto-remediation hooks as an
-  escalation action.
+- ✅ **Auto-remediation actions**: an escalation step can carry an `action_command`,
+  making it POST a structured remediation intent (command + problem context) to a
+  **webhook** channel for an external runbook — the server never runs commands itself
+  (webhook-only, validated on create and at fire time).
+- *(next)* long-range charts backed by trends.
 
 ## Phase 5 — Discovery & scale
 

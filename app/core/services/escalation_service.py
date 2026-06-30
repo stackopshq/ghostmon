@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import logging
 import uuid
 from collections.abc import Sequence
 from datetime import datetime
@@ -9,10 +10,12 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from app.core.models.escalation import EscalationPolicy, EscalationStep
-from app.core.models.notification_channel import NotificationChannel
+from app.core.models.notification_channel import ChannelType, NotificationChannel
 from app.core.models.problem_event import ProblemEvent
 from app.core.schemas.escalation import EscalationPolicyCreate
 from app.tasks.notifications.events import EscalationAlertEvent
+
+logger = logging.getLogger(__name__)
 
 
 class EscalationService:
@@ -44,6 +47,7 @@ class EscalationService:
                     step_order=step.step_order,
                     delay_minutes=step.delay_minutes,
                     channel_id=step.channel_id,
+                    action_command=step.action_command,
                 )
             )
         self._session.add(policy)
@@ -62,6 +66,7 @@ class EscalationService:
                     step_order=step.step_order,
                     delay_minutes=step.delay_minutes,
                     channel_id=step.channel_id,
+                    action_command=step.action_command,
                 )
             )
         await self._session.commit()
@@ -87,6 +92,18 @@ class EscalationService:
             NotificationChannel.id.in_(channel_ids),
         )
         return set((await self._session.execute(stmt)).scalars().all())
+
+    async def channel_types(
+        self, owner_id: uuid.UUID, channel_ids: set[uuid.UUID]
+    ) -> dict[uuid.UUID, ChannelType]:
+        """Map the owner's channels (among `channel_ids`) to their type."""
+        if not channel_ids:
+            return {}
+        stmt = select(NotificationChannel.id, NotificationChannel.type).where(
+            NotificationChannel.owner_id == owner_id,
+            NotificationChannel.id.in_(channel_ids),
+        )
+        return {cid: ctype for cid, ctype in (await self._session.execute(stmt))}
 
     async def _enabled_policy(self, owner_id: uuid.UUID) -> EscalationPolicy | None:
         stmt = (
@@ -132,21 +149,28 @@ class EscalationService:
                     break  # later steps have larger delays
                 channel = await self._session.get(NotificationChannel, step.channel_id)
                 if channel is not None and channel.is_enabled:
-                    deliveries.append(
-                        (
-                            EscalationAlertEvent(
-                                problem_id=problem.id,
-                                subject=problem.subject,
-                                trigger_name=problem.trigger_name,
-                                severity=problem.severity,
-                                step_order=step.step_order,
-                                value=problem.value,
-                                started_at=problem.started_at,
-                                timestamp=now,
-                            ),
-                            channel,
+                    # Auto-remediation must reach a machine endpoint, never an inbox.
+                    if step.action_command is not None and channel.type != ChannelType.WEBHOOK:
+                        logger.warning(
+                            "remediation step %s targets a non-webhook channel; skipping", step.id
                         )
-                    )
+                    else:
+                        deliveries.append(
+                            (
+                                EscalationAlertEvent(
+                                    problem_id=problem.id,
+                                    subject=problem.subject,
+                                    trigger_name=problem.trigger_name,
+                                    severity=problem.severity,
+                                    step_order=step.step_order,
+                                    value=problem.value,
+                                    started_at=problem.started_at,
+                                    timestamp=now,
+                                    action_command=step.action_command,
+                                ),
+                                channel,
+                            )
+                        )
                 problem.escalated_step = step.step_order
         await self._session.commit()
         return deliveries
