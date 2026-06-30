@@ -243,3 +243,40 @@ async def test_dispatch_routes_by_channel_min_severity(
     # A DISASTER alert reaches both.
     await dispatcher.dispatch_alert(_event(Severity.DISASTER))
     assert {name for name, _ in delivered} == {"all", "critical-only"}
+
+
+# ── Web UI ──────────────────────────────────────────────────────────────────
+
+
+async def test_trigger_web_ui_create_and_delete(
+    web_client: httpx.AsyncClient, user: Any, session: Any
+) -> None:
+    monitor = await _make_monitor(session, user.id, name="web-mon")
+
+    detail = await web_client.get(f"/monitors/{monitor.id}")
+    assert detail.status_code == 200
+    assert "Triggers" in detail.text
+
+    created = await web_client.post(
+        f"/monitors/{monitor.id}/triggers/new",
+        data={
+            "name": "slow page",
+            "metric": "latency_ms",
+            "operator": "gt",
+            "threshold": "500",
+            "severity": "high",
+        },
+    )
+    assert created.status_code in (200, 303), created.text
+
+    triggers = list(await TriggerService(session).list_for_monitor(monitor.id))
+    assert len(triggers) == 1
+    assert triggers[0].name == "slow page"
+
+    detail = await web_client.get(f"/monitors/{monitor.id}")
+    assert "slow page" in detail.text
+    assert "sev-high" in detail.text
+
+    deleted = await web_client.post(f"/monitors/{monitor.id}/triggers/{triggers[0].id}/delete")
+    assert deleted.status_code in (200, 303)
+    assert list(await TriggerService(session).list_for_monitor(monitor.id)) == []

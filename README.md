@@ -16,6 +16,14 @@ exposes both a JSON API and a server-rendered web UI, plus Prometheus metrics.
 
 ## Screenshots
 
+**Monitor detail** — settings, notification channels, and threshold triggers with severities:
+
+| Dark | Light |
+| --- | --- |
+| ![Monitor detail with triggers, dark theme](docs/assets/monitor-detail-dark.png) | ![Monitor detail with triggers, light theme](docs/assets/monitor-detail-light.png) |
+
+**Sign-in:**
+
 | Dark | Light |
 | --- | --- |
 | ![GhostMonitor sign-in, dark theme](docs/assets/login-dark.png) | ![GhostMonitor sign-in, light theme](docs/assets/login-light.png) |
