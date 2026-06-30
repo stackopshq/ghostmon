@@ -581,6 +581,26 @@ footer a:hover { color: var(--brand-primary); }
 .status-maintenance { color: #76b4ff; }
 .status-maintenance::before { background: #76b4ff; box-shadow: 0 0 8px #76b4ff; }
 
+/* Trigger severity + state pills (outlined in their own colour, legible on both themes) */
+.sev, .tstate {
+  display: inline-flex;
+  align-items: center;
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  padding: 2px 8px;
+  border-radius: 999px;
+  border: 1px solid currentColor;
+}
+.sev-info { color: var(--text-muted); }
+.sev-warning { color: #d8a200; }
+.sev-average { color: #e8830c; }
+.sev-high { color: #ff6b6b; }
+.sev-disaster { color: #ff3b3b; }
+.tstate-ok { color: var(--brand-primary); }
+.tstate-problem { color: var(--danger); }
+
 /* Flash: success */
 .flash-ok {
   padding: 10px 12px;
