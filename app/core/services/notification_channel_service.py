@@ -20,14 +20,23 @@ from app.core.schemas.notification_channel import (
 )
 from app.core.security.field_crypto import REDACTED, encrypt_secret
 
+# Channel config fields encrypted at rest. The signing `secret` is write-only
+# (redacted on read); the alert targets (`url`, `to`) are also encrypted — a DB
+# dump must not reveal where alerts go or who is notified — but are decrypted back
+# for the owner on read, since they are shown for editing.
+SEALED_TARGET_FIELDS = ("url", "to")
+
 
 def _seal_channel_config(config: dict) -> dict:  # type: ignore[type-arg]
-    """Encrypt the webhook signing secret at rest (idempotent)."""
+    """Encrypt the webhook signing secret and the alert targets at rest (idempotent)."""
     secret = config.get("secret")
     if not secret or secret == REDACTED:
         config.pop("secret", None)
     else:
         config["secret"] = encrypt_secret(str(secret))
+    for field in SEALED_TARGET_FIELDS:
+        if config.get(field):
+            config[field] = encrypt_secret(str(config[field]))
     return config
 
 

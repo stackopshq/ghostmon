@@ -66,9 +66,12 @@ The foundational data-model shift (the core of ADR 0001), via expand → migrate
 
 GhostMonitor's reason to exist over a plain Zabbix clone is privacy (ghost-suite ethos).
 
-- ✅ **Secrets encrypted at rest**: webhook signing secrets and SNMP communities are
-  Fernet/AES-encrypted (key derived from `APP_SECRET_KEY`) and never returned in clear
-  (write-only; redacted on read). A DB dump leaks no monitoring credentials.
+- ✅ **Secrets & targets encrypted at rest**: webhook signing secrets and SNMP
+  communities are Fernet/AES-encrypted (key derived from `APP_SECRET_KEY`) and never
+  returned in clear (write-only; redacted on read). The **alert targets** — webhook
+  URLs and email recipients — are encrypted at rest too (a DB dump reveals neither
+  where alerts go nor who is notified), but decrypted back for the owner who edits
+  them. A DB dump leaks no monitoring credentials or destinations.
 - ✅ **Zero-knowledge "private items"**: items flagged `is_private` store
   client-encrypted ciphertext (AES-256-GCM); the server never decrypts or evaluates
   them. Two key modes, matching ghostbit's e2e: a random key in the URL fragment

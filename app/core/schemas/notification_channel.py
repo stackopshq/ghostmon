@@ -8,7 +8,7 @@ from pydantic import BaseModel, ConfigDict, EmailStr, Field, HttpUrl, TypeAdapte
 
 from app.core.models.notification_channel import ChannelType
 from app.core.models.trigger import Severity
-from app.core.security.field_crypto import REDACTED
+from app.core.security.field_crypto import REDACTED, decrypt_secret
 
 
 class EmailChannelConfig(BaseModel):
@@ -69,8 +69,13 @@ class NotificationChannelRead(NotificationChannelBase):
 
     @field_validator("config")
     @classmethod
-    def _redact_secret(cls, value: dict[str, Any]) -> dict[str, Any]:
-        # The webhook secret is encrypted at rest and never returned in clear.
-        if value.get("secret"):
-            return {**value, "secret": REDACTED}
-        return value
+    def _protect_config(cls, value: dict[str, Any]) -> dict[str, Any]:
+        # Encrypted at rest: the signing secret is never returned in clear (write-only),
+        # while the alert targets are decrypted back for the owner who edits them.
+        out = dict(value)
+        if out.get("secret"):
+            out["secret"] = REDACTED
+        for field in ("url", "to"):
+            if out.get(field):
+                out[field] = decrypt_secret(out[field])
+        return out

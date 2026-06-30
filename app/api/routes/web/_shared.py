@@ -13,6 +13,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app import __version__
 from app.core.models.user import User
+from app.core.security.field_crypto import decrypt_secret
 from app.core.security.tokens import TokenError, decode_token
 from app.core.services.user_service import UserService
 
@@ -33,6 +34,8 @@ def _asset_hash() -> str:
 
 templates.env.globals["v"] = _asset_hash()
 templates.env.globals["version"] = __version__
+# Decrypt an at-rest-encrypted field (alert target) for display to its owner.
+templates.env.filters["reveal"] = decrypt_secret
 
 
 async def resolve_current_user(request: Request, session: AsyncSession) -> User | None:

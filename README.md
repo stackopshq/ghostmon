@@ -75,8 +75,9 @@ channels) with severity/state pills, plus recent values:
   readiness at `/readyz`.
 - **Privacy-first** (the differentiator vs Zabbix): monitoring secrets — webhook
   signing secrets and SNMP communities — are **encrypted at rest** (Fernet/AES, key
-  derived from `APP_SECRET_KEY`) and **never returned in clear**, so a database dump
-  leaks nothing usable. **Zero-knowledge private items** go further: their values are
+  derived from `APP_SECRET_KEY`) and **never returned in clear**; the **alert targets**
+  (webhook URLs, email recipients) are encrypted at rest too, so a database dump reveals
+  neither credentials nor where alerts go. **Zero-knowledge private items** go further: their values are
   end-to-end encrypted client-side (AES-256-GCM, key from a URL fragment or an
   Argon2id passphrase) and the server only ever sees ciphertext. Fully self-hosted,
   no telemetry, no third-party calls, minimal alert payloads, hashed ingest tokens,
