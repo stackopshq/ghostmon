@@ -19,10 +19,23 @@ from pysnmp.hlapi.v3arch.asyncio import (  # type: ignore[import-untyped]
     get_cmd,
 )
 
+from app.core.config import get_settings
 from app.core.models.monitor import Monitor, MonitorType
 from app.core.models.monitor_result import ProbeStatus
+from app.core.security.ssrf import BlockedTargetError, assert_target_allowed
 
 DEFAULT_TIMEOUT_SECONDS = 10.0
+
+
+async def _egress_guard(host: str | None) -> ProbeOutcome | None:
+    """`None` if the target is allowed, else a DOWN outcome (egress policy)."""
+    try:
+        await assert_target_allowed(host or "")
+    except BlockedTargetError:
+        return ProbeOutcome(ProbeStatus.DOWN, None, "target blocked by egress policy")
+    return None
+
+
 SSL_EXPIRY_WARNING_DAYS = 14
 DEFAULT_SNMP_COMMUNITY = "public"
 DEFAULT_SNMP_OID = "1.3.6.1.2.1.1.3.0"  # sysUpTime
@@ -57,11 +70,16 @@ async def run_probe(monitor: Monitor) -> ProbeOutcome:
 
 
 async def _probe_http(url: str) -> ProbeOutcome:
+    if (blocked := await _egress_guard(httpx.URL(url).host)) is not None:
+        return blocked
+    # When the egress guard is on, don't auto-follow redirects either — a 30x could
+    # otherwise bounce the request to an internal address the guard just rejected.
+    follow_redirects = not get_settings().ssrf_block_private
     start = time.perf_counter()
     try:
         async with httpx.AsyncClient(
             timeout=DEFAULT_TIMEOUT_SECONDS,
-            follow_redirects=True,
+            follow_redirects=follow_redirects,
             headers={"User-Agent": "GhostMonitor/0.1"},
         ) as client:
             response = await client.get(url)
@@ -88,6 +106,8 @@ async def _probe_tcp(url: str) -> ProbeOutcome:
             None,
             f"invalid tcp target: {url!r} (expected host:port or tcp://host:port)",
         )
+    if (blocked := await _egress_guard(host)) is not None:
+        return blocked
     start = time.perf_counter()
     try:
         async with asyncio.timeout(DEFAULT_TIMEOUT_SECONDS):
@@ -114,6 +134,8 @@ async def _probe_ssl(url: str) -> ProbeOutcome:
             None,
             f"invalid ssl target: {url!r} (expected host, host:port or https://host[:port])",
         )
+    if (blocked := await _egress_guard(host)) is not None:
+        return blocked
     context = ssl.create_default_context()
     start = time.perf_counter()
     try:
@@ -166,6 +188,8 @@ async def _probe_ping(url: str) -> ProbeOutcome:
     target = _parse_ping_target(url)
     if not target:
         return ProbeOutcome(ProbeStatus.DOWN, None, f"invalid ping target: {url!r}")
+    if (blocked := await _egress_guard(target)) is not None:
+        return blocked
 
     try:
         proc = await asyncio.create_subprocess_exec(
@@ -234,6 +258,8 @@ async def _probe_snmp(url: str) -> ProbeOutcome:
             f"invalid snmp target: {url!r} (expected snmp://[community@]host[:port]/OID)",
         )
     host, port, community, oid = target
+    if (blocked := await _egress_guard(host)) is not None:
+        return blocked
     start = time.perf_counter()
     try:
         async with asyncio.timeout(DEFAULT_TIMEOUT_SECONDS + 2):

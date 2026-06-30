@@ -22,6 +22,7 @@ from app.core.models.host import Host, Item, ItemSource, ItemValueType
 from app.core.models.metric_value import MetricValue
 from app.core.observability import count_ingested
 from app.core.security.field_crypto import decrypt_secret
+from app.core.security.ssrf import BlockedTargetError, assert_target_allowed
 from app.core.services.trigger_service import TriggerService
 from app.tasks.notifications.dispatcher import schedule_item_trigger_alerts
 from app.tasks.probes import SnmpError, _snmp_get
@@ -94,6 +95,11 @@ async def _poll_one(target: _PollTarget, now: datetime) -> None:
     oid = target.config.get("oid")
     if not oid:
         logger.warning("snmp item %s has no 'oid' in config; skipping", target.item_id)
+        return
+    try:
+        await assert_target_allowed(target.address)
+    except BlockedTargetError:
+        logger.debug("snmp item %s target blocked by egress policy", target.item_id)
         return
     community = decrypt_secret(str(target.config.get("community", "public")))
     port = int(target.config.get("port", 161))

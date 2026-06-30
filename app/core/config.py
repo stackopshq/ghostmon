@@ -58,6 +58,11 @@ class Settings(BaseSettings):
     rate_limit_login_per_minute: int = 10
     rate_limit_ingest_per_minute: int = 600
 
+    # SSRF egress guard. Off by default (monitoring legitimately reaches internal
+    # hosts); enable in multi-tenant deployments to block probes/webhooks aimed at
+    # loopback / RFC1918 / link-local (incl. cloud metadata) / reserved addresses.
+    ssrf_block_private: bool = False
+
     @property
     def cookie_secure(self) -> bool:
         """Mark session cookies `Secure` everywhere except local development, so a
