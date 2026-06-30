@@ -10,6 +10,13 @@ from app.core.models.notification_channel import (
     NotificationChannel,
     monitor_channels,
 )
+from app.core.models.trigger import (
+    Severity,
+    Trigger,
+    TriggerMetric,
+    TriggerOperator,
+    TriggerState,
+)
 from app.core.models.user import AuthProvider, User
 
 __all__ = [
@@ -23,6 +30,11 @@ __all__ = [
     "MonitorType",
     "NotificationChannel",
     "ProbeStatus",
+    "Severity",
+    "Trigger",
+    "TriggerMetric",
+    "TriggerOperator",
+    "TriggerState",
     "User",
     "maintenance_monitors",
     "monitor_channels",

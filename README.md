@@ -25,9 +25,12 @@ exposes both a JSON API and a server-rendered web UI, plus Prometheus metrics.
 - **Monitor types**: HTTP(S), TCP connect, SSL/TLS certificate expiry, ICMP ping.
 - **Scheduling**: per-monitor interval with configurable retries and retry interval.
   A reconciling scheduler keeps live probe jobs in sync with the database.
+- **Triggers & severities**: threshold rules on collected metrics (e.g. latency)
+  with `info`→`disaster` severities and a problem/OK state machine.
 - **Maintenance windows**: one-shot (`once`) or recurring (`cron`) silencing of alerts.
 - **Notifications**: email (SMTP) and webhooks, attached per-monitor; fire-and-forget
-  on status transitions so a slow SMTP server never stalls probing.
+  so a slow SMTP server never stalls probing, and **severity-routed** (each channel
+  has a minimum severity). Alerting stays fully self-hosted — no third-party calls.
 - **Auth**: local accounts (argon2 password hashing, JWT) and optional OIDC.
 - **Interfaces**: REST API (`/api`, OpenAPI at `/docs`), web UI, and a `ghostmon` CLI.
 - **Observability**: Prometheus metrics at `/metrics`, liveness at `/healthz`,

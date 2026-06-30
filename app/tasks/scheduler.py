@@ -12,9 +12,11 @@ from sqlalchemy import select
 from app.core.db.session import SessionLocal
 from app.core.models.monitor import Monitor, MonitorStatus
 from app.core.models.monitor_result import MonitorResult, ProbeStatus
+from app.core.models.trigger import TriggerMetric
 from app.core.services.maintenance_service import MaintenanceService
+from app.core.services.trigger_service import TriggerService
 from app.tasks.notifications.dispatcher import schedule_dispatch
-from app.tasks.notifications.events import AlertEvent
+from app.tasks.notifications.events import AlertEvent, TriggerAlertEvent
 from app.tasks.probes import ProbeOutcome, run_probe
 
 logger = logging.getLogger(__name__)
@@ -150,6 +152,31 @@ async def _run_probe_job(monitor_id: uuid.UUID) -> None:
             monitor.url,
         )
 
+        # Evaluate threshold triggers against the metrics just collected. State
+        # changes are persisted here; the resulting alerts are dispatched below.
+        now = datetime.now(UTC)
+        metric_values: dict[TriggerMetric, float | None] = {
+            TriggerMetric.LATENCY_MS: final.latency_ms,
+        }
+        fired = await TriggerService(session).evaluate(monitor.id, metric_values, now)
+        trigger_alerts = [
+            TriggerAlertEvent(
+                monitor_id=monitor.id,
+                monitor_name=monitor.name,
+                monitor_type=monitor.type,
+                monitor_url=monitor.url,
+                trigger_name=f.trigger_name,
+                severity=f.severity,
+                metric=f.metric,
+                operator=f.operator,
+                threshold=f.threshold,
+                value=f.value,
+                new_state=f.new_state,
+                timestamp=now,
+            )
+            for f in fired
+        ]
+
     # Only alert on UP<->DOWN transitions, never from PENDING (initial probe).
     should_alert = (
         previous_status in (MonitorStatus.UP, MonitorStatus.DOWN) and previous_status != new_status
@@ -169,6 +196,9 @@ async def _run_probe_job(monitor_id: uuid.UUID) -> None:
                 timestamp=datetime.now(UTC),
             )
         )
+
+    for trigger_alert in trigger_alerts:
+        schedule_dispatch(trigger_alert)
 
 
 def build_scheduler() -> ProbeScheduler:

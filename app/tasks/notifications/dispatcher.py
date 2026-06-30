@@ -14,37 +14,68 @@ from app.core.models.notification_channel import (
     NotificationChannel,
     monitor_channels,
 )
+from app.core.models.trigger import TriggerOperator
 from app.tasks.notifications.delivery import (
     DeliveryError,
     send_email,
     send_webhook,
 )
-from app.tasks.notifications.events import AlertEvent
+from app.tasks.notifications.events import AlertEvent, TriggerAlertEvent
 
 logger = logging.getLogger(__name__)
 
+Alert = AlertEvent | TriggerAlertEvent
 
-def _format_email(event: AlertEvent) -> tuple[str, str]:
-    settings = get_settings()
-    monitor_link = f"{settings.public_base_url.rstrip('/')}/?monitor={event.monitor_id}"
-    verb = "recovered" if event.is_recovery else "went DOWN"
-    subject = f"[GhostMonitor] {event.monitor_name} {verb}"
-    lines = [
-        f"Monitor: {event.monitor_name} ({event.monitor_type.value})",
-        f"URL: {event.monitor_url}",
-        f"Status: {event.previous_status.value} -> {event.new_status.value}",
-        f"Time: {event.timestamp.isoformat()}",
-    ]
-    if event.latency_ms is not None:
-        lines.append(f"Latency: {event.latency_ms} ms")
-    if event.error:
-        lines.append(f"Error: {event.error}")
+_OPERATOR_SYMBOL = {
+    TriggerOperator.GT: ">",
+    TriggerOperator.GE: ">=",
+    TriggerOperator.LT: "<",
+    TriggerOperator.LE: "<=",
+}
+
+
+def _monitor_link(monitor_id: uuid.UUID) -> str:
+    base = get_settings().public_base_url.rstrip("/")
+    return f"{base}/?monitor={monitor_id}"
+
+
+def _format_email(event: Alert) -> tuple[str, str]:
+    if isinstance(event, AlertEvent):
+        verb = "recovered" if event.is_recovery else "went DOWN"
+        subject = f"[GhostMonitor] {event.monitor_name} {verb}"
+        lines = [
+            f"Monitor: {event.monitor_name} ({event.monitor_type.value})",
+            f"URL: {event.monitor_url}",
+            f"Status: {event.previous_status.value} -> {event.new_status.value}",
+            f"Time: {event.timestamp.isoformat()}",
+        ]
+        if event.latency_ms is not None:
+            lines.append(f"Latency: {event.latency_ms} ms")
+        if event.error:
+            lines.append(f"Error: {event.error}")
+    else:
+        state = "cleared" if event.is_recovery else "PROBLEM"
+        subject = (
+            f"[GhostMonitor] {event.severity.value.upper()} "
+            f"{event.monitor_name}: {event.trigger_name} {state}"
+        )
+        symbol = _OPERATOR_SYMBOL[event.operator]
+        lines = [
+            f"Monitor: {event.monitor_name} ({event.monitor_type.value})",
+            f"URL: {event.monitor_url}",
+            f"Trigger: {event.trigger_name} [{event.severity.value}]",
+            f"Condition: {event.metric.value} {symbol} {event.threshold}",
+            f"Value: {event.value}",
+            f"State: {event.new_state.value}",
+            f"Time: {event.timestamp.isoformat()}",
+        ]
+
     lines.append("")
-    lines.append(f"Details: {monitor_link}")
+    lines.append(f"Details: {_monitor_link(event.monitor_id)}")
     return subject, "\n".join(lines)
 
 
-async def _deliver(event: AlertEvent, channel: NotificationChannel) -> None:
+async def _deliver(event: Alert, channel: NotificationChannel) -> None:
     config = channel.config or {}
     try:
         if channel.type == ChannelType.EMAIL:
@@ -83,11 +114,13 @@ async def _channels_for_monitor(monitor_id: uuid.UUID) -> list[NotificationChann
         return list(result.scalars().all())
 
 
-async def dispatch_alert(event: AlertEvent) -> None:
+async def dispatch_alert(event: Alert) -> None:
     channels = await _channels_for_monitor(event.monitor_id)
-    if not channels:
+    # Severity routing: a channel only receives alerts at or above its threshold.
+    eligible = [c for c in channels if c.min_severity.rank <= event.severity.rank]
+    if not eligible:
         return
-    await asyncio.gather(*(_deliver(event, ch) for ch in channels), return_exceptions=True)
+    await asyncio.gather(*(_deliver(event, ch) for ch in eligible), return_exceptions=True)
 
 
 async def send_test_notification(
@@ -111,7 +144,7 @@ async def send_test_notification(
     await _deliver(event, channel)
 
 
-def schedule_dispatch(event: AlertEvent) -> None:
+def schedule_dispatch(event: Alert) -> None:
     """Fire-and-forget dispatch on the current event loop.
 
     Probe jobs call this after committing a status transition; we do not

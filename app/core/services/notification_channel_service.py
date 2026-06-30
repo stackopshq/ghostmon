@@ -48,6 +48,7 @@ class NotificationChannelService:
             type=data.config.type,
             config=data.config.model_dump(mode="json", exclude={"type"}),
             is_enabled=data.is_enabled,
+            min_severity=data.min_severity,
             owner_id=owner_id,
         )
         self._session.add(channel)
@@ -63,6 +64,8 @@ class NotificationChannelService:
             channel.name = payload["name"]
         if "is_enabled" in payload:
             channel.is_enabled = payload["is_enabled"]
+        if "min_severity" in payload:
+            channel.min_severity = payload["min_severity"]
         if data.config is not None:
             channel.type = data.config.type
             channel.config = data.config.model_dump(mode="json", exclude={"type"})
