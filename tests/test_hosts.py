@@ -8,7 +8,7 @@ from typing import Any
 import httpx
 import pytest
 
-from app.core.models.host import Host, Item, ItemValueType
+from app.core.models.host import Host, Item, ItemSource, ItemValueType
 from app.core.models.monitor import Monitor, MonitorType
 from app.core.services.host_service import HostService, ItemService
 from app.core.services.monitor_host_bridge import ensure_backing_latency_item
@@ -233,3 +233,35 @@ async def test_hosts_web_ui_create_host_and_item(
     deleted = await web_client.post(f"/hosts/{host_id}/items/{items[0].id}/delete")
     assert deleted.status_code in (200, 303)
     assert list(await ItemService(session).list_for_host(host_id)) == []
+
+
+async def test_hosts_web_ui_creates_snmp_item(
+    web_client: httpx.AsyncClient, user: Any, session: Any
+) -> None:
+    created = await web_client.post("/hosts/new", data={"name": "router-9", "address": "10.0.0.9"})
+    assert created.status_code in (200, 303)
+    host = (await HostService(session).list_for_owner(user.id))[0]
+    assert host.address == "10.0.0.9"
+
+    added = await web_client.post(
+        f"/hosts/{host.id}/items/new",
+        data={
+            "key": "if.in",
+            "name": "In octets",
+            "value_type": "unsigned",
+            "interval": "60",
+            "source": "snmp",
+            "oid": "1.3.6.1.2.1.2.2.1.10.1",
+            "community": "public",
+        },
+    )
+    assert added.status_code in (200, 303)
+    item = (await ItemService(session).list_for_host(host.id))[0]
+    assert item.source == ItemSource.SNMP
+    assert item.config == {"oid": "1.3.6.1.2.1.2.2.1.10.1", "community": "public"}
+
+    # The detail page renders the SNMP row (source + oid).
+    detail = await web_client.get(f"/hosts/{host.id}")
+    assert detail.status_code == 200
+    assert "snmp" in detail.text
+    assert "1.3.6.1.2.1.2.2.1.10.1" in detail.text

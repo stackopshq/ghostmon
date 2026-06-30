@@ -32,6 +32,10 @@
             <span>Description</span>
             <input type="text" name="description" maxlength="2048" value="{{ host.description or '' }}">
           </label>
+          <label class="field">
+            <span>Address (hostname/IP, for SNMP polling)</span>
+            <input type="text" name="address" maxlength="255" value="{{ host.address or '' }}" placeholder="10.0.0.1">
+          </label>
           <label class="field inline">
             <input type="checkbox" name="is_enabled" {% if host.is_enabled %}checked{% endif %}>
             <span>Enabled</span>
@@ -76,6 +80,22 @@
               <input type="number" name="interval" min="1" max="86400" value="60">
             </label>
           </div>
+          <div class="field-row">
+            <label class="field">
+              <span>Source</span>
+              <select name="source">
+                {% for s in item_sources %}<option value="{{ s }}">{{ s }}</option>{% endfor %}
+              </select>
+            </label>
+            <label class="field">
+              <span>SNMP OID (source = snmp)</span>
+              <input type="text" name="oid" maxlength="255" placeholder="1.3.6.1.2.1.2.2.1.10.1">
+            </label>
+            <label class="field">
+              <span>SNMP community</span>
+              <input type="text" name="community" maxlength="255" placeholder="public">
+            </label>
+          </div>
           <div class="form-actions">
             <button type="submit" class="btn-primary">Add item</button>
           </div>
@@ -88,13 +108,14 @@
       {% if item_views %}
       <table class="table">
         <thead>
-          <tr><th>Item</th><th>Key</th><th>Latest</th><th>Min / Max</th><th>History</th><th></th></tr>
+          <tr><th>Item</th><th>Key</th><th>Source</th><th>Latest</th><th>Min / Max</th><th>History</th><th></th></tr>
         </thead>
         <tbody>
           {% for iv in item_views %}
           <tr>
             <td>{{ iv.item.name }}{% if not iv.item.is_enabled %} <span class="muted">· disabled</span>{% endif %}</td>
             <td class="muted">{{ iv.item.key }}</td>
+            <td class="muted">{{ iv.item.source.value }}{% if iv.item.source.value == 'snmp' and iv.item.config.get('oid') %} <span style="opacity:.7">({{ iv.item.config.get('oid') }})</span>{% endif %}</td>
             <td>
               {% if iv.latest is none %}<span class="muted">—</span>
               {% elif iv.latest.value_num is not none %}{{ iv.latest.value_num }}{{ ' ' ~ iv.item.units if iv.item.units }}
