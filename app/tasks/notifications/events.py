@@ -132,3 +132,34 @@ class ItemTriggerAlertEvent:
             },
             "timestamp": self.timestamp.isoformat(),
         }
+
+
+@dataclass(slots=True)
+class EscalationAlertEvent:
+    """A scheduled escalation step notifying a specific channel about a problem that
+    is still open and unacknowledged."""
+
+    problem_id: uuid.UUID
+    subject: str
+    trigger_name: str
+    severity: Severity
+    step_order: int
+    value: float | None
+    started_at: datetime
+    timestamp: datetime
+
+    @property
+    def is_recovery(self) -> bool:
+        return False
+
+    def payload(self) -> dict[str, Any]:
+        return {
+            "event": "escalation",
+            "severity": self.severity.value,
+            "step": self.step_order,
+            "subject": self.subject,
+            "trigger": {"name": self.trigger_name, "value": self.value},
+            "problem_id": str(self.problem_id),
+            "started_at": self.started_at.isoformat(),
+            "timestamp": self.timestamp.isoformat(),
+        }

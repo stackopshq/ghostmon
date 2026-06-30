@@ -3,7 +3,7 @@ from __future__ import annotations
 import uuid
 from datetime import datetime
 
-from sqlalchemy import DateTime, Enum, Float, ForeignKey, String
+from sqlalchemy import DateTime, Enum, Float, ForeignKey, Integer, String
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column
 
@@ -50,4 +50,8 @@ class ProblemEvent(UUIDPrimaryKey, Base):
         UUID(as_uuid=True),
         ForeignKey("users.id", ondelete="SET NULL"),
         nullable=True,
+    )
+    # Highest escalation step already executed for this problem (0 = none yet).
+    escalated_step: Mapped[int] = mapped_column(
+        Integer, nullable=False, default=0, server_default="0"
     )
