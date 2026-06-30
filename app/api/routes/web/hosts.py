@@ -8,7 +8,7 @@ from sqlalchemy.exc import IntegrityError
 
 from app.api.deps.db import DBSession
 from app.api.routes.web._shared import login_redirect, resolve_current_user, templates
-from app.api.routes.web.charts import ChartView, line_chart
+from app.api.routes.web.charts import BandChartView, ChartView, band_chart, line_chart
 from app.core.models.host import ItemSource, ItemValueType
 from app.core.models.trigger import Severity, TriggerAggregation, TriggerOperator, TriggerState
 from app.core.models.user import User
@@ -353,6 +353,12 @@ async def _item_detail_context(
     recent = list(await item_svc.list_values(item_id, limit=300))  # newest first
     series = [(v.collected_at, v.value_num) for v in reversed(recent) if v.value_num is not None]
     chart = line_chart(series) if item.value_type.is_numeric else ChartView(width=720, height=240)
+
+    trends = list(await item_svc.list_trends(item_id, limit=720))  # newest first (~30 days)
+    trend_series = [(t.bucket, t.value_min, t.value_avg, t.value_max) for t in reversed(trends)]
+    trend_chart = (
+        band_chart(trend_series) if item.value_type.is_numeric else BandChartView(720, 200)
+    )
     return {
         "current_user": user,
         "active_nav": "hosts",
@@ -360,8 +366,9 @@ async def _item_detail_context(
         "item": item,
         "triggers": list(await TriggerService(session).list_for_item(item_id)),
         "values": recent[:25],
-        "trends": list(await item_svc.list_trends(item_id, limit=24)),
+        "trends": trends[:24],
         "chart": chart,
+        "trend_chart": trend_chart,
         "trigger_operators": [{"value": o.value, "label": s} for o, s in _OPERATOR_SYMBOLS.items()],
         "trigger_aggregations": [a.value for a in TriggerAggregation],
         "severities": [s.value for s in Severity],

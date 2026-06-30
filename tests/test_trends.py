@@ -146,3 +146,25 @@ async def test_item_detail_page_shows_trends(
     page = await web_client.get(f"/hosts/{item.host_id}/items/{item.id}")
     assert page.status_code == 200
     assert "Hourly trends" in page.text
+
+
+async def test_item_detail_shows_long_range_trend_chart(
+    web_client: httpx.AsyncClient, session: Any, user: Any
+) -> None:
+    item = await _item(session, user.id)
+    for i in range(5):
+        session.add(
+            MetricTrend(
+                item_id=item.id,
+                bucket=NOW.replace(hour=8 + i, minute=0),
+                value_min=float(10 + i),
+                value_avg=float(20 + i),
+                value_max=float(30 + i),
+                sample_count=3,
+            )
+        )
+    await session.commit()
+    page = await web_client.get(f"/hosts/{item.host_id}/items/{item.id}")
+    assert page.status_code == 200
+    assert "Trends (long-range)" in page.text
+    assert "chart-band" in page.text

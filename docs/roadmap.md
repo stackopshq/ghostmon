@@ -122,7 +122,9 @@ GhostMonitor's reason to exist over a plain Zabbix clone is privacy (ghost-suite
   making it POST a structured remediation intent (command + problem context) to a
   **webhook** channel for an external runbook — the server never runs commands itself
   (webhook-only, validated on create and at fire time).
-- *(next)* long-range charts backed by trends.
+- ✅ **Long-range trend chart**: a server-rendered min/max band + average line over an
+  item's hourly trend rollups on the item page — long-term shape that survives
+  raw-sample retention. Pure, unit-tested geometry helper (`band_chart`).
 
 ## Phase 5 — Discovery & scale *(in progress)*
 

@@ -117,6 +117,27 @@
     </section>
     {% endif %}
 
+    {% if trend_chart and not trend_chart.empty %}
+    <section class="card" style="margin-top: 20px;">
+      <h2>Trends (long-range)</h2>
+      <p class="muted" style="margin-bottom: 12px;">
+        Hourly average with the min/max band — survives raw-sample retention.
+      </p>
+      <svg class="chart" viewBox="0 0 {{ trend_chart.width }} {{ trend_chart.height }}" role="img"
+           aria-label="{{ item.name }} long-range trend">
+        {% for y, label in trend_chart.y_ticks %}
+        <line class="chart-grid" x1="{{ trend_chart.plot_left }}" y1="{{ y }}" x2="{{ trend_chart.plot_right }}" y2="{{ y }}" />
+        <text class="chart-label" x="{{ trend_chart.plot_left - 6 }}" y="{{ y + 3 }}" text-anchor="end">{{ label }}</text>
+        {% endfor %}
+        {% for x, label in trend_chart.x_ticks %}
+        <text class="chart-label" x="{{ x }}" y="{{ trend_chart.plot_bottom + 16 }}" text-anchor="middle">{{ label }}</text>
+        {% endfor %}
+        <polygon class="chart-band" points="{{ trend_chart.band }}" />
+        <polyline class="chart-line" points="{{ trend_chart.line }}" fill="none" />
+      </svg>
+    </section>
+    {% endif %}
+
     {% if trends %}
     <section class="card" style="margin-top: 20px;">
       <h2>Hourly trends <span class="count">{{ trends|length }}</span></h2>
