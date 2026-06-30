@@ -47,10 +47,10 @@ The foundational data-model shift (the core of ADR 0001), via expand → migrate
 - ✅ **Ingestion tokens**: long-lived per-owner tokens (SHA-256 stored, shown once)
   + a token-authenticated `POST /api/ingest` that auto-creates "trapper" items —
   so agents/scripts can push metrics without a user login.
-- *(next)* **ghostmon-agent**: a lightweight agent reporting system metrics
-  (CPU, memory, disk, load) to `/api/ingest`.
+- ✅ **ghostmon-agent**: a dependency-free agent (`ghostmon agent run`) reporting
+  system metrics (load, memory %, disk %) from `/proc` to `/api/ingest`.
 - *(next)* `Template` = reusable items + triggers, applied to many hosts.
-- *(next)* SNMP polling for network devices.
+- *(next)* CPU utilisation (delta sampling) and SNMP polling for network devices.
 
 ## Phase 4 — Alerting escalation & dashboards
 

@@ -52,7 +52,8 @@ exposes both a JSON API and a server-rendered web UI, plus Prometheus metrics.
   so a slow SMTP server never stalls probing, and **severity-routed** (each channel
   has a minimum severity). Alerting stays fully self-hosted — no third-party calls.
 - **Auth**: local accounts (argon2 password hashing, JWT) and optional OIDC.
-- **Interfaces**: REST API (`/api`, OpenAPI at `/docs`), web UI, and a `ghostmon` CLI.
+- **Interfaces**: REST API (`/api`, OpenAPI at `/docs`), web UI, a `ghostmon` CLI,
+  and a dependency-free metric agent (`ghostmon agent run`).
 - **Observability**: Prometheus metrics at `/metrics`, liveness at `/healthz`,
   readiness at `/readyz`.
 
@@ -80,6 +81,13 @@ APP_SECRET_KEY=$(openssl rand -hex 32) podman compose up --build
 
 Useful endpoints: `/` (web UI), `/docs` (API docs), `/healthz` (liveness),
 `/readyz` (readiness — 503 when the database is unreachable), `/metrics`.
+
+Collect system metrics from a host with the bundled agent (create a host in the UI,
+mint an ingest token via `POST /api/ingest-tokens`, then):
+
+```bash
+GHOSTMON_INGEST_TOKEN=gmi_… uv run ghostmon agent run --host web-01 --url http://localhost:8000
+```
 
 ## Test
 
