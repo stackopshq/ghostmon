@@ -67,7 +67,7 @@
           </div>
         </form>
         <form method="post" action="/monitors/{{ monitor.id }}/delete" class="form-inline form-danger"
-              onsubmit="return confirm('Delete this monitor?');">
+              data-confirm="Delete this monitor?">
           <button type="submit" class="btn-danger">Delete monitor</button>
         </form>
       </section>
@@ -132,7 +132,7 @@
             <td><span class="tstate tstate-{{ t.state.value }}">{{ t.state.value }}</span></td>
             <td class="row-actions">
               <form method="post" action="/monitors/{{ monitor.id }}/triggers/{{ t.id }}/delete" class="form-inline"
-                    onsubmit="return confirm('Delete this trigger?');">
+                    data-confirm="Delete this trigger?">
                 <button type="submit" class="btn-new btn-muted">Delete</button>
               </form>
             </td>

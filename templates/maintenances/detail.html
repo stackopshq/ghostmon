@@ -76,7 +76,7 @@
           </div>
         </form>
         <form method="post" action="/maintenances/{{ maintenance.id }}/delete" class="form-inline form-danger"
-              onsubmit="return confirm('Delete maintenance {{ maintenance.title }}?');">
+              data-confirm="Delete maintenance {{ maintenance.title }}?">
           <button type="submit" class="btn-danger">Delete window</button>
         </form>
       </section>

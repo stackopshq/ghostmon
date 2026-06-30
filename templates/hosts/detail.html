@@ -55,7 +55,7 @@
           </div>
         </form>
         <form method="post" action="/hosts/{{ host.id }}/delete" class="form-inline form-danger"
-              onsubmit="return confirm('Delete host {{ host.name }} and all its items?');">
+              data-confirm="Delete host {{ host.name }} and all its items?">
           <button type="submit" class="btn-danger">Delete host</button>
         </form>
       </section>
@@ -150,7 +150,7 @@
             </td>
             <td class="row-actions">
               <form method="post" action="/hosts/{{ host.id }}/items/{{ iv.item.id }}/delete" class="form-inline"
-                    onsubmit="return confirm('Delete item {{ iv.item.key }}?');">
+                    data-confirm="Delete item {{ iv.item.key }}?">
                 <button type="submit" class="btn-new btn-muted">Delete</button>
               </form>
             </td>

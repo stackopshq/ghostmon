@@ -79,6 +79,10 @@ GhostMonitor's reason to exist over a plain Zabbix clone is privacy (ghost-suite
   interoperable across the CLI and the browser). In-browser decryption via Web Crypto
   + hash-wasm; reference CLI `ghostmon zk genkey|encrypt|decrypt [--key|--password]`.
   Verified end-to-end in a real browser.
+- ✅ **Hardened browser surface**: a strict Content-Security-Policy (no third-party
+  origins, per-request nonce for the one inline script, inline event handlers removed)
+  with `wasm-unsafe-eval` so the zero-knowledge Argon2 passphrase mode runs under it,
+  plus `nosniff` / `X-Frame-Options: DENY` / `Referrer-Policy` / `Permissions-Policy`.
 - Baseline: no telemetry, no third-party calls, minimal alert payloads, hashed ingest
   tokens, bounded retention.
 

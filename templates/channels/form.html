@@ -75,7 +75,7 @@
 
       {% if channel %}
       <form method="post" action="/channels/{{ channel.id }}/delete" class="form-inline form-danger"
-            onsubmit="return confirm('Delete channel {{ channel.name }}?');">
+            data-confirm="Delete channel {{ channel.name }}?">
         <button type="submit" class="btn-danger">Delete channel</button>
       </form>
       {% endif %}

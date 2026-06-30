@@ -32,7 +32,7 @@
             </td>
             <td class="row-actions">
               <form method="post" action="/escalation/{{ p.id }}/delete" class="form-inline"
-                    onsubmit="return confirm('Delete policy {{ p.name }}?');">
+                    data-confirm="Delete policy {{ p.name }}?">
                 <button type="submit" class="btn-new btn-muted">Delete</button>
               </form>
             </td>

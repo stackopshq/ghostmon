@@ -7,6 +7,7 @@ from fastapi.staticfiles import StaticFiles
 from prometheus_fastapi_instrumentator import Instrumentator
 from starlette.middleware.sessions import SessionMiddleware
 
+from app.api.middleware import add_security_headers
 from app.api.routes import api_router, health_router
 from app.api.routes.web import router as web_router
 from app.core.config import get_settings
@@ -51,6 +52,7 @@ def create_app(*, lifespan: Lifespan = scheduler_lifespan) -> FastAPI:
         same_site="lax",
         https_only=settings.app_env == "production",
     )
+    add_security_headers(app)
 
     Instrumentator(
         should_group_status_codes=True,

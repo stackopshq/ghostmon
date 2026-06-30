@@ -122,7 +122,7 @@ open and unacknowledged:
 - **Server-side collection** — items have a `source` (trapper / SNMP); the scheduler polls due SNMP items (any OID) from the host's address.
 - **Agent ingestion** — per-owner ingest tokens and a token-authenticated `POST /api/ingest`; a dependency-free agent (`ghostmon agent run`) reports system metrics from `/proc`.
 - **Notifications** — email (SMTP) and webhooks, attached per monitor or host, **severity-routed**, and fire-and-forget so a slow SMTP server never stalls probing.
-- **Privacy** — encryption at rest for secrets *and* alert targets; zero-knowledge private items; no telemetry, no third-party calls, hashed ingest tokens, bounded retention.
+- **Privacy** — encryption at rest for secrets *and* alert targets; zero-knowledge private items; a strict Content-Security-Policy (no third-party origins, nonce'd inline script, `wasm-unsafe-eval` for the in-browser Argon2); no telemetry, no third-party calls, hashed ingest tokens, bounded retention.
 - **Maintenance windows** — one-shot or recurring (`cron`) alert silencing.
 - **Auth** — local accounts (argon2, JWT) and **OIDC SSO** (any OpenID Connect
   provider) on top, sharing the same session; SSO-only accounts need no password.

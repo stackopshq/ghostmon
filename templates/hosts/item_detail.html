@@ -44,7 +44,7 @@
             <td><span class="tstate tstate-{{ t.state.value }}">{{ t.state.value }}</span></td>
             <td class="row-actions">
               <form method="post" action="/hosts/{{ host.id }}/items/{{ item.id }}/triggers/{{ t.id }}/delete" class="form-inline"
-                    onsubmit="return confirm('Delete this trigger?');">
+                    data-confirm="Delete this trigger?">
                 <button type="submit" class="btn-new btn-muted">Delete</button>
               </form>
             </td>
