@@ -10,7 +10,7 @@ import pytest
 
 from app.core.models.host import Host, Item, ItemValueType
 from app.core.models.monitor import Monitor, MonitorType
-from app.core.services.host_service import ItemService
+from app.core.services.host_service import HostService, ItemService
 from app.core.services.monitor_host_bridge import ensure_backing_latency_item
 from app.core.services.monitor_service import MonitorService
 
@@ -192,3 +192,44 @@ async def test_duplicate_monitor_names_get_distinct_backing_hosts(session: Any, 
     await ensure_backing_latency_item(session, m2)
     assert m1.host_id is not None and m2.host_id is not None
     assert m1.host_id != m2.host_id
+
+
+# ── Web UI ──────────────────────────────────────────────────────────────────
+
+
+def test_sparkline_points() -> None:
+    from app.api.routes.web.hosts import _sparkline_points
+
+    assert _sparkline_points([5.0]) == ""  # need at least two points
+    pts = _sparkline_points([0.0, 5.0, 10.0])
+    assert len(pts.split()) == 3
+
+
+async def test_hosts_web_ui_create_host_and_item(
+    web_client: httpx.AsyncClient, user: Any, session: Any
+) -> None:
+    listing = await web_client.get("/hosts")
+    assert listing.status_code == 200
+    assert "Hosts" in listing.text
+
+    created = await web_client.post("/hosts/new", data={"name": "web-01", "description": "edge"})
+    assert created.status_code in (200, 303)
+    hosts = list(await HostService(session).list_for_owner(user.id))
+    assert len(hosts) == 1
+    host_id = hosts[0].id
+
+    detail = await web_client.get(f"/hosts/{host_id}")
+    assert detail.status_code == 200
+    assert "web-01" in detail.text
+
+    added = await web_client.post(
+        f"/hosts/{host_id}/items/new",
+        data={"key": "cpu", "name": "CPU", "value_type": "float", "units": "%", "interval": "60"},
+    )
+    assert added.status_code in (200, 303)
+    items = list(await ItemService(session).list_for_host(host_id))
+    assert [i.key for i in items] == ["cpu"]
+
+    deleted = await web_client.post(f"/hosts/{host_id}/items/{items[0].id}/delete")
+    assert deleted.status_code in (200, 303)
+    assert list(await ItemService(session).list_for_host(host_id)) == []

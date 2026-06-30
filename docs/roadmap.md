@@ -30,12 +30,14 @@ The foundational data-model shift (the core of ADR 0001), via expand → migrate
 
 - ✅ **Expand**: additive `Host` → `Item` (key, value_type, units, interval) →
   append-only `metric_values` history, with CRUD + a value-ingestion/read API.
-  Non-breaking — the existing `Monitor` model is untouched.
-- **Migrate** *(next)*: reframe each monitor as a `Host` with one agentless
-  availability `Item`; backfill `MonitorResult` into item history (reversible).
-- **Contract**: once readers move to items, retire the monitor-specific tables.
-- Retention for raw history + hourly `trends` (min/avg/max) for long-range graphs.
-- Web UI for hosts/items, and triggers that evaluate item history.
+- ✅ **Migrate (bridge)**: each monitor gets a backing host + `latency_ms` item
+  (lazily provisioned); probes mirror latency into item history.
+- ✅ **Retention**: hourly pruning of history/results past `HISTORY_RETENTION_DAYS`.
+- ✅ **Web UI**: hosts list + host detail (items CRUD, latest/min/max, server-rendered
+  history sparklines).
+- *(next)* **Contract**: once readers move to items, retire the monitor-specific tables.
+- *(next)* Hourly `trends` (min/avg/max) for long-range graphs; triggers that
+  evaluate item-history windows (`avg(metric, 5m) > x`).
 
 ## Phase 3 — Templates & richer collection
 

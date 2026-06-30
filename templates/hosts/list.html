@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+
+{% block title %}Hosts · GhostMonitor{% endblock %}
+
+{% block page %}
+<main class="page-bg">
+  <div class="container">
+    <div class="hero">
+      <h1 class="hero-title">
+        <span class="terminal-prompt">~ $&nbsp;</span><span>ghostmon host list</span><span class="terminal-cursor">▊</span>
+      </h1>
+      <div class="hero-sub">Hosts collect metrics as items with time-series history.</div>
+    </div>
+
+    <div class="toolbar">
+      <div><h2>Hosts<span class="count">{{ hosts|length }} total</span></h2></div>
+      <div><a href="/hosts/new" class="btn-new">+ New host</a></div>
+    </div>
+
+    {% if hosts %}
+    <table class="table">
+      <thead>
+        <tr><th>Name</th><th>Description</th><th>Enabled</th></tr>
+      </thead>
+      <tbody>
+        {% for h in hosts %}
+        <tr>
+          <td><a href="/hosts/{{ h.id }}">{{ h.name }}</a></td>
+          <td class="muted">{{ h.description or '—' }}</td>
+          <td>{{ 'yes' if h.is_enabled else 'no' }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+    <div class="empty">
+      <h3>No hosts yet</h3>
+      <p>Create a host, add metric items, and push values to build history.</p>
+      <p><a href="/hosts/new" class="btn-new">+ New host</a></p>
+    </div>
+    {% endif %}
+  </div>
+</main>
+{% endblock %}

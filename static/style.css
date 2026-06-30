@@ -601,6 +601,9 @@ footer a:hover { color: var(--brand-primary); }
 .tstate-ok { color: var(--brand-primary); }
 .tstate-problem { color: var(--danger); }
 
+/* Server-rendered metric sparkline */
+.spark { color: var(--accent); display: block; overflow: visible; }
+
 /* Flash: success */
 .flash-ok {
   padding: 10px 12px;

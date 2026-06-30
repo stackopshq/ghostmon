@@ -16,6 +16,12 @@ exposes both a JSON API and a server-rendered web UI, plus Prometheus metrics.
 
 ## Screenshots
 
+**Host detail** — items (metrics) with min/max and server-rendered history sparklines:
+
+| Dark | Light |
+| --- | --- |
+| ![Host detail with metric sparklines, dark theme](docs/assets/host-detail-dark.png) | ![Host detail with metric sparklines, light theme](docs/assets/host-detail-light.png) |
+
 **Monitor detail** — settings, notification channels, and threshold triggers with severities:
 
 | Dark | Light |
@@ -35,6 +41,9 @@ exposes both a JSON API and a server-rendered web UI, plus Prometheus metrics.
   A reconciling scheduler keeps live probe jobs in sync with the database.
 - **Triggers & severities**: threshold rules on collected metrics (e.g. latency)
   with `info`→`disaster` severities and a problem/OK state machine.
+- **Hosts, items & history**: collect arbitrary metrics as items with append-only
+  time-series history (bounded by retention), browsable with inline sparklines;
+  each monitor's latency is mirrored into this model automatically.
 - **Maintenance windows**: one-shot (`once`) or recurring (`cron`) silencing of alerts.
 - **Notifications**: email (SMTP) and webhooks, attached per-monitor; fire-and-forget
   so a slow SMTP server never stalls probing, and **severity-routed** (each channel
