@@ -9,6 +9,7 @@ from apscheduler.schedulers.asyncio import AsyncIOScheduler  # type: ignore[impo
 from apscheduler.triggers.interval import IntervalTrigger  # type: ignore[import-untyped]
 from sqlalchemy import select
 
+from app.core.config import get_settings
 from app.core.db.session import SessionLocal
 from app.core.models.metric_value import MetricValue
 from app.core.models.monitor import Monitor, MonitorStatus
@@ -20,16 +21,20 @@ from app.core.services.trigger_service import TriggerService
 from app.tasks.notifications.dispatcher import schedule_dispatch
 from app.tasks.notifications.events import AlertEvent, TriggerAlertEvent
 from app.tasks.probes import ProbeOutcome, run_probe
+from app.tasks.retention import prune_history
 
 logger = logging.getLogger(__name__)
 
 RECONCILE_INTERVAL_SECONDS = 15
+RETENTION_INTERVAL_SECONDS = 3600
+_RECONCILE_JOB_ID = "__reconcile__"
+_PRUNE_JOB_ID = "__prune__"
+_RESERVED_JOB_IDS = {_RECONCILE_JOB_ID, _PRUNE_JOB_ID}
 
 
 class ProbeScheduler:
     def __init__(self) -> None:
         self._scheduler = AsyncIOScheduler(timezone="UTC")
-        self._reconcile_job_id = "__reconcile__"
 
     async def start(self) -> None:
         if self._scheduler.running:
@@ -38,10 +43,19 @@ class ProbeScheduler:
         self._scheduler.add_job(
             _reconcile_jobs,
             trigger=IntervalTrigger(seconds=RECONCILE_INTERVAL_SECONDS),
-            id=self._reconcile_job_id,
+            id=_RECONCILE_JOB_ID,
             replace_existing=True,
             next_run_time=datetime.now(UTC),
             kwargs={"scheduler": self._scheduler},
+        )
+        self._scheduler.add_job(
+            _prune_history_job,
+            trigger=IntervalTrigger(seconds=RETENTION_INTERVAL_SECONDS),
+            id=_PRUNE_JOB_ID,
+            replace_existing=True,
+            next_run_time=datetime.now(UTC) + timedelta(seconds=60),
+            max_instances=1,
+            coalesce=True,
         )
         logger.info("probe scheduler started")
 
@@ -59,7 +73,9 @@ async def _reconcile_jobs(scheduler: AsyncIOScheduler) -> None:
         result = await session.execute(stmt)
         desired = {row.id: row.interval for row in result}
 
-    managed_ids = {uuid.UUID(job.id) for job in scheduler.get_jobs() if job.id != "__reconcile__"}
+    managed_ids = {
+        uuid.UUID(job.id) for job in scheduler.get_jobs() if job.id not in _RESERVED_JOB_IDS
+    }
     desired_ids = set(desired.keys())
 
     for stale_id in managed_ids - desired_ids:
@@ -210,6 +226,22 @@ async def _run_probe_job(monitor_id: uuid.UUID) -> None:
 
     for trigger_alert in trigger_alerts:
         schedule_dispatch(trigger_alert)
+
+
+async def _prune_history_job() -> None:
+    retention_days = get_settings().history_retention_days
+    if retention_days <= 0:
+        return
+    cutoff = datetime.now(UTC) - timedelta(days=retention_days)
+    async with SessionLocal() as session:
+        result = await prune_history(session, cutoff)
+    if result.metric_values or result.monitor_results:
+        logger.info(
+            "pruned history older than %s: %d samples, %d probe results",
+            cutoff.isoformat(),
+            result.metric_values,
+            result.monitor_results,
+        )
 
 
 def build_scheduler() -> ProbeScheduler:
