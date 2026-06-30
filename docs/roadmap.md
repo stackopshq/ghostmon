@@ -108,8 +108,11 @@ GhostMonitor's reason to exist over a plain Zabbix clone is privacy (ghost-suite
 - ✅ **Problem timeline + acknowledge**: trigger OK↔PROBLEM transitions are persisted
   as problem events (opened on a flip, resolved on recovery), shown on a `/problems`
   timeline with severity, duration and one-click acknowledge. Read/ack REST API too.
-- *(next)* overview across hosts; long-range charts backed by trends.
-- Multi-step escalation actions (notify → wait → escalate → auto-remediate hooks).
+- ✅ **Multi-step escalation**: an ordered policy notifies channels at increasing
+  delays while a problem stays open and unacknowledged (ack/resolve stop it).
+  Per-minute engine + REST CRUD + a web page to manage the ladder.
+- *(next)* overview across hosts; long-range charts backed by trends;
+  auto-remediation hooks as an escalation action.
 
 ## Phase 5 — Discovery & scale
 

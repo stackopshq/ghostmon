@@ -5,6 +5,7 @@ from __future__ import annotations
 import uuid
 from datetime import UTC, datetime, timedelta
 from typing import Any
+from urllib.parse import urlencode
 
 import httpx
 
@@ -16,6 +17,7 @@ from app.core.schemas.escalation import EscalationPolicyCreate, EscalationStepCr
 from app.core.services.escalation_service import EscalationService
 
 NOW = datetime(2026, 6, 30, 12, 0, tzinfo=UTC)
+_FORM_HEADERS = {"content-type": "application/x-www-form-urlencoded"}
 
 
 async def _channel(session: Any, owner_id: Any, name: str) -> NotificationChannel:
@@ -166,3 +168,44 @@ async def test_escalation_api_crud_and_channel_validation(
 
     deleted = await client.delete(f"/api/escalation-policies/{policy_id}", headers=auth_headers)
     assert deleted.status_code == 204
+
+
+async def test_escalation_web_create_list_delete(
+    web_client: httpx.AsyncClient, session: Any, user: Any
+) -> None:
+    ch = await _channel(session, user.id, "team")
+    await session.commit()
+
+    body = urlencode(
+        [
+            ("name", "oncall"),
+            ("is_enabled", "on"),
+            ("delay_minutes", "0"),
+            ("channel_id", str(ch.id)),
+            ("delay_minutes", "5"),
+            ("channel_id", ""),  # empty channel row is ignored
+        ]
+    )
+    created = await web_client.post("/escalation/new", content=body, headers=_FORM_HEADERS)
+    assert created.status_code in (200, 303)
+
+    policies = list(await EscalationService(session).list_for_owner(user.id))
+    assert [p.name for p in policies] == ["oncall"]
+    assert len(policies[0].steps) == 1  # only the row with a channel
+
+    page = await web_client.get("/escalation")
+    assert "oncall" in page.text
+    assert "team" in page.text
+
+    deleted = await web_client.post(f"/escalation/{policies[0].id}/delete")
+    assert deleted.status_code in (200, 303)
+    assert list(await EscalationService(session).list_for_owner(user.id)) == []
+
+
+async def test_escalation_web_requires_a_step(
+    web_client: httpx.AsyncClient, session: Any, user: Any
+) -> None:
+    body = urlencode([("name", "empty"), ("delay_minutes", "0"), ("channel_id", "")])
+    resp = await web_client.post("/escalation/new", content=body, headers=_FORM_HEADERS)
+    assert resp.status_code == 422
+    assert "at least one step" in resp.text.lower()

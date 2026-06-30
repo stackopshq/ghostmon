@@ -91,6 +91,11 @@ with severity, duration, and one-click acknowledge:
 
 ![Problems timeline with acknowledge](docs/assets/problems-timeline.png)
 
+**Escalation policies** — notify channels at increasing delays while a problem stays
+open and unacknowledged:
+
+![Escalation policy ladder](docs/assets/escalation.png)
+
 **Host detail** — items with min/max and server-rendered history sparklines:
 
 | Dark | Light |

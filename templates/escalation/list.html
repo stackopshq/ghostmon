@@ -1,0 +1,88 @@
+{% extends "base.html" %}
+
+{% block title %}Escalation · GhostMonitor{% endblock %}
+
+{% block page %}
+<main class="page-bg">
+  <div class="container">
+    <div class="hero">
+      <h1 class="hero-title">
+        <span class="terminal-prompt">~ $&nbsp;</span><span>escalation</span><span class="terminal-cursor">▊</span>
+      </h1>
+      <div class="hero-sub">
+        Notify channels at increasing delays while a problem stays open and unacknowledged.
+      </div>
+    </div>
+
+    {% if error %}<div class="flash flash-error">{{ error }}</div>{% endif %}
+    {% if flash %}<div class="flash flash-ok">{{ flash }}</div>{% endif %}
+
+    <section class="card">
+      <h2>Policies <span class="count">{{ policies|length }}</span></h2>
+      {% if policies %}
+      <table class="table">
+        <thead><tr><th>Name</th><th>Enabled</th><th>Steps</th><th></th></tr></thead>
+        <tbody>
+          {% for p in policies %}
+          <tr>
+            <td>{{ p.name }}</td>
+            <td class="muted">{{ 'yes' if p.is_enabled else 'no' }}</td>
+            <td class="muted">
+              {% for s in p.steps %}{{ s.delay_minutes }}m → {{ channel_names.get(s.channel_id, '?') }}{% if not loop.last %} · {% endif %}{% endfor %}
+            </td>
+            <td class="row-actions">
+              <form method="post" action="/escalation/{{ p.id }}/delete" class="form-inline"
+                    onsubmit="return confirm('Delete policy {{ p.name }}?');">
+                <button type="submit" class="btn-new btn-muted">Delete</button>
+              </form>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+      {% else %}
+      <p class="muted">No policy yet. The most recent enabled policy applies to your problems.</p>
+      {% endif %}
+    </section>
+
+    <section class="card" style="margin-top: 20px;">
+      <h2>New policy</h2>
+      {% if channels %}
+      <form method="post" action="/escalation/new" class="stacked">
+        <div class="field-row">
+          <label class="field">
+            <span>Name</span>
+            <input type="text" name="name" required maxlength="255" placeholder="On-call ladder">
+          </label>
+          <label class="field inline">
+            <input type="checkbox" name="is_enabled" checked>
+            <span>Enabled</span>
+          </label>
+        </div>
+        <p class="muted">Each step notifies a channel after the delay (in minutes) from when the problem opened. Leave a channel empty to skip the row.</p>
+        {% for i in step_rows %}
+        <div class="field-row">
+          <label class="field">
+            <span>Step {{ i + 1 }} — delay (min)</span>
+            <input type="number" name="delay_minutes" min="0" max="10080" value="{{ i * 5 }}">
+          </label>
+          <label class="field">
+            <span>Channel</span>
+            <select name="channel_id">
+              <option value="">— none —</option>
+              {% for c in channels %}<option value="{{ c.id }}">{{ c.name }} ({{ c.type.value }})</option>{% endfor %}
+            </select>
+          </label>
+        </div>
+        {% endfor %}
+        <div class="form-actions">
+          <button type="submit" class="btn-primary">Create policy</button>
+        </div>
+      </form>
+      {% else %}
+      <p class="muted">Create a <a href="/channels">notification channel</a> first; escalation steps notify channels.</p>
+      {% endif %}
+    </section>
+  </div>
+</main>
+{% endblock %}
