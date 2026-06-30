@@ -8,7 +8,7 @@ from sqlalchemy.exc import IntegrityError
 
 from app.api.deps.db import DBSession
 from app.api.routes.web._shared import login_redirect, resolve_current_user, templates
-from app.core.models.host import ItemValueType
+from app.core.models.host import ItemSource, ItemValueType
 from app.core.models.user import User
 from app.core.schemas.host import HostCreate, HostUpdate, ItemCreate
 from app.core.services.host_service import HostService, ItemService
@@ -64,6 +64,7 @@ async def _host_detail_context(
         "host": host,
         "item_views": item_views,
         "value_types": [t.value for t in ItemValueType],
+        "item_sources": [s.value for s in ItemSource],
         "spark_w": _SPARK_W,
         "spark_h": _SPARK_H,
         "error": error,
@@ -102,12 +103,13 @@ async def create_host(
     session: DBSession,
     name: str = Form(...),
     description: str | None = Form(None),
+    address: str | None = Form(None),
 ) -> HTMLResponse | RedirectResponse:
     user = await resolve_current_user(request, session)
     if user is None:
         return login_redirect()
     try:
-        payload = HostCreate(name=name, description=description or None)
+        payload = HostCreate(name=name, description=description or None, address=address or None)
     except (ValueError, TypeError) as exc:
         return templates.TemplateResponse(
             request,
@@ -152,6 +154,7 @@ async def update_host(
     session: DBSession,
     name: str = Form(...),
     description: str | None = Form(None),
+    address: str | None = Form(None),
     is_enabled: str | None = Form(None),
 ) -> HTMLResponse | RedirectResponse:
     user = await resolve_current_user(request, session)
@@ -162,7 +165,13 @@ async def update_host(
     if host is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Host not found")
     await service.update(
-        host, HostUpdate(name=name, description=description or None, is_enabled=is_enabled == "on")
+        host,
+        HostUpdate(
+            name=name,
+            description=description or None,
+            address=address or None,
+            is_enabled=is_enabled == "on",
+        ),
     )
     return RedirectResponse(url=f"/hosts/{host_id}", status_code=status.HTTP_303_SEE_OTHER)
 
@@ -190,12 +199,18 @@ async def create_item_form(
     value_type: str = Form(...),
     units: str | None = Form(None),
     interval: int = Form(60),
+    source: str = Form("trapper"),
+    oid: str | None = Form(None),
+    community: str | None = Form(None),
 ) -> HTMLResponse | RedirectResponse:
     user = await resolve_current_user(request, session)
     if user is None:
         return login_redirect()
     if await HostService(session).get(host_id, user.id) is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Host not found")
+    config: dict[str, str] = {}
+    if source == ItemSource.SNMP.value and oid:
+        config = {"oid": oid, "community": community or "public"}
     try:
         payload = ItemCreate(
             key=key,
@@ -203,6 +218,8 @@ async def create_item_form(
             value_type=ItemValueType(value_type),
             units=units or None,
             interval=interval,
+            source=ItemSource(source),
+            config=config,
         )
     except (ValueError, TypeError) as exc:
         context = await _host_detail_context(session, user, host_id, error=str(exc))
