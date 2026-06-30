@@ -9,7 +9,10 @@ import httpx
 import pytest
 
 from app.core.models.host import Host, Item, ItemValueType
+from app.core.models.monitor import Monitor, MonitorType
 from app.core.services.host_service import ItemService
+from app.core.services.monitor_host_bridge import ensure_backing_latency_item
+from app.core.services.monitor_service import MonitorService
 
 
 async def _create_host(
@@ -146,3 +149,46 @@ async def test_record_value_routing_service(session: Any, user: Any) -> None:
 
     with pytest.raises(ValueError):
         await svc.record_value(item, "boom")
+
+
+# ── Monitor → host bridge ───────────────────────────────────────────────────
+
+
+async def _make_monitor(session: Any, owner_id: Any, name: str = "api") -> Monitor:
+    monitor = Monitor(
+        name=name, type=MonitorType.HTTP, url="https://x", interval=60, owner_id=owner_id
+    )
+    session.add(monitor)
+    await session.commit()
+    await session.refresh(monitor)
+    return monitor
+
+
+async def test_backing_item_is_provisioned_once(session: Any, user: Any) -> None:
+    monitor = await _make_monitor(session, user.id)
+    item1 = await ensure_backing_latency_item(session, monitor)
+    assert monitor.host_id is not None
+    assert item1.key == "latency_ms"
+    assert item1.value_type == ItemValueType.FLOAT
+    assert item1.units == "ms"
+
+    item2 = await ensure_backing_latency_item(session, monitor)
+    assert item2.id == item1.id
+
+
+async def test_monitor_delete_removes_backing_host(session: Any, user: Any) -> None:
+    monitor = await _make_monitor(session, user.id)
+    await ensure_backing_latency_item(session, monitor)
+    host_id = monitor.host_id
+
+    await MonitorService(session).delete(monitor)
+    assert await session.get(Host, host_id) is None
+
+
+async def test_duplicate_monitor_names_get_distinct_backing_hosts(session: Any, user: Any) -> None:
+    m1 = await _make_monitor(session, user.id, name="dup")
+    m2 = await _make_monitor(session, user.id, name="dup")
+    await ensure_backing_latency_item(session, m1)
+    await ensure_backing_latency_item(session, m2)
+    assert m1.host_id is not None and m2.host_id is not None
+    assert m1.host_id != m2.host_id
