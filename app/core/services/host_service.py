@@ -24,6 +24,10 @@ class HostService:
         stmt = select(Host).where(Host.id == host_id, Host.owner_id == owner_id)
         return (await self._session.execute(stmt)).scalar_one_or_none()
 
+    async def get_by_name(self, owner_id: uuid.UUID, name: str) -> Host | None:
+        stmt = select(Host).where(Host.owner_id == owner_id, Host.name == name)
+        return (await self._session.execute(stmt)).scalar_one_or_none()
+
     async def create(self, data: HostCreate, owner_id: uuid.UUID) -> Host:
         host = Host(
             name=data.name,
@@ -67,6 +71,10 @@ class ItemService:
 
     async def get(self, item_id: uuid.UUID, host_id: uuid.UUID) -> Item | None:
         stmt = select(Item).where(Item.id == item_id, Item.host_id == host_id)
+        return (await self._session.execute(stmt)).scalar_one_or_none()
+
+    async def get_by_key(self, host_id: uuid.UUID, key: str) -> Item | None:
+        stmt = select(Item).where(Item.host_id == host_id, Item.key == key)
         return (await self._session.execute(stmt)).scalar_one_or_none()
 
     async def create(self, host_id: uuid.UUID, data: ItemCreate) -> Item:
