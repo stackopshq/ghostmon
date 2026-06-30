@@ -27,16 +27,18 @@ def create_access_token(
     }
     if extra_claims:
         payload.update(extra_claims)
-    return jwt.encode(payload, settings.app_secret_key, algorithm=settings.jwt_algorithm)
+    encoded: str = jwt.encode(payload, settings.app_secret_key, algorithm=settings.jwt_algorithm)
+    return encoded
 
 
 def decode_token(token: str) -> dict[str, Any]:
     settings = get_settings()
     try:
-        return jwt.decode(
+        payload: dict[str, Any] = jwt.decode(
             token,
             settings.app_secret_key,
             algorithms=[settings.jwt_algorithm],
         )
     except JWTError as exc:
         raise TokenError(str(exc)) from exc
+    return payload

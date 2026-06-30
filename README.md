@@ -1,0 +1,107 @@
+# GhostMonitor
+
+Self-hosted uptime monitoring — a modern, lightweight alternative to Uptime-Kuma.
+
+GhostMonitor probes your endpoints on a schedule (HTTP, TCP, SSL certificate
+expiry, ICMP ping), records latency/availability history, and notifies you over
+email or webhooks when a monitor flips **UP ↔ DOWN**. It exposes both a JSON API
+and a server-rendered web UI, plus Prometheus metrics.
+
+## What
+
+- **Monitor types**: HTTP(S), TCP connect, SSL/TLS certificate expiry, ICMP ping.
+- **Scheduling**: per-monitor interval with configurable retries and retry interval.
+  A reconciling scheduler keeps live probe jobs in sync with the database.
+- **Maintenance windows**: one-shot (`once`) or recurring (`cron`) silencing of alerts.
+- **Notifications**: email (SMTP) and webhooks, attached per-monitor; fire-and-forget
+  on status transitions so a slow SMTP server never stalls probing.
+- **Auth**: local accounts (argon2 password hashing, JWT) and optional OIDC.
+- **Interfaces**: REST API (`/api`, OpenAPI at `/docs`), web UI, and a `ghostmon` CLI.
+- **Observability**: Prometheus metrics at `/metrics`, health at `/api/health`.
+
+Stack: Python 3.12, FastAPI, SQLAlchemy 2 (async) + asyncpg, PostgreSQL, APScheduler,
+Typer, Jinja2. Dependencies are managed with [`uv`](https://docs.astral.sh/uv/).
+
+## Run
+
+Prerequisites: `uv`, and a PostgreSQL instance. The repo ships a compose file
+(use **Podman**: `podman compose`) bringing up Postgres, the API, and Prometheus.
+
+```bash
+cp .env.example .env            # then edit APP_SECRET_KEY (>=16 chars) and DB/SMTP/OIDC
+uv sync --extra dev             # install dependencies into .venv
+uv run alembic upgrade head     # apply database migrations
+uv run ghostmon user create -e you@example.com -s   # create a superuser (prompts for password)
+uv run uvicorn app.api.main:app --reload            # API + scheduler on http://localhost:8000
+```
+
+Or the full stack with containers:
+
+```bash
+APP_SECRET_KEY=$(openssl rand -hex 32) podman compose up --build
+```
+
+Useful endpoints: `/` (web UI), `/docs` (API docs), `/api/health`, `/metrics`.
+
+## Test
+
+Tests run against a **real PostgreSQL** database (the schema uses Postgres-specific
+types), not SQLite. Bring one up first:
+
+```bash
+podman run --rm -d --name ghostmon-test-pg \
+  -e POSTGRES_USER=ghostmon -e POSTGRES_PASSWORD=ghostmon -e POSTGRES_DB=ghostmon_test \
+  -p 5432:5432 docker.io/library/postgres:16-alpine
+
+uv run pytest                                   # full suite
+uv run pytest tests/test_probes.py -q           # one module
+uv run pytest tests/test_probes.py::test_name   # one test
+```
+
+Quality gate (all enforced in CI):
+
+```bash
+uv run ruff format --check .    # formatting
+uv run ruff check .             # lint
+uv run mypy app                 # strict type-checking
+```
+
+## Deploy
+
+Build an OCI image and run it against a managed Postgres:
+
+```bash
+podman build -t ghostmon:latest .
+podman run -d --name ghostmon -p 8000:8000 \
+  -e APP_ENV=production \
+  -e APP_SECRET_KEY=... \
+  -e DATABASE_URL=postgresql+asyncpg://user:pass@host:5432/ghostmon \
+  ghostmon:latest
+```
+
+Run `uv run alembic upgrade head` against the target database before starting a new
+release. Configuration is 12-factor (environment variables only); see `.env.example`
+for the full list. `APP_SECRET_KEY` is required and validated at startup.
+
+## Architecture
+
+Layered, with dependencies pointing inward toward `app/core`:
+
+| Layer | Path | Responsibility |
+| --- | --- | --- |
+| Domain & infra | `app/core/` | ORM models, Pydantic schemas, service classes, security, DB session |
+| HTTP | `app/api/` | FastAPI app factory, REST routes (`/api`), server-rendered web UI |
+| Background | `app/tasks/` | Probe scheduler, probe implementations, notification dispatch |
+| CLI | `app/cli/` | Typer admin commands (`ghostmon user …`, `ghostmon monitor …`) |
+
+The scheduler runs **in-process** with the API. A reconcile job (every 15s) diffs the
+monitors in the database against the live APScheduler jobs and converges them — the
+database is the single source of truth; you change a monitor's `interval`/`status`
+rather than scheduling probe jobs directly. Probe results are persisted as
+`MonitorResult` rows, and alerts fire only on genuine UP↔DOWN transitions.
+
+See `CLAUDE.md` for a deeper architecture walkthrough.
+
+## License
+
+Released under the [MIT License](LICENSE). Copyright (c) 2026 StackOps HQ.

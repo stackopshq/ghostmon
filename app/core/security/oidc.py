@@ -40,7 +40,8 @@ class OIDCProvider:
     def client(self) -> StarletteOAuth2App:
         if not self._enabled:
             raise OIDCNotConfiguredError("OIDC auth is disabled.")
-        return self._oauth.ghostmon_oidc  # type: ignore[attr-defined,no-any-return]
+        client: StarletteOAuth2App = self._oauth.ghostmon_oidc
+        return client
 
 
 @lru_cache
