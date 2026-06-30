@@ -36,7 +36,8 @@ exposes both a JSON API and a server-rendered web UI, plus Prometheus metrics.
 
 ## What (today)
 
-- **Monitor types**: HTTP(S), TCP connect, SSL/TLS certificate expiry, ICMP ping.
+- **Monitor types**: HTTP(S), TCP connect, SSL/TLS certificate expiry, ICMP ping,
+  and SNMP reachability (SNMPv2c GET).
 - **Scheduling**: per-monitor interval with configurable retries and retry interval.
   A reconciling scheduler keeps live probe jobs in sync with the database.
 - **Triggers & severities**: threshold rules on collected metrics (e.g. latency)

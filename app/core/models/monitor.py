@@ -24,6 +24,7 @@ class MonitorType(enum.StrEnum):
     TCP = "tcp"
     PING = "ping"
     SSL = "ssl"
+    SNMP = "snmp"
     DOCKER = "docker"
 
 

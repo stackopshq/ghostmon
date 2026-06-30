@@ -53,7 +53,8 @@ The foundational data-model shift (the core of ADR 0001), via expand → migrate
   to provision its items (idempotent re-apply). Trigger templates wait for triggers
   to move onto items (the contract step).
 - ✅ **CPU utilisation** in the agent via `/proc/stat` delta sampling.
-- *(next)* SNMP polling for network devices (adds a dependency).
+- ✅ **SNMP** reachability monitor type (SNMPv2c GET via `pysnmp`). Polling arbitrary
+  OIDs into items needs a server-side item poller — a later step.
 
 ## Phase 4 — Alerting escalation & dashboards
 
