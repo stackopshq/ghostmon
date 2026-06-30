@@ -3,19 +3,31 @@ from __future__ import annotations
 import uuid
 from collections.abc import Sequence
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import datetime, timedelta
+from typing import Any
 
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.models.host import Item
+from app.core.models.metric_value import MetricValue
+from app.core.models.monitor import Monitor
 from app.core.models.trigger import (
     Severity,
     Trigger,
+    TriggerAggregation,
     TriggerMetric,
     TriggerOperator,
     TriggerState,
 )
 from app.core.schemas.trigger import TriggerCreate, TriggerUpdate
+from app.core.services.monitor_host_bridge import LATENCY_ITEM_KEY
+
+_AGGREGATE_FN: dict[TriggerAggregation, Any] = {
+    TriggerAggregation.AVG: func.avg,
+    TriggerAggregation.MIN: func.min,
+    TriggerAggregation.MAX: func.max,
+}
 
 
 @dataclass(slots=True)
@@ -111,7 +123,7 @@ class TriggerService:
 
         fired: list[TriggerFired] = []
         for trigger in triggers:
-            value = values.get(trigger.metric)
+            value = await self._observe(trigger, monitor_id, values, now)
             if value is None:
                 continue
             new_state = (
@@ -140,3 +152,31 @@ class TriggerService:
         if fired:
             await self._session.commit()
         return fired
+
+    async def _observe(
+        self,
+        trigger: Trigger,
+        monitor_id: uuid.UUID,
+        values: dict[TriggerMetric, float | None],
+        now: datetime,
+    ) -> float | None:
+        """The value a trigger compares to its threshold: the latest probe value
+        (LAST / no window), or an aggregate over the backing item's history."""
+        if trigger.aggregation == TriggerAggregation.LAST or trigger.window_seconds <= 0:
+            return values.get(trigger.metric)
+
+        aggregate = _AGGREGATE_FN[trigger.aggregation]
+        since = now - timedelta(seconds=trigger.window_seconds)
+        stmt = (
+            select(aggregate(MetricValue.value_num))
+            .join(Item, Item.id == MetricValue.item_id)
+            .join(Monitor, Monitor.host_id == Item.host_id)
+            .where(
+                Monitor.id == monitor_id,
+                Item.key == LATENCY_ITEM_KEY,
+                MetricValue.collected_at >= since,
+                MetricValue.value_num.is_not(None),
+            )
+        )
+        result = (await self._session.execute(stmt)).scalar_one_or_none()
+        return float(result) if result is not None else None

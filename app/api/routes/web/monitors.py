@@ -9,7 +9,12 @@ from fastapi.responses import HTMLResponse, RedirectResponse
 from app.api.deps.db import DBSession
 from app.api.routes.web._shared import login_redirect, resolve_current_user, templates
 from app.core.models.monitor import MonitorStatus, MonitorType
-from app.core.models.trigger import Severity, TriggerMetric, TriggerOperator
+from app.core.models.trigger import (
+    Severity,
+    TriggerAggregation,
+    TriggerMetric,
+    TriggerOperator,
+)
 from app.core.models.user import User
 from app.core.schemas.monitor import MonitorCreate, MonitorUpdate
 from app.core.schemas.trigger import TriggerCreate
@@ -55,6 +60,7 @@ async def _detail_context(
         "monitor_statuses": [s.value for s in MonitorStatus],
         "trigger_metrics": [m.value for m in TriggerMetric],
         "trigger_operators": [{"value": o.value, "label": s} for o, s in _OPERATOR_SYMBOLS.items()],
+        "trigger_aggregations": [a.value for a in TriggerAggregation],
         "severities": [s.value for s in Severity],
         "operator_symbols": {o.value: s for o, s in _OPERATOR_SYMBOLS.items()},
         "error": error,
@@ -243,6 +249,8 @@ async def create_trigger_form(
     operator: str = Form(...),
     threshold: float = Form(...),
     severity: str = Form(...),
+    aggregation: str = Form("last"),
+    window_seconds: int = Form(0),
 ) -> HTMLResponse | RedirectResponse:
     user = await resolve_current_user(request, session)
     if user is None:
@@ -256,6 +264,8 @@ async def create_trigger_form(
             operator=TriggerOperator(operator),
             threshold=threshold,
             severity=Severity(severity),
+            aggregation=TriggerAggregation(aggregation),
+            window_seconds=window_seconds,
         )
     except (ValueError, TypeError) as exc:
         return await _render_detail_with_error(request, session, user, monitor_id, str(exc))

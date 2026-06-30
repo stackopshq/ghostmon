@@ -35,9 +35,12 @@ The foundational data-model shift (the core of ADR 0001), via expand → migrate
 - ✅ **Retention**: hourly pruning of history/results past `HISTORY_RETENTION_DAYS`.
 - ✅ **Web UI**: hosts list + host detail (items CRUD, latest/min/max, server-rendered
   history sparklines).
-- *(next)* **Contract**: once readers move to items, retire the monitor-specific tables.
-- *(next)* Hourly `trends` (min/avg/max) for long-range graphs; triggers that
-  evaluate item-history windows (`avg(metric, 5m) > x`).
+- ✅ **History-aware triggers**: triggers can aggregate (`avg`/`min`/`max`) over a
+  look-back window of item history instead of only the last probe value.
+- *(deferred)* **Contract**: retire the monitor-specific tables — held back until
+  status/error are modelled as items, so it doesn't regress the uptime feature.
+- *(deferred)* Hourly `trends` (min/avg/max) — speculative until a long-range graph
+  consumes them; the UI reads raw history for now.
 
 ## Phase 3 — Templates & richer collection
 

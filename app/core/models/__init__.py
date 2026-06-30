@@ -15,6 +15,7 @@ from app.core.models.notification_channel import (
 from app.core.models.trigger import (
     Severity,
     Trigger,
+    TriggerAggregation,
     TriggerMetric,
     TriggerOperator,
     TriggerState,
@@ -38,6 +39,7 @@ __all__ = [
     "ProbeStatus",
     "Severity",
     "Trigger",
+    "TriggerAggregation",
     "TriggerMetric",
     "TriggerOperator",
     "TriggerState",

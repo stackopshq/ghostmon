@@ -124,7 +124,10 @@
           {% for t in triggers %}
           <tr>
             <td>{{ t.name }}{% if not t.is_enabled %} <span class="muted">· disabled</span>{% endif %}</td>
-            <td class="muted">{{ t.metric.value }} {{ operator_symbols[t.operator.value] }} {{ t.threshold }}</td>
+            <td class="muted">
+              {% if t.aggregation.value != 'last' and t.window_seconds %}{{ t.aggregation.value }}({{ t.metric.value }}, {{ t.window_seconds }}s){% else %}{{ t.metric.value }}{% endif %}
+              {{ operator_symbols[t.operator.value] }} {{ t.threshold }}
+            </td>
             <td><span class="sev sev-{{ t.severity.value }}">{{ t.severity.value }}</span></td>
             <td><span class="tstate tstate-{{ t.state.value }}">{{ t.state.value }}</span></td>
             <td class="row-actions">
@@ -168,6 +171,18 @@
             <select name="severity" required>
               {% for s in severities %}<option value="{{ s }}"{% if s == 'warning' %} selected{% endif %}>{{ s }}</option>{% endfor %}
             </select>
+          </label>
+        </div>
+        <div class="field-row">
+          <label class="field">
+            <span>Aggregation</span>
+            <select name="aggregation">
+              {% for a in trigger_aggregations %}<option value="{{ a }}">{{ a }}</option>{% endfor %}
+            </select>
+          </label>
+          <label class="field">
+            <span>Window (s) — for avg/min/max</span>
+            <input type="number" name="window_seconds" min="0" max="86400" value="0">
           </label>
         </div>
         <div class="form-actions">
