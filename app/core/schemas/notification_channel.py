@@ -7,6 +7,7 @@ from typing import Annotated, Any, Literal
 from pydantic import BaseModel, ConfigDict, EmailStr, Field, HttpUrl, TypeAdapter
 
 from app.core.models.notification_channel import ChannelType
+from app.core.models.trigger import Severity
 
 
 class EmailChannelConfig(BaseModel):
@@ -41,6 +42,7 @@ def parse_channel_config(data: dict[str, Any]) -> EmailChannelConfig | WebhookCh
 class NotificationChannelBase(BaseModel):
     name: str = Field(min_length=1, max_length=255)
     is_enabled: bool = True
+    min_severity: Severity = Severity.INFO
 
 
 class NotificationChannelCreate(NotificationChannelBase):
@@ -50,6 +52,7 @@ class NotificationChannelCreate(NotificationChannelBase):
 class NotificationChannelUpdate(BaseModel):
     name: str | None = Field(default=None, min_length=1, max_length=255)
     is_enabled: bool | None = None
+    min_severity: Severity | None = None
     config: ChannelConfig | None = None
 
 

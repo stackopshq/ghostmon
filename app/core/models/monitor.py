@@ -15,6 +15,7 @@ if TYPE_CHECKING:
     from app.core.models.maintenance import Maintenance
     from app.core.models.monitor_result import MonitorResult
     from app.core.models.notification_channel import NotificationChannel
+    from app.core.models.trigger import Trigger
     from app.core.models.user import User
 
 
@@ -72,5 +73,10 @@ class Monitor(UUIDPrimaryKey, Timestamped, Base):
     maintenances: Mapped[list[Maintenance]] = relationship(
         secondary="maintenance_monitors",
         back_populates="monitors",
+        lazy="noload",
+    )
+    triggers: Mapped[list[Trigger]] = relationship(
+        back_populates="monitor",
+        cascade="all, delete-orphan",
         lazy="noload",
     )

@@ -10,6 +10,7 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.core.db.session import Base
 from app.core.models.mixins import Timestamped, UUIDPrimaryKey
+from app.core.models.trigger import Severity
 
 if TYPE_CHECKING:
     from app.core.models.monitor import Monitor
@@ -49,6 +50,15 @@ class NotificationChannel(UUIDPrimaryKey, Timestamped, Base):
     )
     config: Mapped[dict[str, Any]] = mapped_column(JSONB, nullable=False, default=dict)
     is_enabled: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
+    # Only alerts at or above this severity are delivered through this channel.
+    # Default INFO keeps existing channels receiving everything.
+    min_severity: Mapped[Severity] = mapped_column(
+        Enum(Severity, name="alert_severity"),
+        nullable=False,
+        default=Severity.INFO,
+        # Native enums store the member *name*; server_default must match (INFO, not info).
+        server_default="INFO",
+    )
 
     owner_id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True),

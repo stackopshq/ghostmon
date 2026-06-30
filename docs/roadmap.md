@@ -11,16 +11,20 @@ per-monitor interval, binary UP/DOWN status with latency, maintenance windows, a
 email/webhook notifications on status transitions. Auth (local + OIDC), web UI,
 REST API, CLI, Prometheus metrics, liveness/readiness probes.
 
-## Phase 1 — Triggers & severities *(next)*
+## Phase 1 — Triggers & severities ✅ *(shipped)*
 
-Introduce a real problem-detection layer on top of the metrics already collected.
+A problem-detection layer on top of the metrics already collected.
 
-- `Trigger(host/item, expression, severity)` with `info|warning|average|high|disaster`.
-- Evaluate thresholds on existing signals (latency, TLS days-to-expiry, HTTP status).
-- Problem/OK state machine replacing the hardcoded UP↔DOWN transition.
-- Severity-routed alerting (notification channels gain a minimum severity).
+- ✅ `Trigger(monitor, metric, operator, threshold, severity)` with
+  `info|warning|average|high|disaster`; threshold rules on the `latency_ms` metric
+  (the `metric` enum is the extension point for TLS days-to-expiry, HTTP status, …).
+- ✅ Problem/OK state machine evaluated each probe, alerting on state changes
+  (alongside the existing availability UP↔DOWN alerts).
+- ✅ Severity-routed alerting — notification channels gained a `min_severity`.
+- Follow-ups: aggregate expressions over history (`avg(metric, 5m) > x`), more
+  metrics, and a web UI for managing triggers.
 
-## Phase 2 — Hosts, Items & history
+## Phase 2 — Hosts, Items & history *(next)*
 
 The foundational data-model shift (the core of ADR 0001).
 
