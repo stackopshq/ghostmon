@@ -20,6 +20,14 @@
     <div class="flash flash-error">{{ error }}</div>
     {% endif %}
 
+    {% if item_views | selectattr('item.is_private') | list %}
+    <p class="muted" style="margin-bottom: 12px;">
+      🔒 This host has private (end-to-end encrypted) items. Append
+      <code>#k=YOUR_KEY</code> to this URL to decrypt them in your browser — the key
+      stays in the fragment and never reaches the server.
+    </p>
+    {% endif %}
+
     <div class="grid-two">
       <section class="card">
         <h2>Settings</h2>
@@ -96,6 +104,10 @@
               <input type="text" name="community" maxlength="255" placeholder="public">
             </label>
           </div>
+          <label class="field inline">
+            <input type="checkbox" name="is_private">
+            <span>🔒 Private (zero-knowledge) — values are encrypted client-side; the server never sees them</span>
+          </label>
           <div class="form-actions">
             <button type="submit" class="btn-primary">Add item</button>
           </div>
@@ -115,9 +127,11 @@
           <tr>
             <td>{{ iv.item.name }}{% if not iv.item.is_enabled %} <span class="muted">· disabled</span>{% endif %}</td>
             <td class="muted">{{ iv.item.key }}</td>
-            <td class="muted">{{ iv.item.source.value }}{% if iv.item.source.value == 'snmp' and iv.item.config.get('oid') %} <span style="opacity:.7">({{ iv.item.config.get('oid') }})</span>{% endif %}</td>
+            <td class="muted">{{ iv.item.source.value }}{% if iv.item.is_private %} <span title="end-to-end encrypted">🔒</span>{% endif %}{% if iv.item.source.value == 'snmp' and iv.item.config.get('oid') %} <span style="opacity:.7">({{ iv.item.config.get('oid') }})</span>{% endif %}</td>
             <td>
-              {% if iv.latest is none %}<span class="muted">—</span>
+              {% if iv.item.is_private %}
+                {% if iv.latest %}<span class="zk" data-zk-cipher="{{ iv.latest.value_text }}">🔒 private</span>{% else %}<span class="muted">🔒 —</span>{% endif %}
+              {% elif iv.latest is none %}<span class="muted">—</span>
               {% elif iv.latest.value_num is not none %}{{ iv.latest.value_num }}{{ ' ' ~ iv.item.units if iv.item.units }}
               {% else %}{{ iv.latest.value_text }}{% endif %}
             </td>
@@ -150,4 +164,8 @@
     </section>
   </div>
 </main>
+{% endblock %}
+
+{% block scripts %}
+<script src="/static/zk.js?v={{ v }}" defer></script>
 {% endblock %}

@@ -298,3 +298,34 @@ async def test_host_channel_attach_list_detach(
     assert detached.status_code == 204
     empty = await client.get(f"/api/hosts/{host_id}/channels", headers=auth_headers)
     assert empty.json() == []
+
+
+# ── Zero-knowledge private items (web) ──────────────────────────────────────
+
+
+async def test_hosts_web_ui_private_item_renders_cipher(
+    web_client: httpx.AsyncClient, user: Any, session: Any
+) -> None:
+    await web_client.post("/hosts/new", data={"name": "vault-h"})
+    host = (await HostService(session).list_for_owner(user.id))[0]
+    await web_client.post(
+        f"/hosts/{host.id}/items/new",
+        data={
+            "key": "sec",
+            "name": "Sec",
+            "value_type": "text",
+            "source": "trapper",
+            "interval": "60",
+            "is_private": "on",
+        },
+    )
+    item = (await ItemService(session).list_for_host(host.id))[0]
+    assert item.is_private is True
+
+    # A pushed value is stored opaque; the page exposes it for in-browser decryption.
+    await ItemService(session).record_value(item, "TOKENABC")
+    detail = await web_client.get(f"/hosts/{host.id}")
+    assert detail.status_code == 200
+    assert 'data-zk-cipher="TOKENABC"' in detail.text
+    assert "/static/zk.js" in detail.text
+    assert "#k=YOUR_KEY" in detail.text

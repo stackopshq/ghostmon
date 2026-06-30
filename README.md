@@ -16,6 +16,12 @@ exposes both a JSON API and a server-rendered web UI, plus Prometheus metrics.
 
 ## Screenshots
 
+**Zero-knowledge private items** — values are encrypted client-side; the server only
+ever holds ciphertext, and the browser decrypts them with a key kept in the URL
+fragment (`#k=…`) that never reaches the server:
+
+![Zero-knowledge private item decrypted in-browser](docs/assets/zk-private-item.png)
+
 **Host detail** — items (metrics) with min/max and server-rendered history sparklines:
 
 | Dark | Light |
