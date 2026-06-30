@@ -74,6 +74,7 @@ class HostService:
             }
             for h in hosts
         ]
+
         def _sort_key(view: dict[str, object]) -> tuple[bool, int]:
             severity = view["worst_severity"]
             rank = severity.rank if isinstance(severity, Severity) else 0
