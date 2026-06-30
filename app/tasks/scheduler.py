@@ -15,6 +15,7 @@ from app.core.models.metric_value import MetricValue
 from app.core.models.monitor import Monitor, MonitorStatus
 from app.core.models.monitor_result import MonitorResult, ProbeStatus
 from app.core.models.trigger import TriggerMetric
+from app.core.services.discovery_service import DiscoveryService
 from app.core.services.escalation_service import EscalationService
 from app.core.services.maintenance_service import MaintenanceService
 from app.core.services.monitor_host_bridge import ensure_backing_items
@@ -32,15 +33,18 @@ RECONCILE_INTERVAL_SECONDS = 15
 RETENTION_INTERVAL_SECONDS = 3600
 POLL_ITEMS_INTERVAL_SECONDS = 15
 ESCALATION_INTERVAL_SECONDS = 60
+DISCOVERY_INTERVAL_SECONDS = 60
 _RECONCILE_JOB_ID = "__reconcile__"
 _PRUNE_JOB_ID = "__prune__"
 _POLL_ITEMS_JOB_ID = "__poll_items__"
 _ESCALATION_JOB_ID = "__escalation__"
+_DISCOVERY_JOB_ID = "__discovery__"
 _RESERVED_JOB_IDS = {
     _RECONCILE_JOB_ID,
     _PRUNE_JOB_ID,
     _POLL_ITEMS_JOB_ID,
     _ESCALATION_JOB_ID,
+    _DISCOVERY_JOB_ID,
 }
 
 
@@ -75,6 +79,15 @@ class ProbeScheduler:
             id=_ESCALATION_JOB_ID,
             replace_existing=True,
             next_run_time=datetime.now(UTC) + timedelta(seconds=30),
+            max_instances=1,
+            coalesce=True,
+        )
+        self._scheduler.add_job(
+            _discovery_job,
+            trigger=IntervalTrigger(seconds=DISCOVERY_INTERVAL_SECONDS),
+            id=_DISCOVERY_JOB_ID,
+            replace_existing=True,
+            next_run_time=datetime.now(UTC) + timedelta(seconds=45),
             max_instances=1,
             coalesce=True,
         )
@@ -318,6 +331,19 @@ async def _escalation_job() -> None:
         schedule_escalation(event, channel)
     if deliveries:
         logger.info("dispatched %d escalation step(s)", len(deliveries))
+
+
+async def _discovery_job() -> None:
+    """Scan due discovery rules and provision hosts for newly-reachable addresses."""
+    now = datetime.now(UTC)
+    async with SessionLocal() as session:
+        service = DiscoveryService(session)
+        rules = await service.due_rules(now)
+        for rule in rules:
+            try:
+                await service.scan_rule(rule, now)
+            except Exception:
+                logger.exception("discovery scan failed for rule %s", rule.id)
 
 
 def build_scheduler() -> ProbeScheduler:

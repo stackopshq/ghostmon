@@ -120,11 +120,17 @@ GhostMonitor's reason to exist over a plain Zabbix clone is privacy (ghost-suite
   (webhook-only, validated on create and at fire time).
 - *(next)* long-range charts backed by trends.
 
-## Phase 5 — Discovery & scale
+## Phase 5 — Discovery & scale *(in progress)*
 
-- Network and host auto-discovery with rule-based item provisioning.
-- Distributed collection (proxy/agent fan-in) and history storage scaling
-  (evaluate TimescaleDB or a dedicated TSDB — measure first).
+- ✅ **Network auto-discovery**: a `DiscoveryRule` (CIDR + ping/TCP method + optional
+  template + interval) is scanned on a schedule; responsive addresses that are not yet
+  a host are provisioned as hosts, with the rule's template items applied. Guardrails:
+  CIDR capped (≤ 1024 hosts), bounded scan concurrency, dedupe by address, owner-scoped.
+  REST CRUD + scan-now under `/api/discovery-rules`. *(next)* a web UI.
+- *(deferred — measure first)* Distributed collection (proxy/agent fan-in) and history
+  storage scaling (TimescaleDB / a dedicated TSDB). Deliberately not built yet: it is
+  premature without real load data. Add ingestion-volume/throughput metrics first so
+  the decision is evidence-driven.
 
 ---
 
