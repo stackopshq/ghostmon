@@ -109,7 +109,8 @@ current value, and trigger status:
 - **Notifications** — email (SMTP) and webhooks, attached per monitor or host, **severity-routed**, and fire-and-forget so a slow SMTP server never stalls probing.
 - **Privacy** — encryption at rest for secrets *and* alert targets; zero-knowledge private items; no telemetry, no third-party calls, hashed ingest tokens, bounded retention.
 - **Maintenance windows** — one-shot or recurring (`cron`) alert silencing.
-- **Auth** — local accounts (argon2, JWT) and optional OIDC.
+- **Auth** — local accounts (argon2, JWT) and **OIDC SSO** (any OpenID Connect
+  provider) on top, sharing the same session; SSO-only accounts need no password.
 - **Interfaces** — REST API (`/api`, OpenAPI at `/docs`), web UI, a `ghostmon` CLI, Prometheus metrics (`/metrics`), liveness/readiness (`/healthz`, `/readyz`).
 
 Stack: Python 3.12 · FastAPI · SQLAlchemy 2 (async) + asyncpg · PostgreSQL · APScheduler · Typer · Jinja2. Dependencies managed with [`uv`](https://docs.astral.sh/uv/). Containers built and run with **Podman**.

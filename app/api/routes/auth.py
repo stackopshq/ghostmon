@@ -1,3 +1,4 @@
+import logging
 from typing import Annotated, Any
 
 from fastapi import APIRouter, Depends, HTTPException, Request, status
@@ -12,6 +13,8 @@ from app.core.schemas.user import UserRead
 from app.core.security.oidc import OIDCNotConfiguredError, get_oidc_provider
 from app.core.security.tokens import create_access_token
 from app.core.services.user_service import UserService
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
@@ -89,9 +92,11 @@ async def oidc_callback(request: Request, session: DBSession) -> RedirectRespons
     try:
         token_data: dict[str, Any] = await client.authorize_access_token(request)
     except Exception as exc:
+        # Don't surface provider/library internals to the caller; log for operators.
+        logger.warning("OIDC token exchange failed: %s", exc)
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail=f"OIDC callback failed: {exc}",
+            detail="OIDC sign-in failed.",
         ) from exc
 
     userinfo = token_data.get("userinfo") or {}
