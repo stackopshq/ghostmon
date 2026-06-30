@@ -10,6 +10,8 @@ class EscalationStepCreate(BaseModel):
     step_order: int = Field(ge=1, le=100)
     delay_minutes: int = Field(ge=0, le=10080)  # up to a week
     channel_id: uuid.UUID
+    # When set, an auto-remediation step: POSTs this command (+ context) to a webhook.
+    action_command: str | None = Field(default=None, max_length=500)
 
 
 class EscalationStepRead(BaseModel):
@@ -19,6 +21,7 @@ class EscalationStepRead(BaseModel):
     step_order: int
     delay_minutes: int
     channel_id: uuid.UUID
+    action_command: str | None
 
 
 class EscalationPolicyCreate(BaseModel):

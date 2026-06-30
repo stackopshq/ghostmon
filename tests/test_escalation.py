@@ -209,3 +209,97 @@ async def test_escalation_web_requires_a_step(
     resp = await web_client.post("/escalation/new", content=body, headers=_FORM_HEADERS)
     assert resp.status_code == 422
     assert "at least one step" in resp.text.lower()
+
+
+async def test_remediation_step_emits_remediation_event(session: Any, user: Any) -> None:
+    hook = await _channel(session, user.id, "automation")  # webhook
+    trig = await _trigger(session, user.id)
+    await EscalationService(session).create(
+        user.id,
+        EscalationPolicyCreate(
+            name="auto",
+            steps=[
+                EscalationStepCreate(
+                    step_order=1,
+                    delay_minutes=0,
+                    channel_id=hook.id,
+                    action_command="restart nginx",
+                )
+            ],
+        ),
+    )
+    await _problem(session, user.id, trig.id, NOW - timedelta(minutes=1))
+    await session.commit()
+
+    deliveries = await EscalationService(session).due_escalations(NOW)
+    assert len(deliveries) == 1
+    event, _channel_obj = deliveries[0]
+    assert event.is_remediation
+    assert event.action_command == "restart nginx"
+    payload = event.payload()
+    assert payload["event"] == "remediation"
+    assert payload["action"]["command"] == "restart nginx"
+
+
+async def test_remediation_step_skipped_for_non_webhook_channel(session: Any, user: Any) -> None:
+    email = NotificationChannel(
+        name="inbox",
+        type=ChannelType.EMAIL,
+        config={"to": "ops@x.io"},
+        owner_id=user.id,
+        min_severity=Severity.INFO,
+    )
+    session.add(email)
+    await session.flush()
+    trig = await _trigger(session, user.id)
+    await EscalationService(session).create(
+        user.id,
+        EscalationPolicyCreate(
+            name="bad-auto",
+            steps=[
+                EscalationStepCreate(
+                    step_order=1, delay_minutes=0, channel_id=email.id, action_command="rm -rf"
+                )
+            ],
+        ),
+    )
+    pe = await _problem(session, user.id, trig.id, NOW - timedelta(minutes=1))
+    await session.commit()
+
+    # The engine refuses to send a remediation to an inbox, but still advances the
+    # step so it is not retried every minute.
+    assert await EscalationService(session).due_escalations(NOW) == []
+    await session.refresh(pe)
+    assert pe.escalated_step == 1
+
+
+async def test_api_rejects_remediation_on_non_webhook(
+    client: httpx.AsyncClient, auth_headers: dict[str, str], session: Any, user: Any
+) -> None:
+    email = NotificationChannel(
+        name="inbox",
+        type=ChannelType.EMAIL,
+        config={"to": "ops@x.io"},
+        owner_id=user.id,
+        min_severity=Severity.INFO,
+    )
+    session.add(email)
+    await session.commit()
+
+    resp = await client.post(
+        "/api/escalation-policies",
+        headers=auth_headers,
+        json={
+            "name": "bad",
+            "steps": [
+                {
+                    "step_order": 1,
+                    "delay_minutes": 0,
+                    "channel_id": str(email.id),
+                    "action_command": "restart",
+                }
+            ],
+        },
+    )
+    assert resp.status_code == 422
+    assert "webhook" in resp.text.lower()

@@ -28,7 +28,7 @@
             <td>{{ p.name }}</td>
             <td class="muted">{{ 'yes' if p.is_enabled else 'no' }}</td>
             <td class="muted">
-              {% for s in p.steps %}{{ s.delay_minutes }}m → {{ channel_names.get(s.channel_id, '?') }}{% if not loop.last %} · {% endif %}{% endfor %}
+              {% for s in p.steps %}{{ s.delay_minutes }}m → {{ channel_names.get(s.channel_id, '?') }}{% if s.action_command %} <span title="auto-remediation: {{ s.action_command }}">⚙</span>{% endif %}{% if not loop.last %} · {% endif %}{% endfor %}
             </td>
             <td class="row-actions">
               <form method="post" action="/escalation/{{ p.id }}/delete" class="form-inline"
@@ -59,7 +59,7 @@
             <span>Enabled</span>
           </label>
         </div>
-        <p class="muted">Each step notifies a channel after the delay (in minutes) from when the problem opened. Leave a channel empty to skip the row.</p>
+        <p class="muted">Each step notifies a channel after the delay (in minutes) from when the problem opened. Leave a channel empty to skip the row. Set an <strong>action command</strong> to make a step auto-remediation: it POSTs the command + problem context to a <strong>webhook</strong> channel for an external runbook (the server never runs commands itself).</p>
         {% for i in step_rows %}
         <div class="field-row">
           <label class="field">
@@ -72,6 +72,10 @@
               <option value="">— none —</option>
               {% for c in channels %}<option value="{{ c.id }}">{{ c.name }} ({{ c.type.value }})</option>{% endfor %}
             </select>
+          </label>
+          <label class="field">
+            <span>Action command (optional — webhook only)</span>
+            <input type="text" name="action_command" maxlength="500" placeholder="e.g. restart nginx">
           </label>
         </div>
         {% endfor %}
