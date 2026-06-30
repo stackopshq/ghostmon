@@ -31,7 +31,8 @@ A problem-detection layer on top of the metrics already collected.
   item's latest value or a window of its history, and alert through the **host's**
   notification channels (host↔channel attachment from earlier). Evaluated on every
   value write (ingest API, user push, SNMP poll). Private items are skipped.
-- *(next)* a web UI to manage item triggers on the host/item page.
+- ✅ **Web UI**: an item detail page (linked from the host's items table) manages an
+  item's triggers (add/list/delete with severity/state pills) and shows recent values.
 
 ## Phase 2 — Hosts, Items & history *(in progress)*
 
