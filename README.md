@@ -48,6 +48,8 @@ exposes both a JSON API and a server-rendered web UI, plus Prometheus metrics.
 - **Agent ingestion**: per-owner ingest tokens and a token-authenticated
   `POST /api/ingest` (auto-creating "trapper" items) so external agents and scripts
   push metrics without a user login.
+- **Server-side polling**: items can have a `source` (trapper / SNMP) and config;
+  the scheduler polls due SNMP items (any OID) from the host's `address` into history.
 - **Maintenance windows**: one-shot (`once`) or recurring (`cron`) silencing of alerts.
 - **Notifications**: email (SMTP) and webhooks, attached per-monitor; fire-and-forget
   so a slow SMTP server never stalls probing, and **severity-routed** (each channel
