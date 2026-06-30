@@ -13,6 +13,7 @@ from app.core.models.mixins import Timestamped, UUIDPrimaryKey
 
 if TYPE_CHECKING:
     from app.core.models.metric_value import MetricValue
+    from app.core.models.notification_channel import NotificationChannel
     from app.core.models.user import User
 
 
@@ -64,6 +65,11 @@ class Host(UUIDPrimaryKey, Timestamped, Base):
     items: Mapped[list[Item]] = relationship(
         back_populates="host",
         cascade="all, delete-orphan",
+        lazy="noload",
+    )
+    channels: Mapped[list[NotificationChannel]] = relationship(
+        secondary="host_channels",
+        back_populates="hosts",
         lazy="noload",
     )
 

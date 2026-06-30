@@ -265,3 +265,34 @@ async def test_hosts_web_ui_creates_snmp_item(
     assert detail.status_code == 200
     assert "snmp" in detail.text
     assert "1.3.6.1.2.1.2.2.1.10.1" in detail.text
+
+
+# ── Host notification channels ──────────────────────────────────────────────
+
+
+async def test_host_channel_attach_list_detach(
+    client: httpx.AsyncClient, auth_headers: dict[str, str]
+) -> None:
+    host_id = await _create_host(client, auth_headers, "ch-host")
+    ch = await client.post(
+        "/api/channels",
+        headers=auth_headers,
+        json={"name": "hook", "config": {"type": "webhook", "url": "https://hook.example/x"}},
+    )
+    assert ch.status_code == 201, ch.text
+    channel_id = ch.json()["id"]
+
+    attached = await client.post(
+        f"/api/hosts/{host_id}/channels", headers=auth_headers, json={"channel_id": channel_id}
+    )
+    assert attached.status_code == 204
+
+    listed = await client.get(f"/api/hosts/{host_id}/channels", headers=auth_headers)
+    assert [c["id"] for c in listed.json()] == [channel_id]
+
+    detached = await client.delete(
+        f"/api/hosts/{host_id}/channels/{channel_id}", headers=auth_headers
+    )
+    assert detached.status_code == 204
+    empty = await client.get(f"/api/hosts/{host_id}/channels", headers=auth_headers)
+    assert empty.json() == []

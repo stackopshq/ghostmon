@@ -11,6 +11,7 @@ from sqlalchemy.orm import selectinload
 from app.core.models.monitor import Monitor
 from app.core.models.notification_channel import (
     NotificationChannel,
+    host_channels,
     monitor_channels,
 )
 from app.core.schemas.notification_channel import (
@@ -99,6 +100,33 @@ class NotificationChannelService:
             select(NotificationChannel)
             .join(monitor_channels, monitor_channels.c.channel_id == NotificationChannel.id)
             .where(monitor_channels.c.monitor_id == monitor_id)
+            .order_by(NotificationChannel.name)
+        )
+        result = await self._session.execute(stmt)
+        return result.scalars().all()
+
+    async def attach_host(self, host_id: uuid.UUID, channel_id: uuid.UUID) -> None:
+        stmt = (
+            pg_insert(host_channels)
+            .values(host_id=host_id, channel_id=channel_id)
+            .on_conflict_do_nothing()
+        )
+        await self._session.execute(stmt)
+        await self._session.commit()
+
+    async def detach_host(self, host_id: uuid.UUID, channel_id: uuid.UUID) -> None:
+        stmt = delete(host_channels).where(
+            host_channels.c.host_id == host_id,
+            host_channels.c.channel_id == channel_id,
+        )
+        await self._session.execute(stmt)
+        await self._session.commit()
+
+    async def channels_for_host(self, host_id: uuid.UUID) -> Sequence[NotificationChannel]:
+        stmt = (
+            select(NotificationChannel)
+            .join(host_channels, host_channels.c.channel_id == NotificationChannel.id)
+            .where(host_channels.c.host_id == host_id)
             .order_by(NotificationChannel.name)
         )
         result = await self._session.execute(stmt)

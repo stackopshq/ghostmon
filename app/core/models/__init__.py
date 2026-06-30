@@ -11,6 +11,7 @@ from app.core.models.monitor_result import MonitorResult, ProbeStatus
 from app.core.models.notification_channel import (
     ChannelType,
     NotificationChannel,
+    host_channels,
     monitor_channels,
 )
 from app.core.models.template import Template, TemplateItem
@@ -50,6 +51,7 @@ __all__ = [
     "TriggerOperator",
     "TriggerState",
     "User",
+    "host_channels",
     "maintenance_monitors",
     "monitor_channels",
 ]
