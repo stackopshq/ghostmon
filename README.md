@@ -17,7 +17,8 @@ and a server-rendered web UI, plus Prometheus metrics.
   on status transitions so a slow SMTP server never stalls probing.
 - **Auth**: local accounts (argon2 password hashing, JWT) and optional OIDC.
 - **Interfaces**: REST API (`/api`, OpenAPI at `/docs`), web UI, and a `ghostmon` CLI.
-- **Observability**: Prometheus metrics at `/metrics`, health at `/api/health`.
+- **Observability**: Prometheus metrics at `/metrics`, liveness at `/healthz`,
+  readiness at `/readyz`.
 
 Stack: Python 3.12, FastAPI, SQLAlchemy 2 (async) + asyncpg, PostgreSQL, APScheduler,
 Typer, Jinja2. Dependencies are managed with [`uv`](https://docs.astral.sh/uv/).
@@ -41,7 +42,8 @@ Or the full stack with containers:
 APP_SECRET_KEY=$(openssl rand -hex 32) podman compose up --build
 ```
 
-Useful endpoints: `/` (web UI), `/docs` (API docs), `/api/health`, `/metrics`.
+Useful endpoints: `/` (web UI), `/docs` (API docs), `/healthz` (liveness),
+`/readyz` (readiness — 503 when the database is unreachable), `/metrics`.
 
 ## Test
 
