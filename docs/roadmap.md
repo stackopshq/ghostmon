@@ -60,9 +60,11 @@ GhostMonitor's reason to exist over a plain Zabbix clone is privacy (ghost-suite
   (write-only; redacted on read). A DB dump leaks no monitoring credentials.
 - ✅ **Zero-knowledge "private items"**: items flagged `is_private` store
   client-encrypted ciphertext (AES-256-GCM); the server never decrypts or evaluates
-  them. Reference CLI `ghostmon zk genkey|encrypt|decrypt`, and **in-browser
-  decryption** on the host page via a key in the URL fragment (`#k=…`) that never
-  reaches the server (Web Crypto, interoperable with the CLI). Verified end-to-end.
+  them. Two key modes, matching ghostbit's e2e: a random key in the URL fragment
+  (`#k=…`), or an **Argon2id passphrase** (same parameters as ghostbit, so tokens are
+  interoperable across the CLI and the browser). In-browser decryption via Web Crypto
+  + hash-wasm; reference CLI `ghostmon zk genkey|encrypt|decrypt [--key|--password]`.
+  Verified end-to-end in a real browser.
 - Baseline: no telemetry, no third-party calls, minimal alert payloads, hashed ingest
   tokens, bounded retention.
 

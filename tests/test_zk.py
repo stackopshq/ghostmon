@@ -8,7 +8,15 @@ from cryptography.exceptions import InvalidTag
 from typer.testing import CliRunner
 
 from app.cli.main import app
-from app.core.security.zk import decrypt, encrypt, generate_key
+from app.core.security.zk import (
+    _derive_argon2id,
+    decrypt,
+    decrypt_with_passphrase,
+    encrypt,
+    encrypt_with_passphrase,
+    generate_key,
+    is_passphrase_token,
+)
 
 runner = CliRunner()
 
@@ -69,3 +77,43 @@ def test_zk_cli_roundtrip() -> None:
     dec = runner.invoke(app, ["zk", "decrypt", "--key", key, token])
     assert dec.exit_code == 0
     assert dec.output.strip() == "topsecret"
+
+
+# ── Passphrase mode (Argon2id, ghostbit-aligned) ────────────────────────────
+
+
+def test_argon2id_reference_vector() -> None:
+    # Locks the Argon2id parameters so they never drift from ghostbit's e2e.js /
+    # hash-wasm — a drift would silently break cross-tool decryption.
+    key = _derive_argon2id("hunter2", b"0123456789abcdef")
+    assert key.hex() == "9d4c62adf54ad88fef393e9fda5cb6c12823c19d68ab04cb0a6adca43ca389c0"
+
+
+def test_passphrase_roundtrip_and_wrong_password() -> None:
+    token = encrypt_with_passphrase("correct horse", "secret reading")
+    assert is_passphrase_token(token)
+    assert token.startswith("a2.")
+    assert len(token.split(".")) == 3
+    assert decrypt_with_passphrase("correct horse", token) == "secret reading"
+    with pytest.raises(InvalidTag):
+        decrypt_with_passphrase("wrong password", token)
+
+
+def test_zk_cli_passphrase_roundtrip() -> None:
+    enc = runner.invoke(app, ["zk", "encrypt", "--password", "pw123", "topsecret"])
+    assert enc.exit_code == 0, enc.output
+    token = enc.output.strip()
+    assert token.startswith("a2.")
+
+    dec = runner.invoke(app, ["zk", "decrypt", "--password", "pw123", token])
+    assert dec.exit_code == 0
+    assert dec.output.strip() == "topsecret"
+
+
+def test_zk_cli_requires_exactly_one_mode() -> None:
+    # Neither key nor password.
+    none = runner.invoke(app, ["zk", "encrypt", "x"])
+    assert none.exit_code != 0
+    # Both at once.
+    both = runner.invoke(app, ["zk", "encrypt", "--key", generate_key(), "--password", "p", "x"])
+    assert both.exit_code != 0
