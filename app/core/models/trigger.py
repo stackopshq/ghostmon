@@ -5,7 +5,7 @@ import uuid
 from datetime import datetime
 from typing import TYPE_CHECKING
 
-from sqlalchemy import Boolean, DateTime, Enum, Float, ForeignKey, String
+from sqlalchemy import Boolean, DateTime, Enum, Float, ForeignKey, Integer, String
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -46,6 +46,17 @@ class TriggerOperator(enum.StrEnum):
     LE = "le"
 
 
+class TriggerAggregation(enum.StrEnum):
+    """How a trigger reduces the observed metric before comparing to the threshold.
+    LAST uses the latest probe value; the others aggregate the item's history over
+    `window_seconds`."""
+
+    LAST = "last"
+    AVG = "avg"
+    MIN = "min"
+    MAX = "max"
+
+
 class TriggerState(enum.StrEnum):
     OK = "ok"
     PROBLEM = "problem"
@@ -71,6 +82,16 @@ class Trigger(UUIDPrimaryKey, Timestamped, Base):
     threshold: Mapped[float] = mapped_column(Float, nullable=False)
     severity: Mapped[Severity] = mapped_column(
         Enum(Severity, name="alert_severity"), nullable=False
+    )
+    aggregation: Mapped[TriggerAggregation] = mapped_column(
+        Enum(TriggerAggregation, name="trigger_aggregation"),
+        nullable=False,
+        default=TriggerAggregation.LAST,
+        server_default="LAST",
+    )
+    # Look-back window for aggregated evaluation, in seconds. Ignored for LAST.
+    window_seconds: Mapped[int] = mapped_column(
+        Integer, nullable=False, default=0, server_default="0"
     )
 
     is_enabled: Mapped[bool] = mapped_column(

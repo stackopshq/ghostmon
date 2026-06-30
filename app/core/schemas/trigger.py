@@ -7,6 +7,7 @@ from pydantic import BaseModel, ConfigDict, Field
 
 from app.core.models.trigger import (
     Severity,
+    TriggerAggregation,
     TriggerMetric,
     TriggerOperator,
     TriggerState,
@@ -19,6 +20,8 @@ class TriggerBase(BaseModel):
     operator: TriggerOperator
     threshold: float
     severity: Severity
+    aggregation: TriggerAggregation = TriggerAggregation.LAST
+    window_seconds: int = Field(default=0, ge=0, le=86400)
     is_enabled: bool = True
 
 
@@ -32,6 +35,8 @@ class TriggerUpdate(BaseModel):
     operator: TriggerOperator | None = None
     threshold: float | None = None
     severity: Severity | None = None
+    aggregation: TriggerAggregation | None = None
+    window_seconds: int | None = Field(default=None, ge=0, le=86400)
     is_enabled: bool | None = None
 
 

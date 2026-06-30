@@ -2,21 +2,24 @@
 
 from __future__ import annotations
 
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 from typing import Any
 
 import httpx
 import pytest
 
+from app.core.models.metric_value import MetricValue
 from app.core.models.monitor import Monitor, MonitorType
 from app.core.models.notification_channel import ChannelType, NotificationChannel
 from app.core.models.trigger import (
     Severity,
     Trigger,
+    TriggerAggregation,
     TriggerMetric,
     TriggerOperator,
     TriggerState,
 )
+from app.core.services.monitor_host_bridge import ensure_backing_latency_item
 from app.core.services.trigger_service import TriggerService
 from app.tasks.notifications import dispatcher
 from app.tasks.notifications.events import TriggerAlertEvent
@@ -111,6 +114,63 @@ async def test_evaluate_less_than_operator(session: Any, user: Any) -> None:
         monitor.id, {TriggerMetric.LATENCY_MS: 5.0}, datetime.now(UTC)
     )
     assert [f.new_state for f in fired] == [TriggerState.PROBLEM]
+
+
+async def test_windowed_avg_trigger_uses_history_not_last_value(session: Any, user: Any) -> None:
+    monitor = await _make_monitor(session, user.id)
+    item = await ensure_backing_latency_item(session, monitor)
+    now = datetime.now(UTC)
+    session.add_all(
+        [
+            MetricValue(item_id=item.id, value_num=100.0, collected_at=now - timedelta(seconds=10)),
+            MetricValue(item_id=item.id, value_num=300.0, collected_at=now - timedelta(seconds=20)),
+            # Outside the 60s window — must not affect the average.
+            MetricValue(
+                item_id=item.id, value_num=9999.0, collected_at=now - timedelta(seconds=600)
+            ),
+        ]
+    )
+    trigger = Trigger(
+        monitor_id=monitor.id,
+        name="avg latency",
+        metric=TriggerMetric.LATENCY_MS,
+        operator=TriggerOperator.GT,
+        threshold=150.0,
+        severity=Severity.WARNING,
+        aggregation=TriggerAggregation.AVG,
+        window_seconds=60,
+    )
+    session.add(trigger)
+    await session.commit()
+
+    # The inline last value (50) would NOT breach GT 150; the 60s average (200) does.
+    fired = await TriggerService(session).evaluate(
+        monitor.id, {TriggerMetric.LATENCY_MS: 50.0}, now
+    )
+    assert [f.new_state for f in fired] == [TriggerState.PROBLEM]
+    assert fired[0].value == 200.0
+
+
+async def test_windowed_trigger_with_no_history_does_not_fire(session: Any, user: Any) -> None:
+    monitor = await _make_monitor(session, user.id)
+    await ensure_backing_latency_item(session, monitor)
+    trigger = Trigger(
+        monitor_id=monitor.id,
+        name="max latency",
+        metric=TriggerMetric.LATENCY_MS,
+        operator=TriggerOperator.GT,
+        threshold=1.0,
+        severity=Severity.HIGH,
+        aggregation=TriggerAggregation.MAX,
+        window_seconds=300,
+    )
+    session.add(trigger)
+    await session.commit()
+    # No samples in the window → no-data → no fire (even though inline value breaches).
+    fired = await TriggerService(session).evaluate(
+        monitor.id, {TriggerMetric.LATENCY_MS: 999.0}, datetime.now(UTC)
+    )
+    assert fired == []
 
 
 # ── CRUD API ────────────────────────────────────────────────────────────────
