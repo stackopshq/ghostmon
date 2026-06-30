@@ -1,0 +1,103 @@
+{% extends "base.html" %}
+
+{% block title %}Discovery · GhostMonitor{% endblock %}
+
+{% block page %}
+<main class="page-bg">
+  <div class="container">
+    <div class="hero">
+      <h1 class="hero-title">
+        <span class="terminal-prompt">~ $&nbsp;</span><span>discovery</span><span class="terminal-cursor">▊</span>
+      </h1>
+      <div class="hero-sub">
+        Scan a network range on a schedule; responsive addresses become hosts (with a template applied).
+      </div>
+    </div>
+
+    {% if error %}<div class="flash flash-error">{{ error }}</div>{% endif %}
+    {% if flash %}<div class="flash flash-ok">{{ flash }}</div>{% endif %}
+
+    <section class="card">
+      <h2>Rules <span class="count">{{ rules|length }}</span></h2>
+      {% if rules %}
+      <table class="table">
+        <thead>
+          <tr><th>Name</th><th>Range</th><th>Method</th><th>Template</th><th>Every</th><th>Last run</th><th>Enabled</th><th></th></tr>
+        </thead>
+        <tbody>
+          {% for r in rules %}
+          <tr>
+            <td>{{ r.name }}</td>
+            <td class="muted">{{ r.cidr }}</td>
+            <td class="muted">{{ r.method.value }}{% if r.method.value == 'tcp' and r.port %}:{{ r.port }}{% endif %}</td>
+            <td class="muted">{{ template_names.get(r.template_id, '—') }}</td>
+            <td class="muted">{{ (r.interval_seconds // 60) }}m</td>
+            <td class="muted">{{ r.last_run_at.strftime('%Y-%m-%d %H:%M') if r.last_run_at else 'never' }}</td>
+            <td class="muted">{{ 'yes' if r.is_enabled else 'no' }}</td>
+            <td class="row-actions">
+              <form method="post" action="/discovery/{{ r.id }}/scan" class="form-inline">
+                <button type="submit" class="btn-new btn-muted">Scan now</button>
+              </form>
+              <form method="post" action="/discovery/{{ r.id }}/delete" class="form-inline" data-confirm="Delete rule {{ r.name }}?">
+                <button type="submit" class="btn-new btn-muted">Delete</button>
+              </form>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+      {% else %}
+      <p class="muted">No discovery rules yet.</p>
+      {% endif %}
+    </section>
+
+    <section class="card" style="margin-top: 20px;">
+      <h2>New rule</h2>
+      <form method="post" action="/discovery/new" class="stacked">
+        <div class="field-row">
+          <label class="field">
+            <span>Name</span>
+            <input type="text" name="name" required maxlength="255" placeholder="LAN sweep">
+          </label>
+          <label class="field">
+            <span>CIDR (≤ 1024 hosts)</span>
+            <input type="text" name="cidr" required maxlength="64" placeholder="10.0.0.0/24">
+          </label>
+        </div>
+        <div class="field-row">
+          <label class="field">
+            <span>Method</span>
+            <select name="method">
+              {% for m in methods %}<option value="{{ m }}">{{ m }}</option>{% endfor %}
+            </select>
+          </label>
+          <label class="field">
+            <span>TCP port (method = tcp)</span>
+            <input type="number" name="port" min="1" max="65535" placeholder="22">
+          </label>
+          <label class="field">
+            <span>Apply template (optional)</span>
+            <select name="template_id">
+              <option value="">— none —</option>
+              {% for t in templates_list %}<option value="{{ t.id }}">{{ t.name }}</option>{% endfor %}
+            </select>
+          </label>
+        </div>
+        <div class="field-row">
+          <label class="field">
+            <span>Interval (seconds)</span>
+            <input type="number" name="interval_seconds" min="60" max="604800" value="3600">
+          </label>
+          <label class="field inline">
+            <input type="checkbox" name="is_enabled" checked>
+            <span>Enabled</span>
+          </label>
+        </div>
+        <div class="form-actions">
+          <button type="submit" class="btn-primary">Create rule</button>
+        </div>
+      </form>
+    </section>
+  </div>
+</main>
+{% endblock %}

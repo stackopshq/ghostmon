@@ -130,7 +130,8 @@ GhostMonitor's reason to exist over a plain Zabbix clone is privacy (ghost-suite
   template + interval) is scanned on a schedule; responsive addresses that are not yet
   a host are provisioned as hosts, with the rule's template items applied. Guardrails:
   CIDR capped (≤ 1024 hosts), bounded scan concurrency, dedupe by address, owner-scoped.
-  REST CRUD + scan-now under `/api/discovery-rules`. *(next)* a web UI.
+  REST CRUD + scan-now under `/api/discovery-rules`, and a `/discovery` web page to
+  manage rules (create, scan-now, delete).
 - *(deferred — measure first)* Distributed collection (proxy/agent fan-in) and history
   storage scaling (TimescaleDB / a dedicated TSDB). Deliberately not built yet: it is
   premature without real load data. Add ingestion-volume/throughput metrics first so
