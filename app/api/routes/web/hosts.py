@@ -8,6 +8,7 @@ from sqlalchemy.exc import IntegrityError
 
 from app.api.deps.db import DBSession
 from app.api.routes.web._shared import login_redirect, resolve_current_user, templates
+from app.api.routes.web.charts import ChartView, line_chart
 from app.core.models.host import ItemSource, ItemValueType
 from app.core.models.trigger import Severity, TriggerAggregation, TriggerOperator
 from app.core.models.user import User
@@ -286,14 +287,18 @@ async def _item_detail_context(
     item = await item_svc.get(item_id, host_id)
     if item is None:
         return None
+    recent = list(await item_svc.list_values(item_id, limit=300))  # newest first
+    series = [(v.collected_at, v.value_num) for v in reversed(recent) if v.value_num is not None]
+    chart = line_chart(series) if item.value_type.is_numeric else ChartView(width=720, height=240)
     return {
         "current_user": user,
         "active_nav": "hosts",
         "host": host,
         "item": item,
         "triggers": list(await TriggerService(session).list_for_item(item_id)),
-        "values": list(await item_svc.list_values(item_id, limit=25)),
+        "values": recent[:25],
         "trends": list(await item_svc.list_trends(item_id, limit=24)),
+        "chart": chart,
         "trigger_operators": [{"value": o.value, "label": s} for o, s in _OPERATOR_SYMBOLS.items()],
         "trigger_aggregations": [a.value for a in TriggerAggregation],
         "severities": [s.value for s in Severity],

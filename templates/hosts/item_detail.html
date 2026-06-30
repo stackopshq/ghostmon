@@ -98,6 +98,25 @@
       </form>
     </section>
 
+    {% if chart and not chart.empty %}
+    <section class="card" style="margin-top: 20px;">
+      <h2>History</h2>
+      <svg class="chart" viewBox="0 0 {{ chart.width }} {{ chart.height }}" role="img"
+           aria-label="{{ item.name }} history{{ ' in ' ~ item.units if item.units }}">
+        {% for y, label in chart.y_ticks %}
+        <line class="chart-grid" x1="{{ chart.plot_left }}" y1="{{ y }}" x2="{{ chart.plot_right }}" y2="{{ y }}" />
+        <text class="chart-label" x="{{ chart.plot_left - 6 }}" y="{{ y + 3 }}" text-anchor="end">{{ label }}</text>
+        {% endfor %}
+        {% for x, label in chart.x_ticks %}
+        <text class="chart-label" x="{{ x }}" y="{{ chart.plot_bottom + 16 }}" text-anchor="middle">{{ label }}</text>
+        {% endfor %}
+        <polygon class="chart-area" points="{{ chart.area }}" />
+        <polyline class="chart-line" points="{{ chart.line }}" fill="none" />
+      </svg>
+      {% if item.units %}<p class="muted">Values in {{ item.units }} · {{ values|length }} of last samples shown.</p>{% endif %}
+    </section>
+    {% endif %}
+
     {% if trends %}
     <section class="card" style="margin-top: 20px;">
       <h2>Hourly trends <span class="count">{{ trends|length }}</span></h2>

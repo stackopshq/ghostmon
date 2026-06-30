@@ -71,9 +71,15 @@ passphrase that never reaches the server:
 ![Zero-knowledge private item decrypted in-browser](docs/assets/zk-private-item.png)
 
 **Item detail** — threshold triggers on a metric item (alerting through the host's
-channels) with severity/state pills, hourly trend rollups, and recent values:
+channels) with severity/state pills, a server-rendered history chart, hourly trend
+rollups, and recent values:
 
 ![Item detail with triggers](docs/assets/item-detail-triggers.png)
+
+**Time-series history** — a server-rendered SVG line chart (no JavaScript, no chart
+library) over an item's history:
+
+![Server-rendered item history chart](docs/assets/item-history-chart.png)
 
 **Host detail** — items with min/max and server-rendered history sparklines:
 
