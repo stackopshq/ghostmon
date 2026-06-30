@@ -50,7 +50,7 @@ async def login_submit(
         value=token,
         httponly=True,
         samesite="lax",
-        secure=settings.app_env == "production",
+        secure=settings.cookie_secure,
         max_age=settings.jwt_access_ttl_minutes * 60,
         path="/",
     )

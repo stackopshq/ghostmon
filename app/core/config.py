@@ -54,6 +54,12 @@ class Settings(BaseSettings):
     trends_retention_days: int = 365
     trends_rollup_lookback_hours: int = 6
 
+    @property
+    def cookie_secure(self) -> bool:
+        """Mark session cookies `Secure` everywhere except local development, so a
+        non-production HTTPS deployment doesn't ship cookies over plaintext."""
+        return self.app_env != "development"
+
 
 @lru_cache
 def get_settings() -> Settings:

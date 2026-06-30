@@ -122,7 +122,7 @@ async def oidc_callback(request: Request, session: DBSession) -> RedirectRespons
         value=jwt_token,
         httponly=True,
         samesite="lax",
-        secure=settings.app_env == "production",
+        secure=settings.cookie_secure,
         max_age=settings.jwt_access_ttl_minutes * 60,
         path="/",
     )

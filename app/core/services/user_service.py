@@ -5,7 +5,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.models.user import AuthProvider, User
 from app.core.schemas.user import UserCreate
-from app.core.security.passwords import hash_password, verify_password
+from app.core.security.passwords import dummy_verify, hash_password, verify_password
 
 
 class UserService:
@@ -34,11 +34,14 @@ class UserService:
 
     async def authenticate_local(self, email: str, password: str) -> User | None:
         user = await self.get_by_email(email)
-        if user is None or user.auth_provider != AuthProvider.LOCAL:
-            return None
-        if not user.password_hash or not verify_password(password, user.password_hash):
-            return None
-        if not user.is_active:
+        if user is not None and user.auth_provider == AuthProvider.LOCAL and user.password_hash:
+            valid = verify_password(password, user.password_hash)
+        else:
+            # No such local account: still spend the hashing time so the response
+            # latency doesn't reveal whether the email exists.
+            dummy_verify(password)
+            valid = False
+        if user is None or not valid or not user.is_active:
             return None
         return user
 
