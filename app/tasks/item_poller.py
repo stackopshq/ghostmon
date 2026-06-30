@@ -20,6 +20,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.db.session import SessionLocal
 from app.core.models.host import Host, Item, ItemSource, ItemValueType
 from app.core.models.metric_value import MetricValue
+from app.core.security.field_crypto import decrypt_secret
 from app.tasks.probes import SnmpError, _snmp_get
 
 logger = logging.getLogger(__name__)
@@ -66,7 +67,7 @@ async def _poll_one(target: _PollTarget, now: datetime) -> None:
     if not oid:
         logger.warning("snmp item %s has no 'oid' in config; skipping", target.item_id)
         return
-    community = str(target.config.get("community", "public"))
+    community = decrypt_secret(str(target.config.get("community", "public")))
     port = int(target.config.get("port", 161))
     try:
         raw = await _snmp_get(target.address, port, community, str(oid))

@@ -258,7 +258,9 @@ async def test_hosts_web_ui_creates_snmp_item(
     assert added.status_code in (200, 303)
     item = (await ItemService(session).list_for_host(host.id))[0]
     assert item.source == ItemSource.SNMP
-    assert item.config == {"oid": "1.3.6.1.2.1.2.2.1.10.1", "community": "public"}
+    assert item.config["oid"] == "1.3.6.1.2.1.2.2.1.10.1"
+    # The SNMP community is stored encrypted at rest.
+    assert item.config["community"].startswith("enc:v1:")
 
     # The detail page renders the SNMP row (source + oid).
     detail = await web_client.get(f"/hosts/{host.id}")

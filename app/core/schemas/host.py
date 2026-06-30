@@ -4,9 +4,10 @@ import uuid
 from datetime import datetime
 from typing import Any
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 from app.core.models.host import ItemSource, ItemValueType
+from app.core.security.field_crypto import REDACTED
 
 
 class HostBase(BaseModel):
@@ -69,6 +70,14 @@ class ItemRead(ItemBase):
     host_id: uuid.UUID
     created_at: datetime
     updated_at: datetime
+
+    @field_validator("config")
+    @classmethod
+    def _redact_community(cls, value: dict[str, Any]) -> dict[str, Any]:
+        # The SNMP community is encrypted at rest and never returned in clear.
+        if value.get("community"):
+            return {**value, "community": REDACTED}
+        return value
 
 
 class MetricValueIngest(BaseModel):

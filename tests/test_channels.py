@@ -54,7 +54,8 @@ async def test_create_webhook_channel_with_secret(
         },
     )
     assert response.status_code == 201
-    assert response.json()["config"]["secret"] == "supersecret"
+    # The secret is encrypted at rest and never returned in clear.
+    assert response.json()["config"]["secret"] == "__redacted__"
 
 
 async def test_webhook_secret_minimum_length(

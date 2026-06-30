@@ -59,6 +59,11 @@ exposes both a JSON API and a server-rendered web UI, plus Prometheus metrics.
   and a dependency-free metric agent (`ghostmon agent run`).
 - **Observability**: Prometheus metrics at `/metrics`, liveness at `/healthz`,
   readiness at `/readyz`.
+- **Privacy-first** (the differentiator vs Zabbix): monitoring secrets — webhook
+  signing secrets and SNMP communities — are **encrypted at rest** (Fernet/AES, key
+  derived from `APP_SECRET_KEY`) and **never returned in clear**, so a database dump
+  leaks nothing usable. Fully self-hosted, no telemetry, no third-party calls,
+  minimal alert payloads, hashed ingest tokens, bounded retention.
 
 Stack: Python 3.12, FastAPI, SQLAlchemy 2 (async) + asyncpg, PostgreSQL, APScheduler,
 Typer, Jinja2. Dependencies are managed with [`uv`](https://docs.astral.sh/uv/).
