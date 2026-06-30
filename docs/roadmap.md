@@ -24,14 +24,18 @@ A problem-detection layer on top of the metrics already collected.
 - Follow-ups: aggregate expressions over history (`avg(metric, 5m) > x`), more
   metrics, and a web UI for managing triggers.
 
-## Phase 2 — Hosts, Items & history *(next)*
+## Phase 2 — Hosts, Items & history *(in progress)*
 
-The foundational data-model shift (the core of ADR 0001).
+The foundational data-model shift (the core of ADR 0001), via expand → migrate → contract.
 
-- `Host` (groups, tags) → `Item` (key, type, interval) → time-series `history`.
-- Reframe the current monitor as a `Host` with one agentless availability `Item`;
-  migrate `MonitorResult` into item history (expand → migrate → contract, reversible).
+- ✅ **Expand**: additive `Host` → `Item` (key, value_type, units, interval) →
+  append-only `metric_values` history, with CRUD + a value-ingestion/read API.
+  Non-breaking — the existing `Monitor` model is untouched.
+- **Migrate** *(next)*: reframe each monitor as a `Host` with one agentless
+  availability `Item`; backfill `MonitorResult` into item history (reversible).
+- **Contract**: once readers move to items, retire the monitor-specific tables.
 - Retention for raw history + hourly `trends` (min/avg/max) for long-range graphs.
+- Web UI for hosts/items, and triggers that evaluate item history.
 
 ## Phase 3 — Templates & richer collection
 
