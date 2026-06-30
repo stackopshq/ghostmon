@@ -4,12 +4,13 @@ import uuid
 from collections.abc import Sequence
 from datetime import UTC, datetime
 
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.models.host import Host, Item, ItemValueType
 from app.core.models.metric_trend import MetricTrend
 from app.core.models.metric_value import MetricValue
+from app.core.models.trigger import Severity, Trigger, TriggerState
 from app.core.schemas.host import HostCreate, HostUpdate, ItemCreate, ItemUpdate
 from app.core.security.field_crypto import REDACTED, encrypt_secret
 
@@ -31,6 +32,56 @@ class HostService:
     async def list_for_owner(self, owner_id: uuid.UUID) -> Sequence[Host]:
         stmt = select(Host).where(Host.owner_id == owner_id).order_by(Host.created_at.desc())
         return (await self._session.execute(stmt)).scalars().all()
+
+    async def overview_for_owner(self, owner_id: uuid.UUID) -> list[dict[str, object]]:
+        """Per-host health for the overview: item count, ongoing problem count and
+        worst severity (item triggers in PROBLEM). Hosts with problems sort first,
+        then by descending worst severity. Aggregated (no per-host queries)."""
+        hosts = list(await self.list_for_owner(owner_id))
+        if not hosts:
+            return []
+        host_ids = [h.id for h in hosts]
+
+        item_rows = await self._session.execute(
+            select(Item.host_id, func.count())
+            .where(Item.host_id.in_(host_ids))
+            .group_by(Item.host_id)
+        )
+        item_counts = {hid: count for hid, count in item_rows}
+
+        problem_rows = await self._session.execute(
+            select(Item.host_id, Trigger.severity)
+            .join(Trigger, Trigger.item_id == Item.id)
+            .where(
+                Item.host_id.in_(host_ids),
+                Trigger.state == TriggerState.PROBLEM,
+                Trigger.is_enabled.is_(True),
+            )
+        )
+        problem_counts: dict[uuid.UUID, int] = {}
+        worst: dict[uuid.UUID, Severity] = {}
+        for host_id, severity in problem_rows:
+            problem_counts[host_id] = problem_counts.get(host_id, 0) + 1
+            if host_id not in worst or severity.rank > worst[host_id].rank:
+                worst[host_id] = severity
+
+        views: list[dict[str, object]] = [
+            {
+                "host": h,
+                "item_count": item_counts.get(h.id, 0),
+                "problem_count": problem_counts.get(h.id, 0),
+                "worst_severity": worst.get(h.id),
+            }
+            for h in hosts
+        ]
+
+        def _sort_key(view: dict[str, object]) -> tuple[bool, int]:
+            severity = view["worst_severity"]
+            rank = severity.rank if isinstance(severity, Severity) else 0
+            return (view["problem_count"] == 0, -rank)  # problems first, worst severity next
+
+        views.sort(key=_sort_key)
+        return views
 
     async def get(self, host_id: uuid.UUID, owner_id: uuid.UUID) -> Host | None:
         stmt = select(Host).where(Host.id == host_id, Host.owner_id == owner_id)

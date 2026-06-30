@@ -352,3 +352,43 @@ async def test_hosts_web_ui_private_item_renders_cipher(
     assert 'data-zk-cipher="TOKENABC"' in detail.text
     assert "/static/zk.js" in detail.text
     assert "#k=YOUR_KEY" in detail.text
+
+
+async def test_hosts_overview_shows_health_and_orders_problems_first(
+    web_client: httpx.AsyncClient, session: Any, user: Any
+) -> None:
+    from app.core.models.host import Host, Item, ItemValueType
+    from app.core.models.trigger import Severity, Trigger, TriggerOperator, TriggerState
+
+    healthy = Host(name="aaa-healthy", owner_id=user.id)
+    session.add(healthy)
+    await session.flush()
+    session.add(
+        Item(host_id=healthy.id, key="ok", name="OK", value_type=ItemValueType.FLOAT, interval=60)
+    )
+    sick = Host(name="zzz-sick", owner_id=user.id)
+    session.add(sick)
+    await session.flush()
+    sick_item = Item(
+        host_id=sick.id, key="cpu", name="CPU", value_type=ItemValueType.FLOAT, interval=60
+    )
+    session.add(sick_item)
+    await session.flush()
+    session.add(
+        Trigger(
+            item_id=sick_item.id,
+            name="hot",
+            operator=TriggerOperator.GT,
+            threshold=80.0,
+            severity=Severity.DISASTER,
+            state=TriggerState.PROBLEM,
+        )
+    )
+    await session.commit()
+
+    page = await web_client.get("/hosts")
+    assert page.status_code == 200
+    assert "with problems" in page.text
+    assert "sev-disaster" in page.text  # the worst-severity pill
+    # The host with a problem sorts before the healthy one despite the name order.
+    assert page.text.index("zzz-sick") < page.text.index("aaa-healthy")
