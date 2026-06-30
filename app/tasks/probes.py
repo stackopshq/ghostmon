@@ -9,12 +9,23 @@ from datetime import UTC, datetime
 from urllib.parse import urlparse
 
 import httpx
+from pysnmp.hlapi.v3arch.asyncio import (  # type: ignore[import-untyped]
+    CommunityData,
+    ContextData,
+    ObjectIdentity,
+    ObjectType,
+    SnmpEngine,
+    UdpTransportTarget,
+    get_cmd,
+)
 
 from app.core.models.monitor import Monitor, MonitorType
 from app.core.models.monitor_result import ProbeStatus
 
 DEFAULT_TIMEOUT_SECONDS = 10.0
 SSL_EXPIRY_WARNING_DAYS = 14
+DEFAULT_SNMP_COMMUNITY = "public"
+DEFAULT_SNMP_OID = "1.3.6.1.2.1.1.3.0"  # sysUpTime
 _PING_TIME_RE = re.compile(r"time[=<]([\d.]+)\s*ms", re.IGNORECASE)
 
 
@@ -35,6 +46,8 @@ async def run_probe(monitor: Monitor) -> ProbeOutcome:
             return await _probe_ssl(monitor.url)
         case MonitorType.PING:
             return await _probe_ping(monitor.url)
+        case MonitorType.SNMP:
+            return await _probe_snmp(monitor.url)
         case _:
             return ProbeOutcome(
                 status=ProbeStatus.DOWN,
@@ -185,6 +198,63 @@ async def _probe_ping(url: str) -> ProbeOutcome:
 
     latency_ms = _parse_ping_time(stdout.decode("utf-8", errors="replace"))
     return ProbeOutcome(ProbeStatus.UP, latency_ms, None)
+
+
+class SnmpError(Exception):
+    pass
+
+
+async def _snmp_get(host: str, port: int, community: str, oid: str) -> str:
+    """One-shot SNMPv2c GET. Returns the value's string form; raises on failure.
+    Isolated so the probe orchestration around it stays unit-testable."""
+    target = await UdpTransportTarget.create(
+        (host, port), timeout=DEFAULT_TIMEOUT_SECONDS, retries=0
+    )
+    error_indication, error_status, error_index, var_binds = await get_cmd(
+        SnmpEngine(),
+        CommunityData(community, mpModel=1),
+        target,
+        ContextData(),
+        ObjectType(ObjectIdentity(oid)),
+    )
+    if error_indication:
+        raise SnmpError(str(error_indication))
+    if error_status:
+        raise SnmpError(f"{error_status.prettyPrint()} at {error_index or '?'}")
+    return str(var_binds[0][1].prettyPrint())
+
+
+async def _probe_snmp(url: str) -> ProbeOutcome:
+    target = _parse_snmp_target(url)
+    if target is None:
+        return ProbeOutcome(
+            ProbeStatus.DOWN,
+            None,
+            f"invalid snmp target: {url!r} (expected snmp://[community@]host[:port]/OID)",
+        )
+    host, port, community, oid = target
+    start = time.perf_counter()
+    try:
+        async with asyncio.timeout(DEFAULT_TIMEOUT_SECONDS + 2):
+            await _snmp_get(host, port, community, oid)
+    except (SnmpError, OSError, TimeoutError) as exc:
+        return ProbeOutcome(ProbeStatus.DOWN, None, f"snmp error: {exc}")
+    latency_ms = int((time.perf_counter() - start) * 1000)
+    return ProbeOutcome(ProbeStatus.UP, latency_ms, None)
+
+
+def _parse_snmp_target(raw: str) -> tuple[str, int, str, str] | None:
+    """Parse `snmp://[community@]host[:port]/OID` (community/port/OID optional)."""
+    candidate = raw.strip()
+    if not candidate:
+        return None
+    if "://" not in candidate:
+        candidate = f"snmp://{candidate}"
+    parsed = urlparse(candidate)
+    if parsed.hostname is None:
+        return None
+    oid = parsed.path.lstrip("/") or DEFAULT_SNMP_OID
+    return parsed.hostname, parsed.port or 161, parsed.username or DEFAULT_SNMP_COMMUNITY, oid
 
 
 def _parse_tcp_target(raw: str) -> tuple[str | None, int | None]:

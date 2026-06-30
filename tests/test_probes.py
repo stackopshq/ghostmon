@@ -8,12 +8,16 @@ import pytest
 
 from app.core.models.monitor import Monitor, MonitorStatus, MonitorType
 from app.core.models.monitor_result import ProbeStatus
+from app.tasks import probes as probes_module
 from app.tasks.probes import (
+    SnmpError,
     _parse_cert_time,
     _parse_ping_target,
     _parse_ping_time,
+    _parse_snmp_target,
     _parse_ssl_target,
     _parse_tcp_target,
+    _probe_snmp,
     run_probe,
 )
 
@@ -239,3 +243,51 @@ def test_ssl_expiry_warning_message_shape() -> None:
     future = datetime.now(UTC) + timedelta(days=3)
     assert future > datetime.now(UTC)
     assert SSL_EXPIRY_WARNING_DAYS >= 3
+
+
+# ── SNMP ─────────────────────────────────────────────────────────────────────
+
+
+def test_parse_snmp_target_bare_host() -> None:
+    host, port, community, oid = _parse_snmp_target("router.lan")
+    assert (host, port, community) == ("router.lan", 161, "public")
+    assert oid == "1.3.6.1.2.1.1.3.0"
+
+
+def test_parse_snmp_target_full() -> None:
+    assert _parse_snmp_target("snmp://secret@10.0.0.1:1161/1.3.6.1.2.1.2.2.1.10.1") == (
+        "10.0.0.1",
+        1161,
+        "secret",
+        "1.3.6.1.2.1.2.2.1.10.1",
+    )
+
+
+def test_parse_snmp_target_empty_is_none() -> None:
+    assert _parse_snmp_target("   ") is None
+
+
+async def test_probe_snmp_up_on_value(monkeypatch: pytest.MonkeyPatch) -> None:
+    async def _ok(host: str, port: int, community: str, oid: str) -> str:
+        return "12345"
+
+    monkeypatch.setattr(probes_module, "_snmp_get", _ok)
+    outcome = await _probe_snmp("snmp://public@10.0.0.1/1.3.6.1.2.1.1.3.0")
+    assert outcome.status == ProbeStatus.UP
+    assert outcome.latency_ms is not None
+
+
+async def test_probe_snmp_down_on_error(monkeypatch: pytest.MonkeyPatch) -> None:
+    async def _boom(host: str, port: int, community: str, oid: str) -> str:
+        raise SnmpError("no response")
+
+    monkeypatch.setattr(probes_module, "_snmp_get", _boom)
+    outcome = await _probe_snmp("snmp://10.0.0.1")
+    assert outcome.status == ProbeStatus.DOWN
+    assert "snmp error" in (outcome.error or "")
+
+
+async def test_probe_snmp_invalid_target() -> None:
+    outcome = await _probe_snmp("")
+    assert outcome.status == ProbeStatus.DOWN
+    assert "invalid snmp target" in (outcome.error or "")
