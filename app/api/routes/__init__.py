@@ -2,6 +2,7 @@ from fastapi import APIRouter
 
 from app.api.routes.auth import router as auth_router
 from app.api.routes.channels import router as channels_router
+from app.api.routes.discovery import router as discovery_router
 from app.api.routes.escalations import router as escalations_router
 from app.api.routes.health import router as health_router
 from app.api.routes.hosts import router as hosts_router
@@ -21,6 +22,7 @@ api_router.include_router(channels_router)
 api_router.include_router(maintenances_router)
 api_router.include_router(problems_router)
 api_router.include_router(escalations_router)
+api_router.include_router(discovery_router)
 api_router.include_router(hosts_router)
 api_router.include_router(ingest_router)
 api_router.include_router(item_triggers_router)
