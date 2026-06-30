@@ -167,5 +167,8 @@
 {% endblock %}
 
 {% block scripts %}
+{% if item_views | selectattr('item.is_private') | list %}
+<script src="/static/hash-wasm-argon2.umd.min.js?v={{ v }}" defer></script>
 <script src="/static/zk.js?v={{ v }}" defer></script>
+{% endif %}
 {% endblock %}

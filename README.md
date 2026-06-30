@@ -17,8 +17,9 @@ exposes both a JSON API and a server-rendered web UI, plus Prometheus metrics.
 ## Screenshots
 
 **Zero-knowledge private items** — values are encrypted client-side; the server only
-ever holds ciphertext, and the browser decrypts them with a key kept in the URL
-fragment (`#k=…`) that never reaches the server:
+ever holds ciphertext, and the browser decrypts them with either a key kept in the
+URL fragment (`#k=…`) or a **passphrase** (key derived in-browser via Argon2id),
+neither of which ever reaches the server:
 
 ![Zero-knowledge private item decrypted in-browser](docs/assets/zk-private-item.png)
 
@@ -68,8 +69,11 @@ fragment (`#k=…`) that never reaches the server:
 - **Privacy-first** (the differentiator vs Zabbix): monitoring secrets — webhook
   signing secrets and SNMP communities — are **encrypted at rest** (Fernet/AES, key
   derived from `APP_SECRET_KEY`) and **never returned in clear**, so a database dump
-  leaks nothing usable. Fully self-hosted, no telemetry, no third-party calls,
-  minimal alert payloads, hashed ingest tokens, bounded retention.
+  leaks nothing usable. **Zero-knowledge private items** go further: their values are
+  end-to-end encrypted client-side (AES-256-GCM, key from a URL fragment or an
+  Argon2id passphrase) and the server only ever sees ciphertext. Fully self-hosted,
+  no telemetry, no third-party calls, minimal alert payloads, hashed ingest tokens,
+  bounded retention.
 
 Stack: Python 3.12, FastAPI, SQLAlchemy 2 (async) + asyncpg, PostgreSQL, APScheduler,
 Typer, Jinja2. Dependencies are managed with [`uv`](https://docs.astral.sh/uv/).
