@@ -117,16 +117,21 @@ async def test_probe_job_mirrors_latency_into_item_history(
 
     await session.refresh(monitor)
     assert monitor.host_id is not None, "backing host provisioned lazily"
-    item = (
-        await session.execute(
-            select(Item).where(Item.host_id == monitor.host_id, Item.key == "latency_ms")
-        )
-    ).scalar_one()
-    values = await ItemService(session).list_values(item.id)
-    assert [v.value_num for v in values] == [137.0]
+
+    async def _item_values(key: str) -> list[Any]:
+        item = (
+            await session.execute(
+                select(Item).where(Item.host_id == monitor.host_id, Item.key == key)
+            )
+        ).scalar_one()
+        return list(await ItemService(session).list_values(item.id))
+
+    assert [v.value_num for v in await _item_values("latency_ms")] == [137.0]
+    # Status is mirrored as an item too: 1 == up.
+    assert [v.value_num for v in await _item_values("status")] == [1.0]
 
 
-async def test_down_probe_writes_no_history(
+async def test_down_probe_mirrors_status_and_error(
     session: Any, user: Any, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     monitor = Monitor(
@@ -150,8 +155,22 @@ async def test_down_probe_writes_no_history(
     await _run_probe_job(monitor_id=monitor.id)
 
     await session.refresh(monitor)
-    # No latency sample → no backing item provisioned, no history written.
-    assert monitor.host_id is None
+    # A DOWN probe now models status/error as items (the migrate precondition):
+    # the backing host is provisioned, status=0 and the error are recorded, but
+    # there is no latency sample.
+    assert monitor.host_id is not None
+
+    async def _item_values(key: str) -> list[Any]:
+        item = (
+            await session.execute(
+                select(Item).where(Item.host_id == monitor.host_id, Item.key == key)
+            )
+        ).scalar_one()
+        return list(await ItemService(session).list_values(item.id))
+
+    assert [v.value_num for v in await _item_values("status")] == [0.0]
+    assert [v.value_text for v in await _item_values("error")] == ["timeout"]
+    assert await _item_values("latency_ms") == []
 
 
 @pytest.fixture

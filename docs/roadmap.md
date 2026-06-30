@@ -40,8 +40,11 @@ The foundational data-model shift (the core of ADR 0001), via expand → migrate
 
 - ✅ **Expand**: additive `Host` → `Item` (key, value_type, units, interval) →
   append-only `metric_values` history, with CRUD + a value-ingestion/read API.
-- ✅ **Migrate (bridge)**: each monitor gets a backing host + `latency_ms` item
-  (lazily provisioned); probes mirror latency into item history.
+- ✅ **Migrate (bridge)**: each monitor gets a backing host with `latency_ms`,
+  `status` (1=up/0=down) and `error` items (lazily provisioned); every probe mirrors
+  status (and latency/error when present) into item history. Modelling status/error
+  as items — not just latency — completes the migrate step and is the precondition
+  for a future contract.
 - ✅ **Retention**: hourly pruning of history/results past `HISTORY_RETENTION_DAYS`.
 - ✅ **Web UI**: hosts list + host detail (items CRUD, latest/min/max, server-rendered
   history sparklines).
@@ -52,10 +55,12 @@ The foundational data-model shift (the core of ADR 0001), via expand → migrate
   up before pruning (re-aggregating the last few hours so late data and missed runs
   are caught), with a separate, longer trend retention. Read API
   `GET /api/hosts/{h}/items/{i}/trends` and an "Hourly trends" table on the item page.
-- *(deferred)* **Contract**: retire the monitor-specific tables — held back until
-  status/error are modelled as items, so it doesn't regress the uptime feature.
-  (Doing this now would drop a working feature; the safe path is to model monitor
-  status/error as items first — see the report, not started.)
+- *(deferred)* **Contract**: retire the monitor-specific tables. The data-model
+  precondition is now met (status/error/latency all mirrored as items), but the
+  destructive step is still held back — it would require porting probing to an
+  item-source, rebuilding the dashboard/monitor UI on hosts/items, and a data
+  migration. Deferred deliberately: it regresses a working feature for no user
+  benefit yet. Revisit when the monitor model actively blocks something.
 
 ## Privacy (the differentiator vs Zabbix)
 
