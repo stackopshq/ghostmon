@@ -16,7 +16,7 @@ from app.core.models.monitor import Monitor, MonitorStatus
 from app.core.models.monitor_result import MonitorResult, ProbeStatus
 from app.core.models.trigger import TriggerMetric
 from app.core.services.maintenance_service import MaintenanceService
-from app.core.services.monitor_host_bridge import ensure_backing_latency_item
+from app.core.services.monitor_host_bridge import ensure_backing_items
 from app.core.services.trigger_service import TriggerService
 from app.tasks.item_poller import poll_due_items
 from app.tasks.notifications.dispatcher import schedule_dispatch
@@ -191,13 +191,29 @@ async def _run_probe_job(monitor_id: uuid.UUID) -> None:
         }
         fired = await TriggerService(session).evaluate(monitor.id, metric_values, now)
 
-        # Mirror the latency into the host/item time-series history (migrate step).
-        if final.latency_ms is not None:
-            item = await ensure_backing_latency_item(session, monitor)
-            session.add(
-                MetricValue(item_id=item.id, value_num=float(final.latency_ms), collected_at=now)
+        # Mirror the probe signals into the host/item time-series history (migrate
+        # step): status (1=up/0=down) every probe, latency and error when present.
+        backing = await ensure_backing_items(session, monitor)
+        session.add(
+            MetricValue(
+                item_id=backing.status.id,
+                value_num=1.0 if new_status is MonitorStatus.UP else 0.0,
+                collected_at=now,
             )
-            await session.commit()
+        )
+        if final.latency_ms is not None:
+            session.add(
+                MetricValue(
+                    item_id=backing.latency.id,
+                    value_num=float(final.latency_ms),
+                    collected_at=now,
+                )
+            )
+        if final.error:
+            session.add(
+                MetricValue(item_id=backing.error.id, value_text=final.error, collected_at=now)
+            )
+        await session.commit()
 
         trigger_alerts = [
             TriggerAlertEvent(

@@ -176,6 +176,29 @@ async def test_backing_item_is_provisioned_once(session: Any, user: Any) -> None
     assert item2.id == item1.id
 
 
+async def test_backing_items_provision_status_and_error(session: Any, user: Any) -> None:
+    from app.core.services.host_service import ItemService
+    from app.core.services.monitor_host_bridge import ensure_backing_items
+
+    monitor = await _make_monitor(session, user.id)
+    backing = await ensure_backing_items(session, monitor)
+    assert backing.status.key == "status"
+    assert backing.status.value_type == ItemValueType.UNSIGNED
+    assert backing.error.key == "error"
+    assert backing.error.value_type == ItemValueType.TEXT
+    assert backing.latency.key == "latency_ms"
+
+    # Idempotent: the host has exactly the three backing items, reused on re-call.
+    again = await ensure_backing_items(session, monitor)
+    assert {again.latency.id, again.status.id, again.error.id} == {
+        backing.latency.id,
+        backing.status.id,
+        backing.error.id,
+    }
+    items = await ItemService(session).list_for_host(monitor.host_id)
+    assert sorted(i.key for i in items) == ["error", "latency_ms", "status"]
+
+
 async def test_monitor_delete_removes_backing_host(session: Any, user: Any) -> None:
     monitor = await _make_monitor(session, user.id)
     await ensure_backing_latency_item(session, monitor)
