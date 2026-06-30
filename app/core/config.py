@@ -54,6 +54,10 @@ class Settings(BaseSettings):
     trends_retention_days: int = 365
     trends_rollup_lookback_hours: int = 6
 
+    # Per-IP rate limits (requests/minute) for abuse-prone endpoints; 0 disables.
+    rate_limit_login_per_minute: int = 10
+    rate_limit_ingest_per_minute: int = 600
+
     @property
     def cookie_secure(self) -> bool:
         """Mark session cookies `Secure` everywhere except local development, so a
