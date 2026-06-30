@@ -28,6 +28,11 @@ fragment (`#k=…`) that never reaches the server:
 | --- | --- |
 | ![Host detail with metric sparklines, dark theme](docs/assets/host-detail-dark.png) | ![Host detail with metric sparklines, light theme](docs/assets/host-detail-light.png) |
 
+**Item detail** — threshold triggers on a metric item (alerting through the host's
+channels) with severity/state pills, plus recent values:
+
+![Item detail with triggers](docs/assets/item-detail-triggers.png)
+
 **Monitor detail** — settings, notification channels, and threshold triggers with severities:
 
 | Dark | Light |

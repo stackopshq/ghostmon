@@ -125,7 +125,7 @@
         <tbody>
           {% for iv in item_views %}
           <tr>
-            <td>{{ iv.item.name }}{% if not iv.item.is_enabled %} <span class="muted">· disabled</span>{% endif %}</td>
+            <td><a href="/hosts/{{ host.id }}/items/{{ iv.item.id }}">{{ iv.item.name }}</a>{% if not iv.item.is_enabled %} <span class="muted">· disabled</span>{% endif %}</td>
             <td class="muted">{{ iv.item.key }}</td>
             <td class="muted">{{ iv.item.source.value }}{% if iv.item.is_private %} <span title="end-to-end encrypted">🔒</span>{% endif %}{% if iv.item.source.value == 'snmp' and iv.item.config.get('oid') %} <span style="opacity:.7">({{ iv.item.config.get('oid') }})</span>{% endif %}</td>
             <td>

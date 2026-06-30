@@ -1,0 +1,125 @@
+{% extends "base.html" %}
+
+{% block title %}{{ item.name }} · {{ host.name }} · GhostMonitor{% endblock %}
+
+{% block page %}
+<main class="page-bg">
+  <div class="container">
+    <div class="hero">
+      <h1 class="hero-title">
+        <span class="terminal-prompt">~ $&nbsp;</span><span>{{ item.name }}</span><span class="terminal-cursor">▊</span>
+      </h1>
+      <div class="hero-sub">
+        <a href="/hosts/{{ host.id }}" class="nav-link" style="display:inline">{{ host.name }}</a>
+        · {{ item.key }} · {{ item.value_type.value }} · {{ item.source.value }}
+        {% if item.is_private %} · 🔒 private{% endif %}
+      </div>
+    </div>
+
+    {% if error %}
+    <div class="flash flash-error">{{ error }}</div>
+    {% endif %}
+
+    <section class="card">
+      <h2>Triggers <span class="count">{{ triggers|length }}</span></h2>
+      <p class="muted" style="margin-bottom: 12px;">
+        Threshold rules on this item's values. A breach alerts through the host's
+        notification channels.{% if item.is_private %} (Private items are encrypted —
+        the server can't evaluate triggers on them.){% endif %}
+      </p>
+      {% if triggers %}
+      <table class="table">
+        <thead>
+          <tr><th>Name</th><th>Condition</th><th>Severity</th><th>State</th><th></th></tr>
+        </thead>
+        <tbody>
+          {% for t in triggers %}
+          <tr>
+            <td>{{ t.name }}{% if not t.is_enabled %} <span class="muted">· disabled</span>{% endif %}</td>
+            <td class="muted">
+              {% if t.aggregation.value != 'last' and t.window_seconds %}{{ t.aggregation.value }}(value, {{ t.window_seconds }}s){% else %}value{% endif %}
+              {{ operator_symbols[t.operator.value] }} {{ t.threshold }}
+            </td>
+            <td><span class="sev sev-{{ t.severity.value }}">{{ t.severity.value }}</span></td>
+            <td><span class="tstate tstate-{{ t.state.value }}">{{ t.state.value }}</span></td>
+            <td class="row-actions">
+              <form method="post" action="/hosts/{{ host.id }}/items/{{ item.id }}/triggers/{{ t.id }}/delete" class="form-inline"
+                    onsubmit="return confirm('Delete this trigger?');">
+                <button type="submit" class="btn-new btn-muted">Delete</button>
+              </form>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+      {% else %}
+      <p class="muted">No triggers yet.</p>
+      {% endif %}
+
+      <form method="post" action="/hosts/{{ host.id }}/items/{{ item.id }}/triggers/new" class="stacked" style="margin-top: 16px;">
+        <div class="field-row">
+          <label class="field">
+            <span>Name</span>
+            <input type="text" name="name" required maxlength="255" placeholder="High CPU">
+          </label>
+          <label class="field">
+            <span>Operator</span>
+            <select name="operator" required>
+              {% for o in trigger_operators %}<option value="{{ o.value }}">{{ o.label }}</option>{% endfor %}
+            </select>
+          </label>
+          <label class="field">
+            <span>Threshold</span>
+            <input type="number" name="threshold" required step="any" placeholder="90">
+          </label>
+          <label class="field">
+            <span>Severity</span>
+            <select name="severity" required>
+              {% for s in severities %}<option value="{{ s }}"{% if s == 'warning' %} selected{% endif %}>{{ s }}</option>{% endfor %}
+            </select>
+          </label>
+        </div>
+        <div class="field-row">
+          <label class="field">
+            <span>Aggregation</span>
+            <select name="aggregation">
+              {% for a in trigger_aggregations %}<option value="{{ a }}">{{ a }}</option>{% endfor %}
+            </select>
+          </label>
+          <label class="field">
+            <span>Window (s) — for avg/min/max</span>
+            <input type="number" name="window_seconds" min="0" max="86400" value="0">
+          </label>
+        </div>
+        <div class="form-actions">
+          <a href="/hosts/{{ host.id }}" class="btn-new btn-muted">Back</a>
+          <button type="submit" class="btn-primary">Add trigger</button>
+        </div>
+      </form>
+    </section>
+
+    <section class="card" style="margin-top: 20px;">
+      <h2>Recent values <span class="count">{{ values|length }}</span></h2>
+      {% if values %}
+      <table class="table">
+        <thead><tr><th>When</th><th>Value</th></tr></thead>
+        <tbody>
+          {% for v in values %}
+          <tr>
+            <td>{{ v.collected_at.strftime('%Y-%m-%d %H:%M:%S UTC') }}</td>
+            <td>
+              {% if item.is_private %}<span class="muted">🔒 encrypted</span>
+              {% elif v.value_num is not none %}{{ v.value_num }}{{ ' ' ~ item.units if item.units }}
+              {% else %}{{ v.value_text }}{% endif %}
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+      {% else %}
+      <p class="muted">No values yet.</p>
+      {% endif %}
+    </section>
+  </div>
+</main>
+{% endblock %}
