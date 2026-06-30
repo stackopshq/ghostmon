@@ -10,7 +10,7 @@ from app.api.deps.db import DBSession
 from app.api.routes.web._shared import login_redirect, resolve_current_user, templates
 from app.api.routes.web.charts import ChartView, line_chart
 from app.core.models.host import ItemSource, ItemValueType
-from app.core.models.trigger import Severity, TriggerAggregation, TriggerOperator
+from app.core.models.trigger import Severity, TriggerAggregation, TriggerOperator, TriggerState
 from app.core.models.user import User
 from app.core.schemas.host import HostCreate, HostUpdate, ItemCreate
 from app.core.schemas.trigger import ItemTriggerCreate
@@ -156,6 +156,64 @@ async def host_detail(
     if context is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Host not found")
     return templates.TemplateResponse(request, "hosts/detail.html", context=context)
+
+
+async def _host_dashboard_context(
+    session: DBSession, user: User, host_id: uuid.UUID
+) -> dict[str, object] | None:
+    host = await HostService(session).get(host_id, user.id)
+    if host is None:
+        return None
+    item_svc = ItemService(session)
+    trigger_svc = TriggerService(session)
+    cards = []
+    for item in await item_svc.list_for_host(host_id):
+        recent = list(await item_svc.list_values(item.id, limit=120))  # newest first
+        series = [
+            (v.collected_at, v.value_num) for v in reversed(recent) if v.value_num is not None
+        ]
+        chart = (
+            line_chart(
+                series, width=340, height=96, pad_left=4, pad_right=4, pad_top=8, pad_bottom=8
+            )
+            if item.value_type.is_numeric
+            else ChartView(width=340, height=96)
+        )
+        triggers = list(await trigger_svc.list_for_item(item.id))
+        if any(t.state is TriggerState.PROBLEM for t in triggers):
+            trigger_state = "problem"
+        elif triggers:
+            trigger_state = "ok"
+        else:
+            trigger_state = None
+        cards.append(
+            {
+                "item": item,
+                "latest": recent[0] if recent else None,
+                "chart": chart,
+                "trigger_state": trigger_state,
+                "trigger_count": len(triggers),
+            }
+        )
+    return {
+        "current_user": user,
+        "active_nav": "hosts",
+        "host": host,
+        "cards": cards,
+    }
+
+
+@router.get("/hosts/{host_id}/dashboard", response_class=HTMLResponse, response_model=None)
+async def host_dashboard(
+    host_id: uuid.UUID, request: Request, session: DBSession
+) -> HTMLResponse | RedirectResponse:
+    user = await resolve_current_user(request, session)
+    if user is None:
+        return login_redirect()
+    context = await _host_dashboard_context(session, user, host_id)
+    if context is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Host not found")
+    return templates.TemplateResponse(request, "hosts/dashboard.html", context=context)
 
 
 @router.post("/hosts/{host_id}", response_class=HTMLResponse, response_model=None)

@@ -103,7 +103,9 @@ GhostMonitor's reason to exist over a plain Zabbix clone is privacy (ghost-suite
 - ✅ **Time-series graphs**: a server-rendered SVG line chart over an item's history
   on the item page (no JavaScript, no chart library — consistent with the inline
   sparklines). Geometry is a pure, unit-tested helper.
-- *(next)* host/overview dashboards; long-range charts backed by trends.
+- ✅ **Host dashboard**: an at-a-glance grid (`/hosts/{id}/dashboard`) of a host's
+  items, each card showing a mini-chart, current value and worst trigger state.
+- *(next)* overview across hosts; long-range charts backed by trends.
 - Multi-step escalation actions (notify → wait → escalate → auto-remediate hooks).
 - Acknowledge / problem timeline.
 

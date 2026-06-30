@@ -81,6 +81,11 @@ library) over an item's history:
 
 ![Server-rendered item history chart](docs/assets/item-history-chart.png)
 
+**Host dashboard** — an at-a-glance grid of a host's items, each with a mini-chart,
+current value, and trigger status:
+
+![Host dashboard with item cards](docs/assets/host-dashboard.png)
+
 **Host detail** — items with min/max and server-rendered history sparklines:
 
 | Dark | Light |

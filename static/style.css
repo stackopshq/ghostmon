@@ -608,6 +608,33 @@ footer a:hover { color: var(--brand-primary); }
 .zk { font-family: var(--font-mono); font-size: 0.82rem; }
 .zk-unlocked { color: var(--accent); }
 
+/* Host dashboard — grid of item cards */
+.dash-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 16px;
+  margin-top: 16px;
+}
+.dash-card {
+  display: block;
+  text-decoration: none;
+  color: inherit;
+  transition: transform 0.08s ease, box-shadow 0.08s ease;
+}
+.dash-card:hover { transform: translateY(-2px); box-shadow: var(--shadow-card-hover, var(--shadow-card)); }
+.dash-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.dash-name { font-weight: 600; }
+.dash-key { font-size: 0.78rem; margin: 2px 0 10px; }
+.dash-spark { width: 100%; height: 64px; color: var(--accent); display: block; }
+.dash-spark-empty {
+  height: 64px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.85rem;
+}
+.dash-value { font-family: var(--font-mono); font-size: 1.35rem; margin-top: 10px; }
+
 /* Server-rendered time-series chart */
 .chart { display: block; width: 100%; height: auto; color: var(--accent); }
 .chart-line { stroke: currentColor; stroke-width: 1.5; }
