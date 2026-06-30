@@ -11,6 +11,7 @@ import aiosmtplib
 import httpx
 
 from app.core.config import Settings
+from app.core.security.ssrf import BlockedTargetError, assert_target_allowed
 
 logger = logging.getLogger(__name__)
 
@@ -52,6 +53,11 @@ WEBHOOK_TIMEOUT_SECONDS = 10.0
 
 
 async def send_webhook(url: str, payload: dict[str, Any], secret: str | None = None) -> None:
+    try:
+        await assert_target_allowed(httpx.URL(url).host)
+    except BlockedTargetError as exc:
+        raise DeliveryError(f"webhook target blocked by egress policy: {exc}") from exc
+
     body = json.dumps(payload, separators=(",", ":")).encode("utf-8")
     headers = {
         "Content-Type": "application/json",
