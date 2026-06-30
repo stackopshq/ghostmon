@@ -42,12 +42,15 @@ The foundational data-model shift (the core of ADR 0001), via expand → migrate
 - *(deferred)* Hourly `trends` (min/avg/max) — speculative until a long-range graph
   consumes them; the UI reads raw history for now.
 
-## Phase 3 — Templates & richer collection
+## Phase 3 — Templates & richer collection *(in progress)*
 
-- `Template` = reusable items + triggers, applied to many hosts.
-- **ghostmon-agent**: a lightweight agent (push or pull) reporting system metrics
-  (CPU, memory, disk, load) to an ingestion endpoint.
-- SNMP polling for network devices.
+- ✅ **Ingestion tokens**: long-lived per-owner tokens (SHA-256 stored, shown once)
+  + a token-authenticated `POST /api/ingest` that auto-creates "trapper" items —
+  so agents/scripts can push metrics without a user login.
+- *(next)* **ghostmon-agent**: a lightweight agent reporting system metrics
+  (CPU, memory, disk, load) to `/api/ingest`.
+- *(next)* `Template` = reusable items + triggers, applied to many hosts.
+- *(next)* SNMP polling for network devices.
 
 ## Phase 4 — Alerting escalation & dashboards
 

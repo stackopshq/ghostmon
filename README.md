@@ -44,6 +44,9 @@ exposes both a JSON API and a server-rendered web UI, plus Prometheus metrics.
 - **Hosts, items & history**: collect arbitrary metrics as items with append-only
   time-series history (bounded by retention), browsable with inline sparklines;
   each monitor's latency is mirrored into this model automatically.
+- **Agent ingestion**: per-owner ingest tokens and a token-authenticated
+  `POST /api/ingest` (auto-creating "trapper" items) so external agents and scripts
+  push metrics without a user login.
 - **Maintenance windows**: one-shot (`once`) or recurring (`cron`) silencing of alerts.
 - **Notifications**: email (SMTP) and webhooks, attached per-monitor; fire-and-forget
   so a slow SMTP server never stalls probing, and **severity-routed** (each channel
