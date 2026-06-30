@@ -42,6 +42,10 @@ class Settings(BaseSettings):
 
     public_base_url: str = "http://localhost:8000"
 
+    # Metric history retention. Samples (and probe results) older than this are
+    # pruned hourly. 0 disables pruning (keep everything).
+    history_retention_days: int = 30
+
 
 @lru_cache
 def get_settings() -> Settings:
