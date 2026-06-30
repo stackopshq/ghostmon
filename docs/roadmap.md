@@ -49,7 +49,9 @@ The foundational data-model shift (the core of ADR 0001), via expand → migrate
   so agents/scripts can push metrics without a user login.
 - ✅ **ghostmon-agent**: a dependency-free agent (`ghostmon agent run`) reporting
   system metrics (load, memory %, disk %) from `/proc` to `/api/ingest`.
-- *(next)* `Template` = reusable items + triggers, applied to many hosts.
+- ✅ **Item templates**: reusable `Template` → `TemplateItem` sets, applied to a host
+  to provision its items (idempotent re-apply). Trigger templates wait for triggers
+  to move onto items (the contract step).
 - *(next)* CPU utilisation (delta sampling) and SNMP polling for network devices.
 
 ## Phase 4 — Alerting escalation & dashboards

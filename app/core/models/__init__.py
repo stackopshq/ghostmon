@@ -13,6 +13,7 @@ from app.core.models.notification_channel import (
     NotificationChannel,
     monitor_channels,
 )
+from app.core.models.template import Template, TemplateItem
 from app.core.models.trigger import (
     Severity,
     Trigger,
@@ -40,6 +41,8 @@ __all__ = [
     "NotificationChannel",
     "ProbeStatus",
     "Severity",
+    "Template",
+    "TemplateItem",
     "Trigger",
     "TriggerAggregation",
     "TriggerMetric",

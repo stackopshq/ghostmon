@@ -15,6 +15,7 @@ if TYPE_CHECKING:
     from app.core.models.maintenance import Maintenance
     from app.core.models.monitor import Monitor
     from app.core.models.notification_channel import NotificationChannel
+    from app.core.models.template import Template
 
 
 class AuthProvider(enum.StrEnum):
@@ -61,6 +62,11 @@ class User(UUIDPrimaryKey, Timestamped, Base):
         lazy="noload",
     )
     ingestion_tokens: Mapped[list[IngestionToken]] = relationship(
+        back_populates="owner",
+        cascade="all, delete-orphan",
+        lazy="noload",
+    )
+    templates: Mapped[list[Template]] = relationship(
         back_populates="owner",
         cascade="all, delete-orphan",
         lazy="noload",

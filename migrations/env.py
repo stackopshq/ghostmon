@@ -14,6 +14,7 @@ from app.core.models import metric_value as _metric_value  # noqa: F401
 from app.core.models import monitor as _monitor  # noqa: F401
 from app.core.models import monitor_result as _monitor_result  # noqa: F401
 from app.core.models import notification_channel as _channel  # noqa: F401
+from app.core.models import template as _template  # noqa: F401
 from app.core.models import trigger as _trigger  # noqa: F401
 from app.core.models import user as _user  # noqa: F401  (register mappers)
 
