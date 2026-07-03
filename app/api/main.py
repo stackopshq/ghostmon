@@ -11,6 +11,7 @@ from app.api.middleware import add_security_headers
 from app.api.ratelimit import add_rate_limit
 from app.api.routes import api_router, health_router
 from app.api.routes.web import router as web_router
+from app.api.routes.wellknown import router as wellknown_router
 from app.core.config import get_settings
 from app.tasks.scheduler import build_scheduler
 
@@ -69,6 +70,7 @@ def create_app(*, lifespan: Lifespan = scheduler_lifespan) -> FastAPI:
         name="static",
     )
     app.include_router(health_router)
+    app.include_router(wellknown_router)
     app.include_router(api_router)
     app.include_router(web_router)
     return app

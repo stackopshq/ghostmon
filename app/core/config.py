@@ -28,6 +28,9 @@ class Settings(BaseSettings):
     oidc_client_id: str | None = None
     oidc_client_secret: str | None = None
     oidc_redirect_uri: str | None = None
+    # Audience the portal resource-server accepts on GhostAuth access tokens.
+    # Defaults to `oidc_client_id` when unset (the common single-audience case).
+    oidc_audience: str | None = None
 
     argon2_time_cost: int = 3
     argon2_memory_cost: int = 65536

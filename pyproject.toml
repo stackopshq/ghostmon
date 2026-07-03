@@ -33,6 +33,7 @@ dependencies = [
     "aiosmtplib>=5.1.0",
     "croniter>=6.2.2",
     "pysnmp>=7.1.27",
+    "joserfc>=1.7.2",
 ]
 
 [project.optional-dependencies]
