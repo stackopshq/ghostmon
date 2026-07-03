@@ -141,9 +141,7 @@ async def test_latency_widget_returns_points(client: Any, session: Any) -> None:
     user = await UserService(session).upsert_oidc("portal-user", "u@ghost.local", None)
     (monitor,) = await _seed_monitors(session, user.id, [MonitorStatus.UP])
     for ms in (120, 90, 150):
-        session.add(
-            MonitorResult(monitor_id=monitor.id, status=ProbeStatus.UP, latency_ms=ms)
-        )
+        session.add(MonitorResult(monitor_id=monitor.id, status=ProbeStatus.UP, latency_ms=ms))
     await session.commit()
     resp = await client.get("/api/v1/widgets/latency", headers=_bearer(_token()))
     assert resp.status_code == 200
