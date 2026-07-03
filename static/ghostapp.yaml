@@ -1,0 +1,40 @@
+# GhostApp manifest — published for the ghostboard portal.
+# ghostboard re-validates this whole document, then overlays only its
+# presentation fields (name, description, version, switcher, widgets) onto its
+# local stub. Identity/base_url/auth stay pinned by ghostboard, so the values
+# here are informational for those — `icon` is intentionally omitted so the
+# portal keeps its own same-origin icon (its CSP blocks cross-origin images).
+apiVersion: ghostsuite.io/v1
+kind: GhostApp
+metadata:
+  id: ghostmon
+  name: Ghostmon
+  description: Uptime & infrastructure monitoring
+  version: 0.1.0
+spec:
+  base_url: https://ghostmon.ghost.local
+  health_endpoint: /healthz
+  auth:
+    required_scopes:
+      - ghostsuite:ghostmon
+  switcher:
+    visible: true
+    order: 10
+    category: monitoring
+  widgets:
+    - id: services_up
+      kind: stat
+      title: Services up
+      size: small
+      data_url: /api/v1/widgets/uptime
+      refresh_interval: 60
+      required_scopes:
+        - ghostsuite:ghostmon
+    - id: response_time
+      kind: chart
+      title: Response time
+      size: medium
+      data_url: /api/v1/widgets/latency
+      refresh_interval: 120
+      required_scopes:
+        - ghostsuite:ghostmon

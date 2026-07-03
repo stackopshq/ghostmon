@@ -13,6 +13,7 @@ from app.api.routes.monitors import router as monitors_router
 from app.api.routes.problems import router as problems_router
 from app.api.routes.templates import router as templates_router
 from app.api.routes.triggers import router as triggers_router
+from app.api.routes.widgets import router as widgets_router
 
 api_router = APIRouter(prefix="/api")
 api_router.include_router(auth_router)
@@ -27,5 +28,6 @@ api_router.include_router(hosts_router)
 api_router.include_router(ingest_router)
 api_router.include_router(item_triggers_router)
 api_router.include_router(templates_router)
+api_router.include_router(widgets_router)
 
 __all__ = ["api_router", "health_router"]
