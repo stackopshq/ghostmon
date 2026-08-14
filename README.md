@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="static/icons/logo.png" alt="GhostMonitor" width="90">
+</p>
+
 <h1 align="center">GhostMonitor</h1>
 
 <p align="center">
