@@ -16,6 +16,17 @@ COPY app ./app
 COPY migrations ./migrations
 COPY alembic.ini ./
 
+# `static/` et `templates/` sont indispensables au DÉMARRAGE, pas seulement au
+# rendu : `create_app()` monte `StaticFiles(directory=…)`, qui lève
+# `RuntimeError: Directory '/app/static' does not exist` si le répertoire manque.
+# L'application ne s'importe donc même pas.
+#
+# Le défaut n'était jamais apparu parce que l'image n'avait jamais été lancée —
+# la CI la construisait puis la jetait. Un `podman build` qui réussit ne dit rien
+# de ce que l'image fait au démarrage.
+COPY static ./static
+COPY templates ./templates
+
 RUN pip install --upgrade pip && pip install -e ".[dev]"
 
 RUN useradd --create-home --uid 1000 ghostmon \
