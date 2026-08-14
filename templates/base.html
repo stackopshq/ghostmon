@@ -21,6 +21,11 @@
   <meta name="description" content="Self-hosted infrastructure monitoring — a free Zabbix alternative. HTTP, TCP, Ping, SSL.">
   <link rel="stylesheet" href="/static/style.css?v={{ v }}">
   <link rel="icon" type="image/svg+xml" href="/static/icons/ghostmon.svg?v={{ v }}">
+  <!-- iOS ignore un favicon SVG pour un signet d'écran d'accueil et rend une
+       capture de la page à la place. Le PNG est rendu depuis le SVG ci-dessus
+       sur un fond opaque : iOS compose les icônes transparentes sur du blanc,
+       ce qui effacerait un trait lime. -->
+  <link rel="apple-touch-icon" href="/static/icons/apple-touch-icon.png?v={{ v }}">
 </head>
 <body class="fade-in">
   <header>

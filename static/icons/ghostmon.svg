@@ -1,12 +1,41 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" fill="none">
-  <defs><linearGradient id="g" x1="256" y1="70" x2="256" y2="470" gradientUnits="userSpaceOnUse">
-    <stop offset="0" stop-color="#CDFF66"/><stop offset="0.55" stop-color="#A3FF00"/><stop offset="1" stop-color="#5BA300"/>
-  </linearGradient></defs>
-  <g stroke="url(#g)" stroke-width="22" stroke-linecap="round" stroke-linejoin="round">
-    <path d="M112 336 C112 176 180 84 256 84 C332 84 400 176 400 330 C400 392 392 436 362 436 C338 436 332 400 308 400 C284 400 278 442 252 442 C226 442 220 406 196 406 C170 406 160 452 132 452 C104 452 96 410 96 366 C96 350 104 342 112 336 Z"/>
-    <path d="M74 402 L44 452" opacity="0.9"/><path d="M60 456 L38 494" opacity="0.7"/><path d="M118 470 L150 500" opacity="0.6"/>
-  </g>
-  <g stroke="#EDFFC2" stroke-width="20" stroke-linecap="round" stroke-linejoin="round" fill="none">
-    <path d="M180 208 L212 208 L228 176 L246 242 L262 208 L332 208"/>
-  </g>
+  <!-- Une seule forme, pas un pictogramme posé sur une autre. L'écran est creusé
+       dans le fantôme et les barres y sont re-remplies : `fill-rule="evenodd"`
+       compte les imbrications, donc corps (1, plein) → écran (2, creusé) →
+       barres (3, pleines). Même construction que ghostcal, ghostmail et
+       ghostlink — la suite doit se reconnaître d'un coup d'œil.
+
+       Des barres et non une courbe de pouls : un trait fin s'efface en dessous
+       de 32 px, la taille à laquelle un favicon est réellement regardé. -->
+  <defs>
+    <linearGradient id="g" x1="256" y1="48" x2="256" y2="470" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#CFFF5E"/>
+      <stop offset="0.5" stop-color="#A3FF00"/>
+      <stop offset="1" stop-color="#5BC800"/>
+    </linearGradient>
+  </defs>
+
+  <path fill-rule="evenodd" clip-rule="evenodd" fill="url(#g)" d="
+      M 256 44
+      C 152 44 84 118 84 220
+      L 84 434
+      C 84 462 114 476 133 456
+      L 167 420
+      C 180 407 199 407 212 420
+      L 237 446
+      C 248 458 264 458 275 446
+      L 300 420
+      C 313 407 332 407 345 420
+      L 379 456
+      C 398 476 428 462 428 434
+      L 428 220
+      C 428 118 360 44 256 44
+      Z
+
+      M 172.0 172.0 L 340.0 172.0 A 26 26 0 0 1 366.0 198.0 L 366.0 310.0 A 26 26 0 0 1 340.0 336.0 L 172.0 336.0 A 26 26 0 0 1 146.0 310.0 L 146.0 198.0 A 26 26 0 0 1 172.0 172.0 Z
+
+      M 192.0 254.0 L 210.0 254.0 A 12 12 0 0 1 222.0 266.0 L 222.0 294.0 A 12 12 0 0 1 210.0 306.0 L 192.0 306.0 A 12 12 0 0 1 180.0 294.0 L 180.0 266.0 A 12 12 0 0 1 192.0 254.0 Z
+      M 256.0 218.0 L 274.0 218.0 A 12 12 0 0 1 286.0 230.0 L 286.0 294.0 A 12 12 0 0 1 274.0 306.0 L 256.0 306.0 A 12 12 0 0 1 244.0 294.0 L 244.0 230.0 A 12 12 0 0 1 256.0 218.0 Z
+      M 320.0 188.0 L 338.0 188.0 A 12 12 0 0 1 350.0 200.0 L 350.0 294.0 A 12 12 0 0 1 338.0 306.0 L 320.0 306.0 A 12 12 0 0 1 308.0 294.0 L 308.0 200.0 A 12 12 0 0 1 320.0 188.0 Z
+  "/>
 </svg>
