@@ -74,10 +74,41 @@ jobs:
     name: Build OCI image
     runs-on: ubuntu-latest
     needs: [lint-type, test]
+    # Porte sur CE job : les autres n'ont besoin que de lire le depot, et un
+    # jeton capable d'ecrire des paquets n'a rien a faire la pendant que
+    # tournent des actions tierces.
+    permissions:
+      contents: read
+      packages: write
     steps:
       - uses: actions/checkout@v4
       - name: Build image with Podman
-        run: podman build -t ghostmon:${{ github.sha }} .
+        run: podman build -t ghostmon:ci .
+
+      # Jusqu'ici le job construisait puis jetait. Deployer ghostmon aurait donc
+      # voulu dire cloner la source sur l'hote cible et y construire, ce qui rend
+      # « quelle version tourne ? » impossible a repondre depuis un registre.
+      #
+      # Etiquete par SHA COURT, comme le reste de la suite : c'est ce que les
+      # roles Ansible epinglent, et une etiquette immuable est ce qui permet de
+      # nommer le deploye et d'y revenir. Jamais `latest`, qui transformerait un
+      # redemarrage en montee de version non decidee.
+      - name: Publish image to ghcr.io
+        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+        env:
+          REGISTRY: ghcr.io
+          IMAGE: ghcr.io/${{ github.repository }}
+        run: |
+          set -euo pipefail
+          echo "${{ secrets.GITHUB_TOKEN }}" \
+            | podman login "${REGISTRY}" -u "${{ github.actor }}" --password-stdin
+          SHORT="$(git rev-parse --short HEAD)"
+          podman tag ghostmon:ci "${IMAGE}:sha-${SHORT}"
+          podman tag ghostmon:ci "${IMAGE}:main"
+          podman push "${IMAGE}:sha-${SHORT}"
+          podman push "${IMAGE}:main"
+          echo "published ${IMAGE}:sha-${SHORT}"
+          podman logout "${REGISTRY}" || true
 
   security:
     name: Security scan
