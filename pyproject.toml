@@ -34,6 +34,8 @@ dependencies = [
     "croniter>=6.2.2",
     "pysnmp>=7.1.27",
     "joserfc>=1.7.2",
+    "cryptography>=50.0.0",
+    "pyasn1>=0.6.4",
 ]
 
 [project.optional-dependencies]
