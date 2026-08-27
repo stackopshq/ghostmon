@@ -1,4 +1,5 @@
 import asyncio
+import shutil
 import uuid
 from collections.abc import Callable
 from datetime import UTC, datetime, timedelta
@@ -160,10 +161,50 @@ def test_parse_ping_time_missing() -> None:
     assert _parse_ping_time("no latency here") is None
 
 
+# Ce contrôle exerce un vrai ICMP, donc il dépend de l'environnement : le binaire
+# doit être présent ET le noyau doit autoriser les sockets ICMP non privilégiées
+# au gid courant. L'image du produit remplit les deux (Dockerfile + le Sysctl posé
+# par le quadlet côté Apollo) ; l'image de job de la CI ne livre pas `ping`.
+#
+# Sans le saut, il rendait DOWN dans la CI — indiscernable d'un produit cassé. On
+# a failli « corriger » ça en installant `ping` dans la CI : le contrôle serait
+# passé au vert et aurait cessé de mesurer quoi que ce soit d'utile, pendant que
+# l'image de production, elle, n'avait toujours pas le binaire.
+#
+# Un contrôle doit rendre trois états et non deux : ça va, ça ne va pas, et je
+# n'ai pas pu regarder. Le troisième est un `skip` qui dit pourquoi.
+@pytest.mark.skipif(
+    shutil.which("ping") is None,
+    reason="pas de binaire ping ici — mesure impossible, pas mesure négative ; "
+    "ce que livre l'image du produit est vérifié par test_dockerfile_installs_ping",
+)
 async def test_run_probe_ping_loopback_is_up() -> None:
     outcome = await run_probe(_monitor(MonitorType.PING, "127.0.0.1"))
     assert outcome.status is ProbeStatus.UP
     assert outcome.error is None
+
+
+def test_dockerfile_installs_ping() -> None:
+    """Le garde-fou qui tient là où le précédent ne peut pas.
+
+    Le contrôle au-dessus saute quand l'environnement n'a pas `ping` — donc dans
+    la CI, c'est-à-dire précisément là où on aimerait être prévenu. Celui-ci
+    n'exécute rien : il lit la recette de l'image, et il s'exécute partout.
+
+    C'est ce défaut-là qui a mis tous les moniteurs ICMP en panne en production
+    sans que rien ne le signale.
+    """
+    from pathlib import Path
+
+    dockerfile = Path(__file__).resolve().parents[1] / "Dockerfile"
+    body = dockerfile.read_text(encoding="utf-8")
+    # Témoin : si la lecture avait échoué ou visé le mauvais fichier, l'assertion
+    # ci-dessous passerait pour une bonne raison qui n'en est pas une.
+    assert "apt-get install" in body, f"{dockerfile} ne ressemble pas au Dockerfile attendu"
+    assert "iputils-ping" in body, (
+        "l'image ne livrerait pas `ping` : tout moniteur ICMP serait DOWN en "
+        "permanence, et la découverte réseau ne provisionnerait aucun hôte"
+    )
 
 
 async def test_run_probe_ping_invalid_target() -> None:
