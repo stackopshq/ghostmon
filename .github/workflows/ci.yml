@@ -83,7 +83,13 @@ jobs:
 
   build:
     name: Build OCI image
-    runs-on: ubuntu-latest
+    # `[self-hosted, linux, x64]` : ces étiquettes désignent `core-run-01-host-1`, un
+    # exécutant enregistré au niveau de l'organisation `stackops` et déclaré SANS image, donc
+    # le job tourne sur la VM `core-run-01` elle-même, où `podman 5.8.2` existe en rootless.
+    # Sur `ubuntu-latest` — l'image du runner de la forge — ce job mourait à sa première
+    # étape sur « podman: command not found ». Ne pas y déplacer les autres jobs : cet
+    # exécutant n'a pas de bac à sable et sa capacité est de 1.
+    runs-on: [self-hosted, linux, x64]
     needs: [lint-type, test]
     # Porte sur CE job : les autres n'ont besoin que de lire le depot, et un
     # jeton capable d'ecrire des paquets n'a rien a faire la pendant que
@@ -108,11 +114,18 @@ jobs:
         if: github.ref == 'refs/heads/main' && github.event_name == 'push'
         env:
           REGISTRY: ghcr.io
-          IMAGE: ghcr.io/${{ github.repository }}
+          GHCR_USERNAME: ${{ secrets.GHCR_USERNAME }}
+          GHCR_TOKEN: ${{ secrets.GHCR_TOKEN }}
+          # `ghcr.io/stackopshq/…` en dur, et non `github.repository` : sur la forge cette
+          # variable vaut `stackops/ghostmon`, un espace de noms qui n'existe pas sur
+          # GitHub. Le nom est le même vu d'ici ou du miroir, autant l'écrire.
+          IMAGE: ghcr.io/stackopshq/ghostmon
         run: |
           set -euo pipefail
-          echo "${{ secrets.GITHUB_TOKEN }}" \
-            | podman login "${REGISTRY}" -u "${{ github.actor }}" --password-stdin
+          # `GITHUB_TOKEN` est ici un jeton de la forge : ghcr.io le refuse en 403.
+          # Les identifiants ghcr sont des secrets d'organisation `stackops`.
+          printf '%s' "${GHCR_TOKEN}" \
+            | podman login "${REGISTRY}" -u "${GHCR_USERNAME}" --password-stdin
           SHORT="$(git rev-parse --short HEAD)"
           podman tag ghostmon:ci "${IMAGE}:sha-${SHORT}"
           podman tag ghostmon:ci "${IMAGE}:main"
