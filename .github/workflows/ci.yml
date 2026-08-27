@@ -155,7 +155,15 @@ jobs:
           # aucune version corrigée et n'arrivait que par lui. La dépendance est
           # partie, l'exemption avec.
           uvx pip-audit -r requirements.txt --strict
+      # Le binaire de la release, et non `podman run` : ce job tourne dans l'image du
+      # runner de la forge, qui ne livre pas podman — il mourait donc sur
+      # « podman: command not found », exactement comme le job d'image. Il reste ici
+      # plutôt que de partir sur l'exécutant hôte : une analyse de secrets n'a pas
+      # besoin d'un moteur de conteneurs, et elle garde ainsi son bac à sable. C'est
+      # déjà ce que font ghostmail et ghostlink.
       - name: Scan for secrets (gitleaks)
         run: |
-          podman run --rm -v "$PWD:/repo:ro,Z" ghcr.io/gitleaks/gitleaks:v8.21.2 \
-            detect --source=/repo --no-banner --redact
+          version=8.21.2
+          curl -sSL "https://github.com/gitleaks/gitleaks/releases/download/v${version}/gitleaks_${version}_linux_x64.tar.gz" \
+            | tar -xz gitleaks
+          ./gitleaks detect --source=. --config .gitleaks.toml --no-banner --redact
