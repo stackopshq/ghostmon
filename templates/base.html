@@ -29,7 +29,15 @@
 </head>
 <body class="fade-in">
   <header>
-    <a href="/" class="logo">ghostmon</a>
+    <a href="/" class="logo">
+      {# Le logo du produit, et non la pastille décorative qui tenait sa place
+         depuis la génération d'identité : `logo.svg` était livré dans
+         static/icons/ et servait UNIQUEMENT de favicon d'onglet.
+         `alt` vide à dessein — le nom est écrit juste à côté, l'image est
+         décorative et un lecteur d'écran ne doit pas la lire deux fois. #}
+      <img src="/static/icons/logo.svg?v={{ v }}" alt="" class="logo-mark" width="22" height="22">
+      ghostmon
+    </a>
     {% if current_user %}
     <nav class="top-nav">
       <a href="/" class="nav-link{% if active_nav == 'dashboard' %} nav-active{% endif %}">Dashboard</a>
