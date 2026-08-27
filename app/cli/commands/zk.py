@@ -34,7 +34,7 @@ def _require_one(key: str | None, passphrase: str | None) -> None:
 
 @app.command("genkey")
 def genkey() -> None:
-    """Generate a random private-item key. Keep it secret — the server never sees it."""
+    """Generate a random private-item key. Keep it secret: the server never sees it."""
     typer.echo(generate_key())
 
 

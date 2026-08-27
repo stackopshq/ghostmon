@@ -181,7 +181,7 @@
             </select>
           </label>
           <label class="field">
-            <span>Window (s) — for avg/min/max</span>
+            <span>Window (s) for avg/min/max</span>
             <input type="number" name="window_seconds" min="0" max="86400" value="0">
           </label>
         </div>
@@ -203,7 +203,7 @@
           <tr>
             <td>{{ r.checked_at.strftime('%Y-%m-%d %H:%M:%S UTC') }}</td>
             <td><span class="status status-{{ r.status.value }}">{{ r.status.value }}</span></td>
-            <td>{{ (r.latency_ms|string + ' ms') if r.latency_ms is not none else '—' }}</td>
+            <td>{{ (r.latency_ms|string + ' ms') if r.latency_ms is not none else 'no data' }}</td>
             <td class="muted">{{ r.error or '' }}</td>
           </tr>
           {% endfor %}

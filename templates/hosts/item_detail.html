@@ -24,7 +24,7 @@
       <h2>Triggers <span class="count">{{ triggers|length }}</span></h2>
       <p class="muted" style="margin-bottom: 12px;">
         Threshold rules on this item's values. A breach alerts through the host's
-        notification channels.{% if item.is_private %} (Private items are encrypted —
+        notification channels.{% if item.is_private %} (Private items are encrypted, so
         the server can't evaluate triggers on them.){% endif %}
       </p>
       {% if triggers %}
@@ -87,7 +87,7 @@
             </select>
           </label>
           <label class="field">
-            <span>Window (s) — for avg/min/max</span>
+            <span>Window (s) for avg/min/max</span>
             <input type="number" name="window_seconds" min="0" max="86400" value="0">
           </label>
         </div>
@@ -121,7 +121,7 @@
     <section class="card" style="margin-top: 20px;">
       <h2>Trends (long-range)</h2>
       <p class="muted" style="margin-bottom: 12px;">
-        Hourly average with the min/max band — survives raw-sample retention.
+        Hourly average with the min/max band. Survives raw-sample retention.
       </p>
       <svg class="chart" viewBox="0 0 {{ trend_chart.width }} {{ trend_chart.height }}" role="img"
            aria-label="{{ item.name }} long-range trend">
@@ -142,7 +142,7 @@
     <section class="card" style="margin-top: 20px;">
       <h2>Hourly trends <span class="count">{{ trends|length }}</span></h2>
       <p class="muted" style="margin-bottom: 12px;">
-        Min/avg/max rollups — downsampled history kept beyond raw-sample retention.
+        Min/avg/max rollups: downsampled history kept beyond raw-sample retention.
       </p>
       <table class="table">
         <thead><tr><th>Hour (UTC)</th><th>Min</th><th>Avg</th><th>Max</th><th>Samples</th></tr></thead>

@@ -37,7 +37,7 @@
         {% endif %}
         <div class="dash-value">
           {% if c.item.is_private %}<span class="muted">🔒</span>
-          {% elif c.latest is none %}<span class="muted">—</span>
+          {% elif c.latest is none %}<span class="muted">no data</span>
           {% elif c.latest.value_num is not none %}{{ c.latest.value_num }}{{ ' ' ~ c.item.units if c.item.units }}
           {% else %}{{ c.latest.value_text }}{% endif %}
         </div>

@@ -30,7 +30,7 @@
             <td>{{ r.name }}</td>
             <td class="muted">{{ r.cidr }}</td>
             <td class="muted">{{ r.method.value }}{% if r.method.value == 'tcp' and r.port %}:{{ r.port }}{% endif %}</td>
-            <td class="muted">{{ template_names.get(r.template_id, '—') }}</td>
+            <td class="muted">{{ template_names.get(r.template_id, 'none') }}</td>
             <td class="muted">{{ (r.interval_seconds // 60) }}m</td>
             <td class="muted">{{ r.last_run_at.strftime('%Y-%m-%d %H:%M') if r.last_run_at else 'never' }}</td>
             <td class="muted">{{ 'yes' if r.is_enabled else 'no' }}</td>
@@ -78,7 +78,7 @@
           <label class="field">
             <span>Apply template (optional)</span>
             <select name="template_id">
-              <option value="">— none —</option>
+              <option value="">none</option>
               {% for t in templates_list %}<option value="{{ t.id }}">{{ t.name }}</option>{% endfor %}
             </select>
           </label>

@@ -24,7 +24,7 @@
     {% if item_views | selectattr('item.is_private') | list %}
     <p class="muted" style="margin-bottom: 12px;">
       🔒 This host has private (end-to-end encrypted) items. Append
-      <code>#k=YOUR_KEY</code> to this URL to decrypt them in your browser — the key
+      <code>#k=YOUR_KEY</code> to this URL to decrypt them in your browser: the key
       stays in the fragment and never reaches the server.
     </p>
     {% endif %}
@@ -107,7 +107,7 @@
           </div>
           <label class="field inline">
             <input type="checkbox" name="is_private">
-            <span>🔒 Private (zero-knowledge) — values are encrypted client-side; the server never sees them</span>
+            <span>🔒 Private (zero-knowledge): values are encrypted client-side; the server never sees them</span>
           </label>
           <div class="form-actions">
             <button type="submit" class="btn-primary">Add item</button>
@@ -131,13 +131,13 @@
             <td class="muted">{{ iv.item.source.value }}{% if iv.item.is_private %} <span title="end-to-end encrypted">🔒</span>{% endif %}{% if iv.item.source.value == 'snmp' and iv.item.config.get('oid') %} <span style="opacity:.7">({{ iv.item.config.get('oid') }})</span>{% endif %}</td>
             <td>
               {% if iv.item.is_private %}
-                {% if iv.latest %}<span class="zk" data-zk-cipher="{{ iv.latest.value_text }}">🔒 private</span>{% else %}<span class="muted">🔒 —</span>{% endif %}
-              {% elif iv.latest is none %}<span class="muted">—</span>
+                {% if iv.latest %}<span class="zk" data-zk-cipher="{{ iv.latest.value_text }}">🔒 private</span>{% else %}<span class="muted">🔒 no data</span>{% endif %}
+              {% elif iv.latest is none %}<span class="muted">no data</span>
               {% elif iv.latest.value_num is not none %}{{ iv.latest.value_num }}{{ ' ' ~ iv.item.units if iv.item.units }}
               {% else %}{{ iv.latest.value_text }}{% endif %}
             </td>
             <td class="muted">
-              {% if iv.min is not none %}{{ iv.min }} / {{ iv.max }}{% else %}—{% endif %}
+              {% if iv.min is not none %}{{ iv.min }} / {{ iv.max }}{% else %}no data{% endif %}
             </td>
             <td>
               {% if iv.spark %}
