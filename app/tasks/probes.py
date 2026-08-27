@@ -184,6 +184,31 @@ async def _probe_ssl(url: str) -> ProbeOutcome:
     return ProbeOutcome(ProbeStatus.UP, latency_ms, warning)
 
 
+def _ping_failure_reason(stderr: str, returncode: int | None) -> str:
+    """Explain a failed `ping` run, without letting a setup fault look like an outage.
+
+    Every failure here surfaces as DOWN, which an operator reads as "the host is
+    gone". For one class of failure that reading is wrong: when the process may
+    not open an ICMP socket, we never asked the target anything, and the target
+    may be perfectly healthy. The container runs as uid 1000 and podman leaves
+    `net.ipv4.ping_group_range` at `0 0`, so this is the *expected* outcome of a
+    deployment that ships the binary and forgets the capability. Naming it here
+    is what turns a phantom outage into a five-second fix.
+
+    Anything else keeps ping's own words, which are usually better than ours; the
+    exit code is the last resort, for a failure that printed nothing at all. A
+    silent DOWN is the one answer this function must never give.
+    """
+    lowered = stderr.lower()
+    if "not permitted" in lowered and ("cap_net_raw" in lowered or "socket" in lowered):
+        return (
+            "ping is not permitted to open an ICMP socket, so the target was "
+            "never contacted (this is a probe setup fault, not an outage): "
+            "grant NET_RAW or set net.ipv4.ping_group_range for this container"
+        )
+    return stderr or f"ping exited with code {returncode}"
+
+
 async def _probe_ping(url: str) -> ProbeOutcome:
     target = _parse_ping_target(url)
     if not target:
@@ -218,7 +243,7 @@ async def _probe_ping(url: str) -> ProbeOutcome:
         return ProbeOutcome(
             ProbeStatus.DOWN,
             None,
-            err or f"ping exited with code {proc.returncode}",
+            _ping_failure_reason(err, proc.returncode),
         )
 
     latency_ms = _parse_ping_time(stdout.decode("utf-8", errors="replace"))

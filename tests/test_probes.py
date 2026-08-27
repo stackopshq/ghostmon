@@ -321,3 +321,83 @@ async def test_ping_inserts_argv_separator_before_target(monkeypatch: pytest.Mon
     # "--" must precede the (user-controlled) target so a '-x' target can't be a flag.
     assert "--" in args
     assert args.index("--") < args.index("8.8.8.8")
+
+
+# --- Mode dégradé de la sonde ICMP -----------------------------------------
+#
+# Ces trois cas couvrent ce que personne ne regardait : ce que rend la sonde
+# quand `ping` est là mais ne peut pas travailler. Le texte d'erreur ci-dessous
+# n'est pas inventé, il est copié de la sortie de `ping` dans l'image du produit
+# lancée en uid 1000 sans capacité, le 2026-08-27. Un échantillon inventé aurait
+# testé notre idée du message, pas le message.
+
+
+def _fake_ping(
+    monkeypatch: pytest.MonkeyPatch, *, returncode: int, stderr: bytes, stdout: bytes = b""
+) -> None:
+    """Remplace le lancement de `ping` par une sortie choisie."""
+    import asyncio as _asyncio
+
+    class _FakeProc:
+        def __init__(self) -> None:
+            self.returncode = returncode
+
+        async def communicate(self) -> tuple[bytes, bytes]:
+            return (stdout, stderr)
+
+        def kill(self) -> None:  # pragma: no cover
+            pass
+
+    async def _fake_exec(*_args: str, **_kw: object) -> _FakeProc:
+        return _FakeProc()
+
+    monkeypatch.setattr(_asyncio, "create_subprocess_exec", _fake_exec)
+
+
+PING_EACCES = (
+    b"ping: socktype: SOCK_RAW\n"
+    b"ping: socket: Operation not permitted\n"
+    b"ping: => missing cap_net_raw+p capability or setuid?\n"
+)
+
+
+async def test_ping_permission_denied_says_it_is_a_setup_fault(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Le cas qui transforme un défaut de configuration en fausse panne."""
+    _fake_ping(monkeypatch, returncode=2, stderr=PING_EACCES)
+    outcome = await probes_module._probe_ping("127.0.0.1")
+
+    assert outcome.status is ProbeStatus.DOWN
+    assert outcome.latency_ms is None
+
+    # Muet est le seul verdict interdit : sans texte, l'exploitant lit une panne
+    # de l'hôte et part chercher un incident qui n'existe pas.
+    assert outcome.error
+    reason = outcome.error.lower()
+    # Il doit dire QUE la cible n'a pas été jointe, et QUOI faire.
+    assert "never contacted" in reason
+    assert "net_raw" in reason or "ping_group_range" in reason
+
+
+async def test_ping_ordinary_failure_keeps_pings_own_words(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """L'autre sens : une vraie panne ne doit pas être rebaptisée défaut de setup."""
+    _fake_ping(monkeypatch, returncode=1, stderr=b"ping: unknown host nope.invalid\n")
+    outcome = await probes_module._probe_ping("nope.invalid")
+
+    assert outcome.status is ProbeStatus.DOWN
+    assert outcome.error == "ping: unknown host nope.invalid"
+    assert "net_raw" not in (outcome.error or "").lower()
+
+
+async def test_ping_silent_failure_still_reports_a_reason(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Un échec qui n'imprime rien doit quand même rendre un motif, pas une chaîne vide."""
+    _fake_ping(monkeypatch, returncode=1, stderr=b"")
+    outcome = await probes_module._probe_ping("10.0.0.1")
+
+    assert outcome.status is ProbeStatus.DOWN
+    assert outcome.error == "ping exited with code 1"
