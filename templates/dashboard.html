@@ -8,15 +8,15 @@
       <h1 class="hero-title">
         <span class="terminal-prompt">~ $&nbsp;</span><span>ghostmon monitor list</span><span class="terminal-cursor">▊</span>
       </h1>
-      <div class="hero-sub">Real-time view of your monitors.</div>
+      <div class="hero-sub">{{ t("dashboard.subtitle") }}</div>
     </div>
 
     <div class="toolbar">
       <div>
-        <h2>Monitors<span class="count">{{ monitors|length }} total</span></h2>
+        <h2>{{ t("dashboard.monitors") }}<span class="count">{{ monitors|length }} {{ t("dashboard.total") }}</span></h2>
       </div>
       <div>
-        <a href="/monitors/new" class="btn-new">+ New monitor</a>
+        <a href="/monitors/new" class="btn-new">{{ t("dashboard.newMonitor") }}</a>
       </div>
     </div>
 
@@ -31,20 +31,20 @@
         <div class="monitor-url" title="{{ m.url }}">{{ m.url }}</div>
         <div class="monitor-foot">
           {% if m.id|string in under_maintenance %}
-          <span class="status status-maintenance">maintenance</span>
+          <span class="status status-maintenance">{{ t("dashboard.maintenance") }}</span>
           {% else %}
           <span class="status status-{{ m.status.value }}">{{ m.status.value }}</span>
           {% endif %}
-          <span class="monitor-interval">every {{ m.interval }}s</span>
+          <span class="monitor-interval">{{ t("dashboard.everySeconds", n=m.interval) }}</span>
         </div>
       </article>
       {% endfor %}
     </div>
     {% else %}
     <div class="empty">
-      <h3>No monitors yet</h3>
-      <p>Create your first monitor to start watching an endpoint.</p>
-      <p><a href="/monitors/new" class="btn-new">+ New monitor</a></p>
+      <h3>{{ t("dashboard.empty") }}</h3>
+      <p>{{ t("dashboard.emptyHint") }}</p>
+      <p><a href="/monitors/new" class="btn-new">{{ t("dashboard.newMonitor") }}</a></p>
     </div>
     {% endif %}
 

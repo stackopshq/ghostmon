@@ -16,11 +16,18 @@ from app.core.models.user import User
 from app.core.security.field_crypto import decrypt_secret
 from app.core.security.tokens import TokenError, decode_token
 from app.core.services.user_service import UserService
+from app.web.i18n import context as i18n_context
 
 SESSION_COOKIE = "ghostmon_session"
 
 _ROOT = Path(__file__).resolve().parents[4]
-templates = Jinja2Templates(directory=str(_ROOT / "templates"))
+# `context_processors` plutôt qu'un ajout au contexte de chaque route : il y a
+# une trentaine de rendus, et celui qu'on oublierait afficherait ses clés brutes
+# au lieu de son texte — un oubli visible, mais seulement par qui ouvre la page.
+templates = Jinja2Templates(
+    directory=str(_ROOT / "templates"),
+    context_processors=[i18n_context],
+)
 
 
 def _asset_hash() -> str:

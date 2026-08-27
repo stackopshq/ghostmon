@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}Sign in · GhostMonitor{% endblock %}
+{% block title %}{{ t("login.title") }} · GhostMonitor{% endblock %}
 
 {% block header_actions %}{% endblock %}
 
@@ -8,8 +8,8 @@
 <main class="page-bg">
   <div class="auth-wrap">
     <div class="card auth-card">
-      <h1>Sign in</h1>
-      <p class="auth-sub">Access your GhostMonitor dashboard.</p>
+      <h1>{{ t("login.title") }}</h1>
+      <p class="auth-sub">{{ t("login.subtitle") }}</p>
 
       {% if error %}
       <div class="flash flash-error">{{ error }}</div>
@@ -17,23 +17,23 @@
 
       <form method="post" action="/login" class="stacked">
         <label class="field">
-          <span>Email</span>
+          <span>{{ t("login.email") }}</span>
           <input type="email" name="email" required autocomplete="email" autofocus>
         </label>
         <label class="field">
-          <span>Password</span>
+          <span>{{ t("login.password") }}</span>
           <input type="password" name="password" required autocomplete="current-password" minlength="12">
         </label>
-        <button type="submit" class="btn-primary">Sign in</button>
+        <button type="submit" class="btn-primary">{{ t("login.submit") }}</button>
       </form>
 
-      <div class="divider">or</div>
+      <div class="divider">{{ t("login.or") }}</div>
 
       <a
         href="{% if oidc_enabled %}/api/auth/oidc/login{% else %}#{% endif %}"
         class="btn-oidc"
-        {% if not oidc_enabled %}aria-disabled="true" title="OIDC is disabled"{% endif %}>
-        Continue with SSO (OIDC)
+        {% if not oidc_enabled %}aria-disabled="true" title="{{ t('login.ssoDisabled') }}"{% endif %}>
+        {{ t("login.sso") }}
       </a>
     </div>
   </div>

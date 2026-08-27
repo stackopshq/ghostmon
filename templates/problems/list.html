@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}Problems · GhostMonitor{% endblock %}
+{% block title %}{{ t("base.problems") }} · GhostMonitor{% endblock %}
 
 {% block page %}
 <main class="page-bg">
@@ -10,7 +10,7 @@
         <span class="terminal-prompt">~ $&nbsp;</span><span>problems</span><span class="terminal-cursor">▊</span>
       </h1>
       <div class="hero-sub">
-        {% if ongoing %}{{ ongoing }} ongoing{% else %}no ongoing problems{% endif %} · {{ rows|length }} shown
+        {% if ongoing %}{{ t("problems.ongoing", n=ongoing) }}{% else %}{{ t("problems.noneOngoing") }}{% endif %} · {{ t("problems.shown", n=rows|length) }}
       </div>
     </div>
 
