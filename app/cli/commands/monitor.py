@@ -30,7 +30,7 @@ async def _list(owner_email: str | None) -> int:
                 return 1
             monitors = list(await MonitorService(session).list_for_owner(user.id))
 
-    table = Table(title="GhostMonitor — Monitors", show_lines=False)
+    table = Table(title="GhostMonitor · Monitors", show_lines=False)
     table.add_column("ID", style="dim", no_wrap=True)
     table.add_column("Name")
     table.add_column("Type")

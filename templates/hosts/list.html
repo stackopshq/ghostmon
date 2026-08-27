@@ -31,7 +31,7 @@
             {% if v.problem_count %}<span class="sev sev-{{ v.worst_severity.value }}">{{ v.problem_count }} problem{{ 's' if v.problem_count > 1 }}</span>
             {% else %}<span class="tstate tstate-ok">ok</span>{% endif %}
           </td>
-          <td class="muted">{{ v.host.description or '—' }}</td>
+          <td class="muted">{{ v.host.description or 'none' }}</td>
           <td>{{ 'yes' if v.host.is_enabled else 'no' }}</td>
         </tr>
         {% endfor %}

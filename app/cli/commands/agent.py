@@ -56,7 +56,7 @@ def run(
     on first push. Provide the token via --token or the GHOSTMON_INGEST_TOKEN env.
     """
     if not token:
-        console.print("[red]No ingest token[/red] — set --token or GHOSTMON_INGEST_TOKEN.")
+        console.print("[red]No ingest token[/red]: set --token or GHOSTMON_INGEST_TOKEN.")
         raise typer.Exit(code=2)
     endpoint = f"{url.rstrip('/')}/api/ingest"
     with httpx.Client(timeout=10) as client:

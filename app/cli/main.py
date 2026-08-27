@@ -8,7 +8,7 @@ from app.cli.commands import zk as zk_cmd
 
 app = typer.Typer(
     name="ghostmon",
-    help="GhostMonitor CLI — self-hosted monitoring.",
+    help="GhostMonitor CLI, self-hosted monitoring.",
     no_args_is_help=True,
     add_completion=True,
 )

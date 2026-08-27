@@ -51,7 +51,7 @@ async def _list() -> int:
         console.print("[yellow]No users found.[/yellow]")
         return 0
 
-    table = Table(title="GhostMonitor — Users", show_lines=False)
+    table = Table(title="GhostMonitor · Users", show_lines=False)
     table.add_column("ID", style="dim", no_wrap=True)
     table.add_column("Email")
     table.add_column("Full name")

@@ -63,18 +63,18 @@
         {% for i in step_rows %}
         <div class="field-row">
           <label class="field">
-            <span>Step {{ i + 1 }} — delay (min)</span>
+            <span>Step {{ i + 1 }} delay (min)</span>
             <input type="number" name="delay_minutes" min="0" max="10080" value="{{ i * 5 }}">
           </label>
           <label class="field">
             <span>Channel</span>
             <select name="channel_id">
-              <option value="">— none —</option>
+              <option value="">none</option>
               {% for c in channels %}<option value="{{ c.id }}">{{ c.name }} ({{ c.type.value }})</option>{% endfor %}
             </select>
           </label>
           <label class="field">
-            <span>Action command (optional — webhook only)</span>
+            <span>Action command (optional, webhook only)</span>
             <input type="text" name="action_command" maxlength="500" placeholder="e.g. restart nginx">
           </label>
         </div>
