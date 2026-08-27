@@ -57,11 +57,27 @@ def encrypt_cmd(
 
 @app.command("decrypt")
 def decrypt_cmd(
-    token: Annotated[str, typer.Argument(help="Token from history.")],
+    token: Annotated[
+        str,
+        typer.Argument(
+            # Tokens are urlsafe base64, whose alphabet contains `-`. Roughly one
+            # in sixty-four therefore begins with a dash, and the parser reads it
+            # as an option before this function is ever called. Measured
+            # 2026-08-27: 5 failures in 400 round-trips, every failing token
+            # starting with `-`. The help says so because the error the parser
+            # produces ("No such option") points nowhere near the cause.
+            help="Token from history. If it starts with '-', put `--` before it.",
+        ),
+    ],
     key: _KEY = None,
     passphrase: _PASSPHRASE = None,
 ) -> None:
-    """Decrypt a token read back from a private item's history."""
+    """Decrypt a token read back from a private item's history.
+
+    A token beginning with `-` must be separated by `--`:
+
+        ghostmon zk decrypt --key KEY -- -MvDRH...
+    """
     _require_one(key, passphrase)
     if passphrase or is_passphrase_token(token):
         if not passphrase:

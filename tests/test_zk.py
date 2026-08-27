@@ -77,8 +77,31 @@ def test_zk_cli_roundtrip() -> None:
     assert enc.exit_code == 0
     token = enc.output.strip()
 
-    dec = runner.invoke(app, ["zk", "decrypt", "--key", key, token])
+    # `--` avant le jeton, et ce n'est pas une précaution de style : les jetons
+    # sont du base64 urlsafe, dont l'alphabet contient `-`. Environ un sur
+    # soixante-quatre commence donc par un tiret, et l'analyseur le lisait comme
+    # une option — ce test échouait aléatoirement, en `exit_code == 2`, environ
+    # une exécution sur soixante-dix. Mesuré le 2026-08-27 : 5 échecs sur 400
+    # rejouements, chaque jeton fautif commençant par `-`.
+    dec = runner.invoke(app, ["zk", "decrypt", "--key", key, "--", token])
     assert dec.exit_code == 0
+    assert dec.output.strip() == "topsecret"
+
+
+def test_zk_cli_decrypt_token_commencant_par_un_tiret() -> None:
+    """Le cas qui rendait le test précédent intermittent, rendu déterministe."""
+    key = runner.invoke(app, ["zk", "genkey"]).output.strip()
+    # Chiffrer jusqu'à obtenir un jeton qui commence par un tiret : c'est le cas
+    # à couvrir, et l'attendre du hasard est exactement ce qui ne marchait pas.
+    for _ in range(2000):
+        token = runner.invoke(app, ["zk", "encrypt", "--key", key, "topsecret"]).output.strip()
+        if token.startswith("-"):
+            break
+    else:  # pragma: no cover - 2000 tirages sans un seul tiret est invraisemblable
+        raise AssertionError("aucun jeton commençant par '-' en 2000 essais")
+
+    dec = runner.invoke(app, ["zk", "decrypt", "--key", key, "--", token])
+    assert dec.exit_code == 0, dec.output
     assert dec.output.strip() == "topsecret"
 
 
