@@ -12,6 +12,7 @@ from fastapi.templating import Jinja2Templates
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app import __version__
+from app.core.config import get_settings
 from app.core.models.user import User
 from app.core.security.field_crypto import decrypt_secret
 from app.core.security.tokens import TokenError, decode_token
@@ -41,6 +42,12 @@ def _asset_hash() -> str:
 
 templates.env.globals["v"] = _asset_hash()
 templates.env.globals["version"] = __version__
+# Origine publique du service, pour les seules balises qui ne tolèrent pas une
+# URL relative : un aperçu de partage est fabriqué par un robot qui n'a pas
+# chargé la page et ne sait donc pas la résoudre. Le slash final est retiré
+# ici plutôt que dans le gabarit, où l'oubli ne se verrait qu'à l'affichage
+# d'une vignette manquante.
+templates.env.globals["base_url"] = get_settings().public_base_url.rstrip("/")
 # Decrypt an at-rest-encrypted field (alert target) for display to its owner.
 templates.env.filters["reveal"] = decrypt_secret
 

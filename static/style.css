@@ -3,8 +3,13 @@
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
 :root {
-  --font-mono: 'JetBrains Mono', 'Fira Code', Consolas, 'Courier New', monospace;
-  --font-ui: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  /* `--font-sans`, `--font-mono` et l'alias `--font-ui` viennent de
+     `ghost-fonts.css`, chargé juste avant celui-ci. Les deux déclarations qui
+     tenaient ici ont été retirées, et pas seulement par souci de doublon :
+     `--font-mono` nommait 'JetBrains Mono' alors que le dépôt ne livrait aucun
+     fichier de police, donc l'interface rendait en Consolas depuis toujours.
+     Une famille qu'on nomme sans l'embarquer n'est pas un choix typographique,
+     c'est un vœu. Les fichiers sont maintenant dans `static/fonts/`. */
   --radius: 10px;
   --radius-sm: 6px;
   --transition: 0.15s ease;

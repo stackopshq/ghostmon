@@ -19,13 +19,38 @@
   </script>
   <title>{% block title %}GhostMonitor — self-hosted uptime monitoring{% endblock %}</title>
   <meta name="description" content="Self-hosted infrastructure monitoring — a free Zabbix alternative. HTTP, TCP, Ping, SSL.">
+  <meta name="theme-color" content="#A3FF00">
+  <!-- Les polices d'abord : `ghost-fonts.css` pose `--font-sans`, `--font-mono`
+       et l'alias `--font-ui` que `style.css` consomme ensuite. Les deux
+       fichiers sont servis depuis /static, aucune requête ne sort de
+       l'origine, ce que la CSP (`font-src 'self'`) impose de toute façon. -->
+  <link rel="stylesheet" href="/static/ghost-fonts.css?v={{ v }}">
   <link rel="stylesheet" href="/static/style.css?v={{ v }}">
-  <link rel="icon" type="image/svg+xml" href="/static/icons/ghostmon.svg?v={{ v }}">
+  <link rel="icon" type="image/svg+xml" href="/static/icons/favicon.svg?v={{ v }}">
+  <!-- Le repli matriciel, pour les navigateurs qui ignorent encore un favicon
+       vectoriel. Sans lui le fichier existerait sans que rien ne le demande,
+       et un navigateur sur deux irait chercher /favicon.ico qui n'est pas là. -->
+  <link rel="icon" type="image/png" sizes="192x192" href="/static/icons/icon-192.png?v={{ v }}">
   <!-- iOS ignore un favicon SVG pour un signet d'écran d'accueil et rend une
        capture de la page à la place. Le PNG est rendu depuis le SVG ci-dessus
        sur un fond opaque : iOS compose les icônes transparentes sur du blanc,
        ce qui effacerait un trait lime. -->
   <link rel="apple-touch-icon" href="/static/icons/apple-touch-icon.png?v={{ v }}">
+
+  <!-- Aperçu de partage. `og:image` est ABSOLUE, et c'est le seul point qui ne
+       se rattrape pas : en relatif, aucun réseau ne va chercher l'image, et le
+       résultat n'est pas une vignette cassée mais l'absence pure et simple de
+       carte. L'origine vient de `public_base_url`, celle-là même dont les
+       alertes se servent pour lier un problème à sa page : elle est donc déjà
+       juste partout où les notifications arrivent. Titre et description sont en
+       français, la langue dans laquelle ce produit s'adresse à ses lecteurs. -->
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="GhostMonitor">
+  <meta property="og:title" content="GhostMonitor, la supervision que vous hébergez vous-même">
+  <meta property="og:description" content="Surveillez vos hôtes et vos services depuis votre propre infrastructure : sondes HTTP, TCP, Ping et TLS, seuils, escalade et alertes. Une alternative libre à Zabbix.">
+  <meta property="og:url" content="{{ base_url }}{{ request.url.path }}">
+  <meta property="og:image" content="{{ base_url }}/static/icons/og-image.png?v={{ v }}">
+  <meta name="twitter:card" content="summary_large_image">
 </head>
 <body class="fade-in">
   <header>

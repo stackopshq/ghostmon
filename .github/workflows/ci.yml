@@ -41,21 +41,32 @@ jobs:
     name: Tests
     runs-on: ubuntu-latest
     services:
+      # Pas de `ports:`. Publier 5432 sur l'hôte est ce que fait GitHub, où
+      # chaque job a sa propre machine ; sur `core-run-01`, partagé par les huit
+      # produits de la suite, un seul job de toute la forge peut tenir ce port.
+      # Les autres mouraient à la création du conteneur, avant même
+      # `actions/checkout`, sur `bind: address already in use` : les 259 tests
+      # n'échouaient pas, ils n'étaient jamais lancés.
       postgres:
         image: postgres:16-alpine
         env:
           POSTGRES_USER: ghostmon
           POSTGRES_PASSWORD: ghostmon
           POSTGRES_DB: ghostmon_test
-        ports:
-          - 5432:5432
         options: >-
           --health-cmd "pg_isready -U ghostmon -d ghostmon_test"
           --health-interval 5s
           --health-timeout 5s
           --health-retries 10
     env:
-      DATABASE_URL: postgresql+asyncpg://ghostmon:ghostmon@localhost:5432/ghostmon_test
+      # `postgres`, le NOM du service, et pas `localhost` : sans port publié le
+      # conteneur reste joignable par son nom sur le réseau du job. C'est le
+      # second geste, indissociable du premier, et celui qu'on oublie. Il ne
+      # pardonne pas ici, où les tests ouvrent de vraies connexions : depuis le
+      # conteneur de job, `127.0.0.1` désigne le conteneur de job lui-même, donc
+      # l'adresse était fausse indépendamment du conflit de port.
+      # Au niveau du job, pour que toute étape en hérite.
+      DATABASE_URL: postgresql+asyncpg://ghostmon:ghostmon@postgres:5432/ghostmon_test
     steps:
       - uses: actions/checkout@v4
       - name: Install uv
