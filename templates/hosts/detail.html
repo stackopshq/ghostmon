@@ -13,7 +13,7 @@
         {% if host.is_enabled %}enabled{% else %}disabled{% endif %}
         {% if host.description %} · {{ host.description }}{% endif %}
         · {{ item_views|length }} item(s)
-        · <a href="/hosts/{{ host.id }}/dashboard" class="nav-link" style="display:inline">dashboard</a>
+        · <a href="/hosts/{{ host.id }}/dashboard" class="nav-link" style="display:inline">{{ t("tpl.dashboard") }}</a>
       </div>
     </div>
 
@@ -31,108 +31,108 @@
 
     <div class="grid-two">
       <section class="card">
-        <h2>Settings</h2>
+        <h2>{{ t("tpl.settings") }}</h2>
         <form method="post" action="/hosts/{{ host.id }}" class="stacked">
           <label class="field">
-            <span>Name</span>
+            <span>{{ t("tpl.name") }}</span>
             <input type="text" name="name" required maxlength="255" value="{{ host.name }}">
           </label>
           <label class="field">
-            <span>Description</span>
+            <span>{{ t("tpl.description") }}</span>
             <input type="text" name="description" maxlength="2048" value="{{ host.description or '' }}">
           </label>
           <label class="field">
-            <span>Address (hostname/IP, for SNMP polling)</span>
+            <span>{{ t("tpl.addressHostnameIpForSnmpPolling") }}</span>
             <input type="text" name="address" maxlength="255" value="{{ host.address or '' }}" placeholder="10.0.0.1">
           </label>
           <label class="field inline">
             <input type="checkbox" name="is_enabled" {% if host.is_enabled %}checked{% endif %}>
-            <span>Enabled</span>
+            <span>{{ t("tpl.enabled") }}</span>
           </label>
           <div class="form-actions">
-            <a href="/hosts" class="btn-new btn-muted">Back</a>
-            <button type="submit" class="btn-primary">Save</button>
+            <a href="/hosts" class="btn-new btn-muted">{{ t("tpl.back") }}</a>
+            <button type="submit" class="btn-primary">{{ t("tpl.save") }}</button>
           </div>
         </form>
         <form method="post" action="/hosts/{{ host.id }}/delete" class="form-inline form-danger"
               data-confirm="Delete host {{ host.name }} and all its items?">
-          <button type="submit" class="btn-danger">Delete host</button>
+          <button type="submit" class="btn-danger">{{ t("tpl.deleteHost") }}</button>
         </form>
       </section>
 
       <section class="card">
-        <h2>Add item</h2>
+        <h2>{{ t("tpl.addItem") }}</h2>
         <form method="post" action="/hosts/{{ host.id }}/items/new" class="stacked">
           <div class="field-row">
             <label class="field">
-              <span>Key</span>
+              <span>{{ t("tpl.key") }}</span>
               <input type="text" name="key" required maxlength="255" placeholder="system.cpu.util">
             </label>
             <label class="field">
-              <span>Name</span>
+              <span>{{ t("tpl.name") }}</span>
               <input type="text" name="name" required maxlength="255" placeholder="CPU util">
             </label>
           </div>
           <div class="field-row">
             <label class="field">
-              <span>Type</span>
+              <span>{{ t("tpl.type") }}</span>
               <select name="value_type" required>
                 {% for vt in value_types %}<option value="{{ vt }}">{{ vt }}</option>{% endfor %}
               </select>
             </label>
             <label class="field">
-              <span>Units</span>
+              <span>{{ t("tpl.units") }}</span>
               <input type="text" name="units" maxlength="32" placeholder="%">
             </label>
             <label class="field">
-              <span>Interval (s)</span>
+              <span>{{ t("tpl.intervalS") }}</span>
               <input type="number" name="interval" min="1" max="86400" value="60">
             </label>
           </div>
           <div class="field-row">
             <label class="field">
-              <span>Source</span>
+              <span>{{ t("tpl.source") }}</span>
               <select name="source">
                 {% for s in item_sources %}<option value="{{ s }}">{{ s }}</option>{% endfor %}
               </select>
             </label>
             <label class="field">
-              <span>SNMP OID (source = snmp)</span>
+              <span>{{ t("tpl.snmpOidSourceSnmp") }}</span>
               <input type="text" name="oid" maxlength="255" placeholder="1.3.6.1.2.1.2.2.1.10.1">
             </label>
             <label class="field">
-              <span>SNMP community</span>
+              <span>{{ t("tpl.snmpCommunity") }}</span>
               <input type="text" name="community" maxlength="255" placeholder="public">
             </label>
           </div>
           <label class="field inline">
             <input type="checkbox" name="is_private">
-            <span>🔒 Private (zero-knowledge): values are encrypted client-side; the server never sees them</span>
+            <span>{{ t("tpl.privateZeroKnowledgeValuesAreEncryptedCl") }}</span>
           </label>
           <div class="form-actions">
-            <button type="submit" class="btn-primary">Add item</button>
+            <button type="submit" class="btn-primary">{{ t("tpl.addItem") }}</button>
           </div>
         </form>
       </section>
     </div>
 
     <section class="card" style="margin-top: 20px;">
-      <h2>Items <span class="count">{{ item_views|length }}</span></h2>
+      <h2>{{ t("tpl.items") }} <span class="count">{{ item_views|length }}</span></h2>
       {% if item_views %}
       <table class="table">
         <thead>
-          <tr><th>Item</th><th>Key</th><th>Source</th><th>Latest</th><th>Min / Max</th><th>History</th><th></th></tr>
+          <tr><th>{{ t("tpl.item") }}</th><th>{{ t("tpl.key") }}</th><th>{{ t("tpl.source") }}</th><th>{{ t("tpl.latest") }}</th><th>{{ t("tpl.minMax") }}</th><th>{{ t("tpl.history") }}</th><th></th></tr>
         </thead>
         <tbody>
           {% for iv in item_views %}
           <tr>
-            <td><a href="/hosts/{{ host.id }}/items/{{ iv.item.id }}">{{ iv.item.name }}</a>{% if not iv.item.is_enabled %} <span class="muted">· disabled</span>{% endif %}</td>
+            <td><a href="/hosts/{{ host.id }}/items/{{ iv.item.id }}">{{ iv.item.name }}</a>{% if not iv.item.is_enabled %} <span class="muted">{{ t("tpl.disabledX") }}</span>{% endif %}</td>
             <td class="muted">{{ iv.item.key }}</td>
             <td class="muted">{{ iv.item.source.value }}{% if iv.item.is_private %} <span title="end-to-end encrypted">🔒</span>{% endif %}{% if iv.item.source.value == 'snmp' and iv.item.config.get('oid') %} <span style="opacity:.7">({{ iv.item.config.get('oid') }})</span>{% endif %}</td>
             <td>
               {% if iv.item.is_private %}
-                {% if iv.latest %}<span class="zk" data-zk-cipher="{{ iv.latest.value_text }}">🔒 private</span>{% else %}<span class="muted">🔒 no data</span>{% endif %}
-              {% elif iv.latest is none %}<span class="muted">no data</span>
+                {% if iv.latest %}<span class="zk" data-zk-cipher="{{ iv.latest.value_text }}">{{ t("tpl.private") }}</span>{% else %}<span class="muted">{{ t("tpl.noDataX") }}</span>{% endif %}
+              {% elif iv.latest is none %}<span class="muted">{{ t("tpl.noData") }}</span>
               {% elif iv.latest.value_num is not none %}{{ iv.latest.value_num }}{{ ' ' ~ iv.item.units if iv.item.units }}
               {% else %}{{ iv.latest.value_text }}{% endif %}
             </td>
@@ -151,7 +151,7 @@
             <td class="row-actions">
               <form method="post" action="/hosts/{{ host.id }}/items/{{ iv.item.id }}/delete" class="form-inline"
                     data-confirm="Delete item {{ iv.item.key }}?">
-                <button type="submit" class="btn-new btn-muted">Delete</button>
+                <button type="submit" class="btn-new btn-muted">{{ t("tpl.delete") }}</button>
               </form>
             </td>
           </tr>

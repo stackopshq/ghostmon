@@ -21,40 +21,40 @@
 
     <div class="grid-two">
       <section class="card">
-        <h2>Settings</h2>
+        <h2>{{ t("tpl.settings") }}</h2>
         <form method="post" action="/monitors/{{ monitor.id }}" class="stacked">
           <label class="field">
-            <span>Name</span>
+            <span>{{ t("tpl.name") }}</span>
             <input type="text" name="name" required maxlength="255" value="{{ monitor.name }}">
           </label>
           <label class="field">
-            <span>Type</span>
+            <span>{{ t("tpl.type") }}</span>
             <select name="type" required>
-              {% for t in monitor_types %}
-              <option value="{{ t }}" {% if monitor.type.value == t %}selected{% endif %}>{{ t }}</option>
+              {% for mon_ in monitor_types %}
+              <option value="{{ mon_ }}" {% if monitor.type.value == mon_ %}selected{% endif %}>{{ mon_ }}</option>
               {% endfor %}
             </select>
           </label>
           <label class="field">
-            <span>URL / target</span>
+            <span>{{ t("tpl.urlTarget") }}</span>
             <input type="text" name="url" required maxlength="2048" value="{{ monitor.url }}">
           </label>
           <div class="field-row">
             <label class="field">
-              <span>Interval</span>
+              <span>{{ t("tpl.interval") }}</span>
               <input type="number" name="interval" required min="10" max="86400" value="{{ monitor.interval }}">
             </label>
             <label class="field">
-              <span>Retries</span>
+              <span>{{ t("tpl.retries") }}</span>
               <input type="number" name="retries" required min="0" max="10" value="{{ monitor.retries }}">
             </label>
             <label class="field">
-              <span>Retry interval</span>
+              <span>{{ t("tpl.retryInterval") }}</span>
               <input type="number" name="retry_interval" required min="5" max="3600" value="{{ monitor.retry_interval }}">
             </label>
           </div>
           <label class="field">
-            <span>Status</span>
+            <span>{{ t("tpl.status") }}</span>
             <select name="status" required>
               {% for s in monitor_statuses %}
               <option value="{{ s }}" {% if monitor.status.value == s %}selected{% endif %}>{{ s }}</option>
@@ -62,18 +62,18 @@
             </select>
           </label>
           <div class="form-actions">
-            <a href="/" class="btn-new btn-muted">Back</a>
-            <button type="submit" class="btn-primary">Save</button>
+            <a href="/" class="btn-new btn-muted">{{ t("tpl.back") }}</a>
+            <button type="submit" class="btn-primary">{{ t("tpl.save") }}</button>
           </div>
         </form>
         <form method="post" action="/monitors/{{ monitor.id }}/delete" class="form-inline form-danger"
               data-confirm="Delete this monitor?">
-          <button type="submit" class="btn-danger">Delete monitor</button>
+          <button type="submit" class="btn-danger">{{ t("tpl.deleteMonitor") }}</button>
         </form>
       </section>
 
       <section class="card">
-        <h2>Notification channels</h2>
+        <h2>{{ t("tpl.notificationChannels") }}</h2>
         {% if attached_channels %}
         <ul class="bare-list">
           {% for c in attached_channels %}
@@ -83,13 +83,13 @@
               <span class="muted">· {{ c.type.value }}{% if not c.is_enabled %} · disabled{% endif %}</span>
             </div>
             <form method="post" action="/monitors/{{ monitor.id }}/channels/{{ c.id }}/detach" class="form-inline">
-              <button type="submit" class="btn-new btn-muted">Detach</button>
+              <button type="submit" class="btn-new btn-muted">{{ t("tpl.detach") }}</button>
             </form>
           </li>
           {% endfor %}
         </ul>
         {% else %}
-        <p class="muted">No channels attached.</p>
+        <p class="muted">{{ t("tpl.noChannelsAttached") }}</p>
         {% endif %}
 
         {% if available_channels %}
@@ -99,18 +99,18 @@
             <option value="{{ c.id }}">{{ c.name }} ({{ c.type.value }})</option>
             {% endfor %}
           </select>
-          <button type="submit" class="btn-primary">Attach</button>
+          <button type="submit" class="btn-primary">{{ t("tpl.attach") }}</button>
         </form>
         {% else %}
         <p class="muted" style="margin-top: 12px;">
-          {% if not attached_channels %}No channels configured yet. <a href="/channels/new">Create one</a>.{% else %}All your channels are already attached.{% endif %}
+          {% if not attached_channels %}No channels configured yet. <a href="/channels/new">{{ t("tpl.createOne") }}</a>.{% else %}All your channels are already attached.{% endif %}
         </p>
         {% endif %}
       </section>
     </div>
 
     <section class="card" style="margin-top: 20px;">
-      <h2>Triggers <span class="count">{{ triggers|length }}</span></h2>
+      <h2>{{ t("tpl.triggers") }} <span class="count">{{ triggers|length }}</span></h2>
       <p class="muted" style="margin-bottom: 12px;">
         Threshold rules on collected metrics. A breach raises a severity-tagged alert
         through the attached channels.
@@ -118,22 +118,22 @@
       {% if triggers %}
       <table class="table">
         <thead>
-          <tr><th>Name</th><th>Condition</th><th>Severity</th><th>State</th><th></th></tr>
+          <tr><th>{{ t("tpl.name") }}</th><th>{{ t("tpl.condition") }}</th><th>{{ t("tpl.severity") }}</th><th>{{ t("tpl.state") }}</th><th></th></tr>
         </thead>
         <tbody>
-          {% for t in triggers %}
+          {% for trig in triggers %}
           <tr>
-            <td>{{ t.name }}{% if not t.is_enabled %} <span class="muted">· disabled</span>{% endif %}</td>
+            <td>{{ trig.name }}{% if not trig.is_enabled %} <span class="muted">{{ t("tpl.disabledX") }}</span>{% endif %}</td>
             <td class="muted">
-              {% if t.aggregation.value != 'last' and t.window_seconds %}{{ t.aggregation.value }}({{ t.metric.value }}, {{ t.window_seconds }}s){% else %}{{ t.metric.value }}{% endif %}
-              {{ operator_symbols[t.operator.value] }} {{ t.threshold }}
+              {% if trig.aggregation.value != 'last' and trig.window_seconds %}{{ trig.aggregation.value }}({{ trig.metric.value }}, {{ trig.window_seconds }}s){% else %}{{ trig.metric.value }}{% endif %}
+              {{ operator_symbols[trig.operator.value] }} {{ trig.threshold }}
             </td>
-            <td><span class="sev sev-{{ t.severity.value }}">{{ t.severity.value }}</span></td>
-            <td><span class="tstate tstate-{{ t.state.value }}">{{ t.state.value }}</span></td>
+            <td><span class="sev sev-{{ trig.severity.value }}">{{ trig.severity.value }}</span></td>
+            <td><span class="tstate tstate-{{ trig.state.value }}">{{ trig.state.value }}</span></td>
             <td class="row-actions">
-              <form method="post" action="/monitors/{{ monitor.id }}/triggers/{{ t.id }}/delete" class="form-inline"
+              <form method="post" action="/monitors/{{ monitor.id }}/triggers/{{ trig.id }}/delete" class="form-inline"
                     data-confirm="Delete this trigger?">
-                <button type="submit" class="btn-new btn-muted">Delete</button>
+                <button type="submit" class="btn-new btn-muted">{{ t("tpl.delete") }}</button>
               </form>
             </td>
           </tr>
@@ -141,33 +141,33 @@
         </tbody>
       </table>
       {% else %}
-      <p class="muted">No triggers yet.</p>
+      <p class="muted">{{ t("tpl.noTriggersYet") }}</p>
       {% endif %}
 
       <form method="post" action="/monitors/{{ monitor.id }}/triggers/new" class="stacked" style="margin-top: 16px;">
         <div class="field-row">
           <label class="field">
-            <span>Name</span>
+            <span>{{ t("tpl.name") }}</span>
             <input type="text" name="name" required maxlength="255" placeholder="High latency">
           </label>
           <label class="field">
-            <span>Metric</span>
+            <span>{{ t("tpl.metric") }}</span>
             <select name="metric" required>
               {% for m in trigger_metrics %}<option value="{{ m }}">{{ m }}</option>{% endfor %}
             </select>
           </label>
           <label class="field">
-            <span>Operator</span>
+            <span>{{ t("tpl.operator") }}</span>
             <select name="operator" required>
               {% for o in trigger_operators %}<option value="{{ o.value }}">{{ o.label }}</option>{% endfor %}
             </select>
           </label>
           <label class="field">
-            <span>Threshold</span>
+            <span>{{ t("tpl.threshold") }}</span>
             <input type="number" name="threshold" required step="any" placeholder="500">
           </label>
           <label class="field">
-            <span>Severity</span>
+            <span>{{ t("tpl.severity") }}</span>
             <select name="severity" required>
               {% for s in severities %}<option value="{{ s }}"{% if s == 'warning' %} selected{% endif %}>{{ s }}</option>{% endfor %}
             </select>
@@ -175,28 +175,28 @@
         </div>
         <div class="field-row">
           <label class="field">
-            <span>Aggregation</span>
+            <span>{{ t("tpl.aggregation") }}</span>
             <select name="aggregation">
               {% for a in trigger_aggregations %}<option value="{{ a }}">{{ a }}</option>{% endfor %}
             </select>
           </label>
           <label class="field">
-            <span>Window (s) for avg/min/max</span>
+            <span>{{ t("tpl.windowSForAvgMinMax") }}</span>
             <input type="number" name="window_seconds" min="0" max="86400" value="0">
           </label>
         </div>
         <div class="form-actions">
-          <button type="submit" class="btn-primary">Add trigger</button>
+          <button type="submit" class="btn-primary">{{ t("tpl.addTrigger") }}</button>
         </div>
       </form>
     </section>
 
     <section class="card" style="margin-top: 20px;">
-      <h2>Recent results <span class="count">{{ results|length }}</span></h2>
+      <h2>{{ t("tpl.recentResults") }} <span class="count">{{ results|length }}</span></h2>
       {% if results %}
       <table class="table">
         <thead>
-          <tr><th>When</th><th>Status</th><th>Latency</th><th>Error</th></tr>
+          <tr><th>{{ t("tpl.when") }}</th><th>{{ t("tpl.status") }}</th><th>{{ t("tpl.latency") }}</th><th>{{ t("tpl.error") }}</th></tr>
         </thead>
         <tbody>
           {% for r in results %}
@@ -210,7 +210,7 @@
         </tbody>
       </table>
       {% else %}
-      <p class="muted">No probe has run yet.</p>
+      <p class="muted">{{ t("tpl.noProbeHasRunYet") }}</p>
       {% endif %}
     </section>
   </div>

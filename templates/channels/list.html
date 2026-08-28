@@ -9,7 +9,7 @@
       <h1 class="hero-title">
         <span class="terminal-prompt">~ $&nbsp;</span><span>ghostmon channel list</span><span class="terminal-cursor">▊</span>
       </h1>
-      <div class="hero-sub">Notification channels: email and signed webhooks.</div>
+      <div class="hero-sub">{{ t("tpl.notificationChannelsEmailAndSignedWebhoo") }}</div>
     </div>
 
     {% if flash %}
@@ -18,17 +18,17 @@
 
     <div class="toolbar">
       <div>
-        <h2>Channels<span class="count">{{ channels|length }} total</span></h2>
+        <h2>{{ t("tpl.channels") }}<span class="count">{{ channels|length }} total</span></h2>
       </div>
       <div>
-        <a href="/channels/new" class="btn-new">+ New channel</a>
+        <a href="/channels/new" class="btn-new">{{ t("tpl.newChannel") }}</a>
       </div>
     </div>
 
     {% if channels %}
     <table class="table">
       <thead>
-        <tr><th>Name</th><th>Type</th><th>Enabled</th><th>Target</th><th></th></tr>
+        <tr><th>{{ t("tpl.name") }}</th><th>{{ t("tpl.type") }}</th><th>{{ t("tpl.enabled") }}</th><th>{{ t("tpl.target") }}</th><th></th></tr>
       </thead>
       <tbody>
         {% for c in channels %}
@@ -41,11 +41,11 @@
           </td>
           <td class="row-actions">
             <form method="post" action="/channels/{{ c.id }}/test" class="form-inline">
-              <button type="submit" class="btn-new btn-muted">Test</button>
+              <button type="submit" class="btn-new btn-muted">{{ t("tpl.test") }}</button>
             </form>
             <form method="post" action="/channels/{{ c.id }}/delete" class="form-inline"
                   data-confirm="Delete channel {{ c.name }}?">
-              <button type="submit" class="btn-danger">Delete</button>
+              <button type="submit" class="btn-danger">{{ t("tpl.delete") }}</button>
             </form>
           </td>
         </tr>
@@ -54,9 +54,9 @@
     </table>
     {% else %}
     <div class="empty">
-      <h3>No channels yet</h3>
-      <p>Create a channel to be alerted when monitors go down.</p>
-      <p><a href="/channels/new" class="btn-new">+ New channel</a></p>
+      <h3>{{ t("tpl.noChannelsYet") }}</h3>
+      <p>{{ t("tpl.createAChannelToBeAlertedWhenMonitorsGoD") }}</p>
+      <p><a href="/channels/new" class="btn-new">{{ t("tpl.newChannel") }}</a></p>
     </div>
     {% endif %}
   </div>

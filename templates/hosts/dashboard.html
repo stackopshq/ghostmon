@@ -11,7 +11,7 @@
       </h1>
       <div class="hero-sub">
         {{ cards|length }} item(s) ·
-        <a href="/hosts/{{ host.id }}" class="nav-link" style="display:inline">manage host</a>
+        <a href="/hosts/{{ host.id }}" class="nav-link" style="display:inline">{{ t("tpl.manageHost") }}</a>
       </div>
     </div>
 
@@ -21,23 +21,23 @@
       <a class="card dash-card" href="/hosts/{{ host.id }}/items/{{ c.item.id }}">
         <div class="dash-head">
           <span class="dash-name">{{ c.item.name }}</span>
-          {% if c.trigger_state == 'problem' %}<span class="tstate tstate-problem">problem</span>
+          {% if c.trigger_state == 'problem' %}<span class="tstate tstate-problem">{{ t("tpl.problem") }}</span>
           {% elif c.trigger_state == 'ok' %}<span class="tstate tstate-ok">ok</span>{% endif %}
         </div>
         <div class="dash-key muted">{{ c.item.key }}</div>
         {% if c.item.is_private %}
-          <div class="dash-spark-empty muted">🔒 private</div>
+          <div class="dash-spark-empty muted">{{ t("tpl.private") }}</div>
         {% elif not c.chart.empty %}
           <svg class="dash-spark" viewBox="0 0 {{ c.chart.width }} {{ c.chart.height }}" preserveAspectRatio="none" role="img" aria-label="{{ c.item.name }} trend">
             <polygon class="chart-area" points="{{ c.chart.area }}" />
             <polyline class="chart-line" points="{{ c.chart.line }}" fill="none" />
           </svg>
         {% else %}
-          <div class="dash-spark-empty muted">no data</div>
+          <div class="dash-spark-empty muted">{{ t("tpl.noData") }}</div>
         {% endif %}
         <div class="dash-value">
           {% if c.item.is_private %}<span class="muted">🔒</span>
-          {% elif c.latest is none %}<span class="muted">no data</span>
+          {% elif c.latest is none %}<span class="muted">{{ t("tpl.noData") }}</span>
           {% elif c.latest.value_num is not none %}{{ c.latest.value_num }}{{ ' ' ~ c.item.units if c.item.units }}
           {% else %}{{ c.latest.value_text }}{% endif %}
         </div>
@@ -45,7 +45,7 @@
       {% endfor %}
     </div>
     {% else %}
-    <p class="muted">No items yet. <a href="/hosts/{{ host.id }}">Add some</a> to populate the dashboard.</p>
+    <p class="muted">{{ t("tpl.noItemsYet") }} <a href="/hosts/{{ host.id }}">{{ t("tpl.addSome") }}</a> {{ t("tpl.toPopulateTheDashboard") }}</p>
     {% endif %}
   </div>
 </main>

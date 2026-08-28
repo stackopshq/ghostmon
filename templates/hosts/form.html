@@ -18,20 +18,20 @@
     <section class="card" style="max-width: 560px; margin: 0 auto;">
       <form method="post" action="/hosts/new" class="stacked">
         <label class="field">
-          <span>Name</span>
+          <span>{{ t("tpl.name") }}</span>
           <input type="text" name="name" required maxlength="255" placeholder="web-01">
         </label>
         <label class="field">
-          <span>Description</span>
+          <span>{{ t("tpl.description") }}</span>
           <input type="text" name="description" maxlength="2048" placeholder="Edge node (optional)">
         </label>
         <label class="field">
-          <span>Address: hostname/IP, used by SNMP polling (optional)</span>
+          <span>{{ t("tpl.addressHostnameIpUsedBySnmpPollingOption") }}</span>
           <input type="text" name="address" maxlength="255" placeholder="10.0.0.1">
         </label>
         <div class="form-actions">
-          <a href="/hosts" class="btn-new btn-muted">Back</a>
-          <button type="submit" class="btn-primary">Create host</button>
+          <a href="/hosts" class="btn-new btn-muted">{{ t("tpl.back") }}</a>
+          <button type="submit" class="btn-primary">{{ t("tpl.createHost") }}</button>
         </div>
       </form>
     </section>

@@ -21,7 +21,7 @@
     {% endif %}
 
     <section class="card">
-      <h2>Triggers <span class="count">{{ triggers|length }}</span></h2>
+      <h2>{{ t("tpl.triggers") }} <span class="count">{{ triggers|length }}</span></h2>
       <p class="muted" style="margin-bottom: 12px;">
         Threshold rules on this item's values. A breach alerts through the host's
         notification channels.{% if item.is_private %} (Private items are encrypted, so
@@ -30,22 +30,22 @@
       {% if triggers %}
       <table class="table">
         <thead>
-          <tr><th>Name</th><th>Condition</th><th>Severity</th><th>State</th><th></th></tr>
+          <tr><th>{{ t("tpl.name") }}</th><th>{{ t("tpl.condition") }}</th><th>{{ t("tpl.severity") }}</th><th>{{ t("tpl.state") }}</th><th></th></tr>
         </thead>
         <tbody>
-          {% for t in triggers %}
+          {% for trig in triggers %}
           <tr>
-            <td>{{ t.name }}{% if not t.is_enabled %} <span class="muted">· disabled</span>{% endif %}</td>
+            <td>{{ trig.name }}{% if not trig.is_enabled %} <span class="muted">{{ t("tpl.disabledX") }}</span>{% endif %}</td>
             <td class="muted">
-              {% if t.aggregation.value != 'last' and t.window_seconds %}{{ t.aggregation.value }}(value, {{ t.window_seconds }}s){% else %}value{% endif %}
-              {{ operator_symbols[t.operator.value] }} {{ t.threshold }}
+              {% if trig.aggregation.value != 'last' and trig.window_seconds %}{{ trig.aggregation.value }}(value, {{ trig.window_seconds }}s){% else %}value{% endif %}
+              {{ operator_symbols[trig.operator.value] }} {{ trig.threshold }}
             </td>
-            <td><span class="sev sev-{{ t.severity.value }}">{{ t.severity.value }}</span></td>
-            <td><span class="tstate tstate-{{ t.state.value }}">{{ t.state.value }}</span></td>
+            <td><span class="sev sev-{{ trig.severity.value }}">{{ trig.severity.value }}</span></td>
+            <td><span class="tstate tstate-{{ trig.state.value }}">{{ trig.state.value }}</span></td>
             <td class="row-actions">
-              <form method="post" action="/hosts/{{ host.id }}/items/{{ item.id }}/triggers/{{ t.id }}/delete" class="form-inline"
+              <form method="post" action="/hosts/{{ host.id }}/items/{{ item.id }}/triggers/{{ trig.id }}/delete" class="form-inline"
                     data-confirm="Delete this trigger?">
-                <button type="submit" class="btn-new btn-muted">Delete</button>
+                <button type="submit" class="btn-new btn-muted">{{ t("tpl.delete") }}</button>
               </form>
             </td>
           </tr>
@@ -53,27 +53,27 @@
         </tbody>
       </table>
       {% else %}
-      <p class="muted">No triggers yet.</p>
+      <p class="muted">{{ t("tpl.noTriggersYet") }}</p>
       {% endif %}
 
       <form method="post" action="/hosts/{{ host.id }}/items/{{ item.id }}/triggers/new" class="stacked" style="margin-top: 16px;">
         <div class="field-row">
           <label class="field">
-            <span>Name</span>
+            <span>{{ t("tpl.name") }}</span>
             <input type="text" name="name" required maxlength="255" placeholder="High CPU">
           </label>
           <label class="field">
-            <span>Operator</span>
+            <span>{{ t("tpl.operator") }}</span>
             <select name="operator" required>
               {% for o in trigger_operators %}<option value="{{ o.value }}">{{ o.label }}</option>{% endfor %}
             </select>
           </label>
           <label class="field">
-            <span>Threshold</span>
+            <span>{{ t("tpl.threshold") }}</span>
             <input type="number" name="threshold" required step="any" placeholder="90">
           </label>
           <label class="field">
-            <span>Severity</span>
+            <span>{{ t("tpl.severity") }}</span>
             <select name="severity" required>
               {% for s in severities %}<option value="{{ s }}"{% if s == 'warning' %} selected{% endif %}>{{ s }}</option>{% endfor %}
             </select>
@@ -81,26 +81,26 @@
         </div>
         <div class="field-row">
           <label class="field">
-            <span>Aggregation</span>
+            <span>{{ t("tpl.aggregation") }}</span>
             <select name="aggregation">
               {% for a in trigger_aggregations %}<option value="{{ a }}">{{ a }}</option>{% endfor %}
             </select>
           </label>
           <label class="field">
-            <span>Window (s) for avg/min/max</span>
+            <span>{{ t("tpl.windowSForAvgMinMax") }}</span>
             <input type="number" name="window_seconds" min="0" max="86400" value="0">
           </label>
         </div>
         <div class="form-actions">
-          <a href="/hosts/{{ host.id }}" class="btn-new btn-muted">Back</a>
-          <button type="submit" class="btn-primary">Add trigger</button>
+          <a href="/hosts/{{ host.id }}" class="btn-new btn-muted">{{ t("tpl.back") }}</a>
+          <button type="submit" class="btn-primary">{{ t("tpl.addTrigger") }}</button>
         </div>
       </form>
     </section>
 
     {% if chart and not chart.empty %}
     <section class="card" style="margin-top: 20px;">
-      <h2>History</h2>
+      <h2>{{ t("tpl.history") }}</h2>
       <svg class="chart" viewBox="0 0 {{ chart.width }} {{ chart.height }}" role="img"
            aria-label="{{ item.name }} history{{ ' in ' ~ item.units if item.units }}">
         {% for y, label in chart.y_ticks %}
@@ -119,9 +119,9 @@
 
     {% if trend_chart and not trend_chart.empty %}
     <section class="card" style="margin-top: 20px;">
-      <h2>Trends (long-range)</h2>
+      <h2>{{ t("tpl.trendsLongRange") }}</h2>
       <p class="muted" style="margin-bottom: 12px;">
-        Hourly average with the min/max band. Survives raw-sample retention.
+        {{ t("tpl.hourlyAverageWithTheMinMaxBandSurvivesRa") }}
       </p>
       <svg class="chart" viewBox="0 0 {{ trend_chart.width }} {{ trend_chart.height }}" role="img"
            aria-label="{{ item.name }} long-range trend">
@@ -140,20 +140,20 @@
 
     {% if trends %}
     <section class="card" style="margin-top: 20px;">
-      <h2>Hourly trends <span class="count">{{ trends|length }}</span></h2>
+      <h2>{{ t("tpl.hourlyTrends") }} <span class="count">{{ trends|length }}</span></h2>
       <p class="muted" style="margin-bottom: 12px;">
-        Min/avg/max rollups: downsampled history kept beyond raw-sample retention.
+        {{ t("tpl.minAvgMaxRollupsDownsampledHistoryKeptBe") }}
       </p>
       <table class="table">
-        <thead><tr><th>Hour (UTC)</th><th>Min</th><th>Avg</th><th>Max</th><th>Samples</th></tr></thead>
+        <thead><tr><th>{{ t("tpl.hourUtc") }}</th><th>{{ t("tpl.min") }}</th><th>{{ t("tpl.avg") }}</th><th>{{ t("tpl.max") }}</th><th>{{ t("tpl.samples") }}</th></tr></thead>
         <tbody>
-          {% for t in trends %}
+          {% for tr in trends %}
           <tr>
-            <td>{{ t.bucket.strftime('%Y-%m-%d %H:00') }}</td>
-            <td>{{ '%.2f'|format(t.value_min) }}{{ ' ' ~ item.units if item.units }}</td>
-            <td>{{ '%.2f'|format(t.value_avg) }}{{ ' ' ~ item.units if item.units }}</td>
-            <td>{{ '%.2f'|format(t.value_max) }}{{ ' ' ~ item.units if item.units }}</td>
-            <td class="muted">{{ t.sample_count }}</td>
+            <td>{{ tr.bucket.strftime('%Y-%m-%d %H:00') }}</td>
+            <td>{{ '%.2f'|format(tr.value_min) }}{{ ' ' ~ item.units if item.units }}</td>
+            <td>{{ '%.2f'|format(tr.value_avg) }}{{ ' ' ~ item.units if item.units }}</td>
+            <td>{{ '%.2f'|format(tr.value_max) }}{{ ' ' ~ item.units if item.units }}</td>
+            <td class="muted">{{ tr.sample_count }}</td>
           </tr>
           {% endfor %}
         </tbody>
@@ -162,16 +162,16 @@
     {% endif %}
 
     <section class="card" style="margin-top: 20px;">
-      <h2>Recent values <span class="count">{{ values|length }}</span></h2>
+      <h2>{{ t("tpl.recentValues") }} <span class="count">{{ values|length }}</span></h2>
       {% if values %}
       <table class="table">
-        <thead><tr><th>When</th><th>Value</th></tr></thead>
+        <thead><tr><th>{{ t("tpl.when") }}</th><th>{{ t("tpl.value") }}</th></tr></thead>
         <tbody>
           {% for v in values %}
           <tr>
             <td>{{ v.collected_at.strftime('%Y-%m-%d %H:%M:%S UTC') }}</td>
             <td>
-              {% if item.is_private %}<span class="muted">🔒 encrypted</span>
+              {% if item.is_private %}<span class="muted">{{ t("tpl.encrypted") }}</span>
               {% elif v.value_num is not none %}{{ v.value_num }}{{ ' ' ~ item.units if item.units }}
               {% else %}{{ v.value_text }}{% endif %}
             </td>
@@ -180,7 +180,7 @@
         </tbody>
       </table>
       {% else %}
-      <p class="muted">No values yet.</p>
+      <p class="muted">{{ t("tpl.noValuesYet") }}</p>
       {% endif %}
     </section>
   </div>
