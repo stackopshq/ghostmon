@@ -29,8 +29,8 @@
         <label class="field">
           <span>{{ t("tpl.type") }}</span>
           <select name="type" required>
-            {% for t in channel_types %}
-            <option value="{{ t }}" {% if (form and form.type == t) or (not form and channel and channel.type.value == t) %}selected{% endif %}>{{ t }}</option>
+            {% for cha_ in channel_types %}
+            <option value="{{ cha_ }}" {% if (form and form.type == cha_) or (not form and channel and channel.type.value == cha_) %}selected{% endif %}>{{ cha_ }}</option>
             {% endfor %}
           </select>
         </label>

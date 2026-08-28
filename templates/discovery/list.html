@@ -79,7 +79,7 @@
             <span>{{ t("tpl.applyTemplateOptional") }}</span>
             <select name="template_id">
               <option value="">{{ t("tpl.none") }}</option>
-              {% for t in templates_list %}<option value="{{ t.id }}">{{ t.name }}</option>{% endfor %}
+              {% for tem_ in templates_list %}<option value="{{ tem_.id }}">{{ tem_.name }}</option>{% endfor %}
             </select>
           </label>
         </div>

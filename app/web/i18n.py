@@ -37,12 +37,24 @@ COOKIE = "gm_lang"
 DEFAULT = "en"
 
 EN: dict[str, str] = {
-    "tpl.notifyChannelsAtIncreasingDelaysWhileAPr": "Notify channels at increasing delays while a problem stays open and unacknowledged.",
-    "tpl.thresholdRulesOnCollectedMetricsABreachR": "Threshold rules on collected metrics. A breach raises a severity-tagged problem.",
-    "tpl.scanANetworkRangeOnAScheduleResponsiveAd": "Scan a network range on a schedule; responsive addresses become hosts.",
-    "tpl.hourlyAverageWithTheMinMaxBandSurvivesRa": "Hourly average with the min/max band. Survives raw-sample retention.",
-    "tpl.minAvgMaxRollupsDownsampledHistoryKeptBe": "Min/avg/max rollups: downsampled history kept beyond raw-sample retention.",
-    "tpl.noItemsYetAddOneAboveThenPushValuesViaTh": "No items yet. Add one above, then push values via the API",
+    "tpl.notifyChannelsAtIncreasingDelaysWhileAPr": (
+        "Notify channels at increasing delays while a problem stays open and unacknowledged."
+    ),
+    "tpl.thresholdRulesOnCollectedMetricsABreachR": (
+        "Threshold rules on collected metrics. A breach raises a severity-tagged problem."
+    ),
+    "tpl.scanANetworkRangeOnAScheduleResponsiveAd": (
+        "Scan a network range on a schedule; responsive addresses become hosts."
+    ),
+    "tpl.hourlyAverageWithTheMinMaxBandSurvivesRa": (
+        "Hourly average with the min/max band. Survives raw-sample retention."
+    ),
+    "tpl.minAvgMaxRollupsDownsampledHistoryKeptBe": (
+        "Min/avg/max rollups: downsampled history kept beyond raw-sample retention."
+    ),
+    "tpl.noItemsYetAddOneAboveThenPushValuesViaTh": (
+        "No items yet. Add one above, then push values via the API"
+    ),
     "tpl.signIn": "Sign in",
     "tpl.name": "Name",
     "tpl.type": "Type",
@@ -120,10 +132,14 @@ EN: dict[str, str] = {
     "tpl.toAddress": "To address",
     "tpl.webhookConfigUsedWhenTypeWebhook": "Webhook config (used when type = webhook)",
     "tpl.deleteChannel": "Delete channel",
-    "tpl.notificationChannelsEmailAndSignedWebhoo": "Notification channels: email and signed webhooks.",
+    "tpl.notificationChannelsEmailAndSignedWebhoo": (
+        "Notification channels: email and signed webhooks."
+    ),
     "tpl.newChannel": "+ New channel",
     "tpl.noChannelsYet": "No channels yet",
-    "tpl.createAChannelToBeAlertedWhenMonitorsGoD": "Create a channel to be alerted when monitors go down.",
+    "tpl.createAChannelToBeAlertedWhenMonitorsGoD": (
+        "Create a channel to be alerted when monitors go down."
+    ),
     "tpl.noDiscoveryRulesYet": "No discovery rules yet.",
     "tpl.newRule": "New rule",
     "tpl.cidr1024Hosts": "CIDR (≤ 1024 hosts)",
@@ -133,12 +149,21 @@ EN: dict[str, str] = {
     "tpl.createRule": "Create rule",
     "tpl.scanNow": "Scan now",
     "tpl.lastRun": "Last run",
-    "tpl.noPolicyYetTheMostRecentEnabledPolicyApp": "No policy yet. The most recent enabled policy applies to your problems.",
+    "tpl.noPolicyYetTheMostRecentEnabledPolicyApp": (
+        "No policy yet. The most recent enabled policy applies to your problems."
+    ),
     "tpl.newPolicy": "New policy",
-    "tpl.eachStepNotifiesAChannelAfterTheDelayInM": "Each step notifies a channel after the delay (in minutes) from when the problem opened. Leave a channel empty to skip the row. Set an",
+    "tpl.eachStepNotifiesAChannelAfterTheDelayInM": (
+        "Each step notifies a channel after the delay (in minutes) from when the problem opened. "
+        "Leave a channel empty to skip the row. Set an"
+    ),
     "tpl.actionCommand": "action command",
-    "tpl.toMakeAStepAutoRemediationItPostsTheComm": "to make a step auto-remediation: it POSTs the command + problem context to a",
-    "tpl.channelForAnExternalRunbookTheServerNeve": "channel for an external runbook (the server never runs commands itself).",
+    "tpl.toMakeAStepAutoRemediationItPostsTheComm": (
+        "to make a step auto-remediation: it POSTs the command + problem context to a"
+    ),
+    "tpl.channelForAnExternalRunbookTheServerNeve": (
+        "channel for an external runbook (the server never runs commands itself)."
+    ),
     "tpl.actionCommandOptionalWebhookOnly": "Action command (optional, webhook only)",
     "tpl.createPolicy": "Create policy",
     "tpl.createA": "Create a",
@@ -155,11 +180,15 @@ EN: dict[str, str] = {
     "tpl.intervalS": "Interval (s)",
     "tpl.snmpOidSourceSnmp": "SNMP OID (source = snmp)",
     "tpl.snmpCommunity": "SNMP community",
-    "tpl.privateZeroKnowledgeValuesAreEncryptedCl": "🔒 Private (zero-knowledge): values are encrypted client-side; the server never sees them",
+    "tpl.privateZeroKnowledgeValuesAreEncryptedCl": (
+        "🔒 Private (zero-knowledge): values are encrypted client-side; the server never sees them"
+    ),
     "tpl.minMax": "Min / Max",
     "tpl.disabledX": "· disabled",
     "tpl.noDataX": "🔒 no data",
-    "tpl.addressHostnameIpUsedBySnmpPollingOption": "Address: hostname/IP, used by SNMP polling (optional)",
+    "tpl.addressHostnameIpUsedBySnmpPollingOption": (
+        "Address: hostname/IP, used by SNMP polling (optional)"
+    ),
     "tpl.createHost": "Create host",
     "tpl.noTriggersYet": "No triggers yet.",
     "tpl.windowSForAvgMinMax": "Window (s) for avg/min/max",
@@ -170,10 +199,14 @@ EN: dict[str, str] = {
     "tpl.recentValues": "Recent values",
     "tpl.encrypted": "🔒 encrypted",
     "tpl.noValuesYet": "No values yet.",
-    "tpl.hostsCollectMetricsAsItemsWithTimeSeries": "Hosts collect metrics as items with time-series history.",
+    "tpl.hostsCollectMetricsAsItemsWithTimeSeries": (
+        "Hosts collect metrics as items with time-series history."
+    ),
     "tpl.newHost": "+ New host",
     "tpl.noHostsYet": "No hosts yet",
-    "tpl.createAHostAddMetricItemsAndPushValuesTo": "Create a host, add metric items, and push values to build history.",
+    "tpl.createAHostAddMetricItemsAndPushValuesTo": (
+        "Create a host, add metric items, and push values to build history."
+    ),
     "tpl.startUtc": "Start (UTC)",
     "tpl.endUtc": "End (UTC)",
     "tpl.durationMin": "Duration (min)",
@@ -192,7 +225,9 @@ EN: dict[str, str] = {
     "tpl.maintenanceWindows": "Maintenance windows",
     "tpl.newWindow": "+ New window",
     "tpl.noMaintenanceWindows": "No maintenance windows",
-    "tpl.createAWindowToSuppressAlertsDuringPlann": "Create a window to suppress alerts during planned downtime.",
+    "tpl.createAWindowToSuppressAlertsDuringPlann": (
+        "Create a window to suppress alerts during planned downtime."
+    ),
     "tpl.urlTarget": "URL / target",
     "tpl.retryInterval": "Retry interval",
     "tpl.deleteMonitor": "Delete monitor",
@@ -204,7 +239,9 @@ EN: dict[str, str] = {
     "tpl.retryIntervalSeconds": "Retry interval (seconds)",
     "tpl.startedUtc": "Started (UTC)",
     "tpl.acknowledge": "Acknowledge",
-    "tpl.noProblemsRecordedYetThresholdTriggersRa": "No problems recorded yet. Threshold triggers raise a problem here when they fire.",
+    "tpl.noProblemsRecordedYetThresholdTriggersRa": (
+        "No problems recorded yet. Threshold triggers raise a problem here when they fire."
+    ),
     # --- Chrome : navigation et en-tête -------------------------------------
     "base.dashboard": "Dashboard",
     "base.hosts": "Hosts",
@@ -245,12 +282,27 @@ EN: dict[str, str] = {
 }
 
 FR: dict[str, str] = {
-    "tpl.notifyChannelsAtIncreasingDelaysWhileAPr": "Notifie des canaux à intervalles croissants tant qu’un problème reste ouvert et non acquitté.",
-    "tpl.thresholdRulesOnCollectedMetricsABreachR": "Règles de seuil sur les métriques collectées. Un dépassement ouvre un problème étiqueté par gravité.",
-    "tpl.scanANetworkRangeOnAScheduleResponsiveAd": "Analyse une plage réseau à intervalle régulier ; les adresses qui répondent deviennent des hôtes.",
-    "tpl.hourlyAverageWithTheMinMaxBandSurvivesRa": "Moyenne horaire avec la bande min/max. Survit à la rétention des échantillons bruts.",
-    "tpl.minAvgMaxRollupsDownsampledHistoryKeptBe": "Agrégats min/moy/max : historique sous-échantillonné, conservé au-delà des mesures brutes.",
-    "tpl.noItemsYetAddOneAboveThenPushValuesViaTh": "Aucun élément. Ajoutez-en un ci-dessus, puis envoyez des valeurs par l’API",
+    "tpl.notifyChannelsAtIncreasingDelaysWhileAPr": (
+        "Notifie des canaux à intervalles croissants tant qu’un problème reste ouvert et non "
+        "acquitté."
+    ),
+    "tpl.thresholdRulesOnCollectedMetricsABreachR": (
+        "Règles de seuil sur les métriques collectées. Un dépassement ouvre un problème étiqueté "
+        "par gravité."
+    ),
+    "tpl.scanANetworkRangeOnAScheduleResponsiveAd": (
+        "Analyse une plage réseau à intervalle régulier ; les adresses qui répondent deviennent "
+        "des hôtes."
+    ),
+    "tpl.hourlyAverageWithTheMinMaxBandSurvivesRa": (
+        "Moyenne horaire avec la bande min/max. Survit à la rétention des échantillons bruts."
+    ),
+    "tpl.minAvgMaxRollupsDownsampledHistoryKeptBe": (
+        "Agrégats min/moy/max : historique sous-échantillonné, conservé au-delà des mesures brutes."
+    ),
+    "tpl.noItemsYetAddOneAboveThenPushValuesViaTh": (
+        "Aucun élément. Ajoutez-en un ci-dessus, puis envoyez des valeurs par l’API"
+    ),
     "tpl.signIn": "Connexion",
     "tpl.name": "Nom",
     "tpl.type": "Type",
@@ -328,10 +380,14 @@ FR: dict[str, str] = {
     "tpl.toAddress": "Adresse destinataire",
     "tpl.webhookConfigUsedWhenTypeWebhook": "Configuration webhook (si type = webhook)",
     "tpl.deleteChannel": "Supprimer le canal",
-    "tpl.notificationChannelsEmailAndSignedWebhoo": "Canaux de notification : e-mail et webhooks signés.",
+    "tpl.notificationChannelsEmailAndSignedWebhoo": (
+        "Canaux de notification : e-mail et webhooks signés."
+    ),
     "tpl.newChannel": "+ Nouveau canal",
     "tpl.noChannelsYet": "Aucun canal pour l’instant",
-    "tpl.createAChannelToBeAlertedWhenMonitorsGoD": "Créez un canal pour être alerté quand une sonde tombe.",
+    "tpl.createAChannelToBeAlertedWhenMonitorsGoD": (
+        "Créez un canal pour être alerté quand une sonde tombe."
+    ),
     "tpl.noDiscoveryRulesYet": "Aucune règle de découverte.",
     "tpl.newRule": "Nouvelle règle",
     "tpl.cidr1024Hosts": "CIDR (≤ 1024 hôtes)",
@@ -341,12 +397,22 @@ FR: dict[str, str] = {
     "tpl.createRule": "Créer la règle",
     "tpl.scanNow": "Analyser maintenant",
     "tpl.lastRun": "Dernière exécution",
-    "tpl.noPolicyYetTheMostRecentEnabledPolicyApp": "Aucune politique. La plus récente politique active s’applique à vos problèmes.",
+    "tpl.noPolicyYetTheMostRecentEnabledPolicyApp": (
+        "Aucune politique. La plus récente politique active s’applique à vos problèmes."
+    ),
     "tpl.newPolicy": "Nouvelle politique",
-    "tpl.eachStepNotifiesAChannelAfterTheDelayInM": "Chaque étape notifie un canal après le délai (en minutes) écoulé depuis l’ouverture du problème. Laissez un canal vide pour sauter la ligne. Renseignez une",
+    "tpl.eachStepNotifiesAChannelAfterTheDelayInM": (
+        "Chaque étape notifie un canal après le délai (en minutes) écoulé depuis l’ouverture du "
+        "problème. Laissez un canal vide pour sauter la ligne. Renseignez une"
+    ),
     "tpl.actionCommand": "commande d’action",
-    "tpl.toMakeAStepAutoRemediationItPostsTheComm": "pour qu’une étape se répare seule : la commande et le contexte du problème sont envoyés en POST à un canal",
-    "tpl.channelForAnExternalRunbookTheServerNeve": "pour un runbook externe (le serveur n’exécute jamais de commande lui-même).",
+    "tpl.toMakeAStepAutoRemediationItPostsTheComm": (
+        "pour qu’une étape se répare seule : la commande et le contexte du problème sont envoyés "
+        "en POST à un canal"
+    ),
+    "tpl.channelForAnExternalRunbookTheServerNeve": (
+        "pour un runbook externe (le serveur n’exécute jamais de commande lui-même)."
+    ),
     "tpl.actionCommandOptionalWebhookOnly": "Commande d’action (facultative, webhook uniquement)",
     "tpl.createPolicy": "Créer la politique",
     "tpl.createA": "Créez d’abord un",
@@ -363,11 +429,16 @@ FR: dict[str, str] = {
     "tpl.intervalS": "Intervalle (s)",
     "tpl.snmpOidSourceSnmp": "OID SNMP (source = snmp)",
     "tpl.snmpCommunity": "Communauté SNMP",
-    "tpl.privateZeroKnowledgeValuesAreEncryptedCl": "🔒 Privé (zero-knowledge) : les valeurs sont chiffrées sur l’appareil ; le serveur ne les voit jamais",
+    "tpl.privateZeroKnowledgeValuesAreEncryptedCl": (
+        "🔒 Privé (zero-knowledge) : les valeurs sont chiffrées sur l’appareil ; le serveur ne les "
+        "voit jamais"
+    ),
     "tpl.minMax": "Min / Max",
     "tpl.disabledX": "· désactivé",
     "tpl.noDataX": "🔒 aucune donnée",
-    "tpl.addressHostnameIpUsedBySnmpPollingOption": "Adresse : nom d’hôte ou IP, utilisée par l’interrogation SNMP (facultatif)",
+    "tpl.addressHostnameIpUsedBySnmpPollingOption": (
+        "Adresse : nom d’hôte ou IP, utilisée par l’interrogation SNMP (facultatif)"
+    ),
     "tpl.createHost": "Créer l’hôte",
     "tpl.noTriggersYet": "Aucun déclencheur.",
     "tpl.windowSForAvgMinMax": "Fenêtre (s) pour moy/min/max",
@@ -378,10 +449,15 @@ FR: dict[str, str] = {
     "tpl.recentValues": "Valeurs récentes",
     "tpl.encrypted": "🔒 chiffré",
     "tpl.noValuesYet": "Aucune valeur.",
-    "tpl.hostsCollectMetricsAsItemsWithTimeSeries": "Les hôtes collectent des métriques sous forme d’éléments, avec un historique.",
+    "tpl.hostsCollectMetricsAsItemsWithTimeSeries": (
+        "Les hôtes collectent des métriques sous forme d’éléments, avec un historique."
+    ),
     "tpl.newHost": "+ Nouvel hôte",
     "tpl.noHostsYet": "Aucun hôte",
-    "tpl.createAHostAddMetricItemsAndPushValuesTo": "Créez un hôte, ajoutez des éléments de mesure, puis envoyez des valeurs pour construire l’historique.",
+    "tpl.createAHostAddMetricItemsAndPushValuesTo": (
+        "Créez un hôte, ajoutez des éléments de mesure, puis envoyez des valeurs pour construire "
+        "l’historique."
+    ),
     "tpl.startUtc": "Début (UTC)",
     "tpl.endUtc": "Fin (UTC)",
     "tpl.durationMin": "Durée (min)",
@@ -396,11 +472,15 @@ FR: dict[str, str] = {
     "tpl.recurringWindowStrategyCron": "Fenêtre récurrente (stratégie = cron)",
     "tpl.cronExpression5Fields": "Expression cron (5 champs)",
     "tpl.durationMinutes": "Durée (minutes)",
-    "tpl.silenceAlertsDuringPlannedWork": "Faire taire les alertes pendant une intervention planifiée.",
+    "tpl.silenceAlertsDuringPlannedWork": (
+        "Faire taire les alertes pendant une intervention planifiée."
+    ),
     "tpl.maintenanceWindows": "Fenêtres de maintenance",
     "tpl.newWindow": "+ Nouvelle fenêtre",
     "tpl.noMaintenanceWindows": "Aucune fenêtre de maintenance",
-    "tpl.createAWindowToSuppressAlertsDuringPlann": "Créez une fenêtre pour supprimer les alertes pendant une interruption planifiée.",
+    "tpl.createAWindowToSuppressAlertsDuringPlann": (
+        "Créez une fenêtre pour supprimer les alertes pendant une interruption planifiée."
+    ),
     "tpl.urlTarget": "URL / cible",
     "tpl.retryInterval": "Intervalle de réessai",
     "tpl.deleteMonitor": "Supprimer la sonde",
@@ -412,7 +492,10 @@ FR: dict[str, str] = {
     "tpl.retryIntervalSeconds": "Intervalle de réessai (secondes)",
     "tpl.startedUtc": "Début (UTC)",
     "tpl.acknowledge": "Acquitter",
-    "tpl.noProblemsRecordedYetThresholdTriggersRa": "Aucun problème enregistré. Les déclencheurs de seuil en font apparaître ici quand ils se déclenchent.",
+    "tpl.noProblemsRecordedYetThresholdTriggersRa": (
+        "Aucun problème enregistré. Les déclencheurs de seuil en font apparaître ici quand ils se "
+        "déclenchent."
+    ),
     # --- Chrome : navigation et en-tête -------------------------------------
     "base.dashboard": "Tableau de bord",
     "base.hosts": "Hôtes",

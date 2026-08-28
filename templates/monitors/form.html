@@ -26,8 +26,8 @@
         <label class="field">
           <span>{{ t("tpl.type") }}</span>
           <select name="type" required>
-            {% for t in monitor_types %}
-            <option value="{{ t }}" {% if (form and form.type == t) or (not form and monitor and monitor.type.value == t) %}selected{% endif %}>{{ t }}</option>
+            {% for mon_ in monitor_types %}
+            <option value="{{ mon_ }}" {% if (form and form.type == mon_) or (not form and monitor and monitor.type.value == mon_) %}selected{% endif %}>{{ mon_ }}</option>
             {% endfor %}
           </select>
         </label>

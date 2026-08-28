@@ -33,17 +33,17 @@
           <tr><th>{{ t("tpl.name") }}</th><th>{{ t("tpl.condition") }}</th><th>{{ t("tpl.severity") }}</th><th>{{ t("tpl.state") }}</th><th></th></tr>
         </thead>
         <tbody>
-          {% for t in triggers %}
+          {% for trig in triggers %}
           <tr>
-            <td>{{ t.name }}{% if not t.is_enabled %} <span class="muted">{{ t("tpl.disabledX") }}</span>{% endif %}</td>
+            <td>{{ trig.name }}{% if not trig.is_enabled %} <span class="muted">{{ t("tpl.disabledX") }}</span>{% endif %}</td>
             <td class="muted">
-              {% if t.aggregation.value != 'last' and t.window_seconds %}{{ t.aggregation.value }}(value, {{ t.window_seconds }}s){% else %}value{% endif %}
-              {{ operator_symbols[t.operator.value] }} {{ t.threshold }}
+              {% if trig.aggregation.value != 'last' and trig.window_seconds %}{{ trig.aggregation.value }}(value, {{ trig.window_seconds }}s){% else %}value{% endif %}
+              {{ operator_symbols[trig.operator.value] }} {{ trig.threshold }}
             </td>
-            <td><span class="sev sev-{{ t.severity.value }}">{{ t.severity.value }}</span></td>
-            <td><span class="tstate tstate-{{ t.state.value }}">{{ t.state.value }}</span></td>
+            <td><span class="sev sev-{{ trig.severity.value }}">{{ trig.severity.value }}</span></td>
+            <td><span class="tstate tstate-{{ trig.state.value }}">{{ trig.state.value }}</span></td>
             <td class="row-actions">
-              <form method="post" action="/hosts/{{ host.id }}/items/{{ item.id }}/triggers/{{ t.id }}/delete" class="form-inline"
+              <form method="post" action="/hosts/{{ host.id }}/items/{{ item.id }}/triggers/{{ trig.id }}/delete" class="form-inline"
                     data-confirm="Delete this trigger?">
                 <button type="submit" class="btn-new btn-muted">{{ t("tpl.delete") }}</button>
               </form>
@@ -147,13 +147,13 @@
       <table class="table">
         <thead><tr><th>{{ t("tpl.hourUtc") }}</th><th>{{ t("tpl.min") }}</th><th>{{ t("tpl.avg") }}</th><th>{{ t("tpl.max") }}</th><th>{{ t("tpl.samples") }}</th></tr></thead>
         <tbody>
-          {% for t in trends %}
+          {% for tr in trends %}
           <tr>
-            <td>{{ t.bucket.strftime('%Y-%m-%d %H:00') }}</td>
-            <td>{{ '%.2f'|format(t.value_min) }}{{ ' ' ~ item.units if item.units }}</td>
-            <td>{{ '%.2f'|format(t.value_avg) }}{{ ' ' ~ item.units if item.units }}</td>
-            <td>{{ '%.2f'|format(t.value_max) }}{{ ' ' ~ item.units if item.units }}</td>
-            <td class="muted">{{ t.sample_count }}</td>
+            <td>{{ tr.bucket.strftime('%Y-%m-%d %H:00') }}</td>
+            <td>{{ '%.2f'|format(tr.value_min) }}{{ ' ' ~ item.units if item.units }}</td>
+            <td>{{ '%.2f'|format(tr.value_avg) }}{{ ' ' ~ item.units if item.units }}</td>
+            <td>{{ '%.2f'|format(tr.value_max) }}{{ ' ' ~ item.units if item.units }}</td>
+            <td class="muted">{{ tr.sample_count }}</td>
           </tr>
           {% endfor %}
         </tbody>
