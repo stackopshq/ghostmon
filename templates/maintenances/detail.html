@@ -11,7 +11,7 @@
       </h1>
       <div class="hero-sub">
         {{ maintenance.strategy.value }}
-        {% if maintenance.is_active %}· <span class="status status-up">enabled</span>{% else %}· <span class="status status-paused">disabled</span>{% endif %}
+        {% if maintenance.is_active %}· <span class="status status-up">{{ t("tpl.enabledX") }}</span>{% else %}· <span class="status status-paused">{{ t("tpl.disabled") }}</span>{% endif %}
       </div>
     </div>
 
@@ -21,18 +21,18 @@
 
     <div class="grid-two">
       <section class="card">
-        <h2>Settings</h2>
+        <h2>{{ t("tpl.settings") }}</h2>
         <form method="post" action="/maintenances/{{ maintenance.id }}" class="stacked">
           <label class="field">
-            <span>Title</span>
+            <span>{{ t("tpl.title") }}</span>
             <input type="text" name="title" required maxlength="255" value="{{ maintenance.title }}">
           </label>
           <label class="field">
-            <span>Description</span>
+            <span>{{ t("tpl.description") }}</span>
             <textarea name="description" rows="3">{{ maintenance.description or '' }}</textarea>
           </label>
           <label class="field">
-            <span>Strategy</span>
+            <span>{{ t("tpl.strategy") }}</span>
             <select name="strategy" required>
               {% for s in strategies %}
               <option value="{{ s }}" {% if maintenance.strategy.value == s %}selected{% endif %}>{{ s }}</option>
@@ -41,48 +41,48 @@
           </label>
           <div class="field-row">
             <label class="field">
-              <span>Start (UTC)</span>
+              <span>{{ t("tpl.startUtc") }}</span>
               <input type="datetime-local" name="start_at"
                      value="{% if maintenance.start_at %}{{ maintenance.start_at.strftime('%Y-%m-%dT%H:%M') }}{% endif %}">
             </label>
             <label class="field">
-              <span>End (UTC)</span>
+              <span>{{ t("tpl.endUtc") }}</span>
               <input type="datetime-local" name="end_at"
                      value="{% if maintenance.end_at %}{{ maintenance.end_at.strftime('%Y-%m-%dT%H:%M') }}{% endif %}">
             </label>
           </div>
           <div class="field-row">
             <label class="field">
-              <span>Cron</span>
+              <span>{{ t("tpl.cron") }}</span>
               <input type="text" name="cron" value="{{ maintenance.cron or '' }}">
             </label>
             <label class="field">
-              <span>Duration (min)</span>
+              <span>{{ t("tpl.durationMin") }}</span>
               <input type="number" name="duration_minutes" min="1" max="20160"
                      value="{{ maintenance.duration_minutes or '' }}">
             </label>
             <label class="field">
-              <span>Timezone</span>
+              <span>{{ t("tpl.timezone") }}</span>
               <input type="text" name="timezone" maxlength="64" value="{{ maintenance.timezone }}">
             </label>
           </div>
           <label class="field inline">
             <input type="checkbox" name="is_active" {% if maintenance.is_active %}checked{% endif %}>
-            <span>Enabled</span>
+            <span>{{ t("tpl.enabled") }}</span>
           </label>
           <div class="form-actions">
-            <a href="/maintenances" class="btn-new btn-muted">Back</a>
-            <button type="submit" class="btn-primary">Save</button>
+            <a href="/maintenances" class="btn-new btn-muted">{{ t("tpl.back") }}</a>
+            <button type="submit" class="btn-primary">{{ t("tpl.save") }}</button>
           </div>
         </form>
         <form method="post" action="/maintenances/{{ maintenance.id }}/delete" class="form-inline form-danger"
               data-confirm="Delete maintenance {{ maintenance.title }}?">
-          <button type="submit" class="btn-danger">Delete window</button>
+          <button type="submit" class="btn-danger">{{ t("tpl.deleteWindow") }}</button>
         </form>
       </section>
 
       <section class="card">
-        <h2>Affected monitors</h2>
+        <h2>{{ t("tpl.affectedMonitors") }}</h2>
         {% if attached_monitors %}
         <ul class="bare-list">
           {% for m in attached_monitors %}
@@ -92,13 +92,13 @@
               <span class="muted">· {{ m.type.value }} · {{ m.url }}</span>
             </div>
             <form method="post" action="/maintenances/{{ maintenance.id }}/monitors/{{ m.id }}/detach" class="form-inline">
-              <button type="submit" class="btn-new btn-muted">Detach</button>
+              <button type="submit" class="btn-new btn-muted">{{ t("tpl.detach") }}</button>
             </form>
           </li>
           {% endfor %}
         </ul>
         {% else %}
-        <p class="muted">No monitors attached.</p>
+        <p class="muted">{{ t("tpl.noMonitorsAttached") }}</p>
         {% endif %}
 
         {% if available_monitors %}
@@ -108,11 +108,11 @@
             <option value="{{ m.id }}">{{ m.name }} ({{ m.type.value }})</option>
             {% endfor %}
           </select>
-          <button type="submit" class="btn-primary">Attach</button>
+          <button type="submit" class="btn-primary">{{ t("tpl.attach") }}</button>
         </form>
         {% else %}
         <p class="muted" style="margin-top: 12px;">
-          {% if not attached_monitors %}No monitors yet. <a href="/monitors/new">Create one</a>.{% else %}All your monitors are already attached.{% endif %}
+          {% if not attached_monitors %}No monitors yet. <a href="/monitors/new">{{ t("tpl.createOne") }}</a>.{% else %}All your monitors are already attached.{% endif %}
         </p>
         {% endif %}
       </section>

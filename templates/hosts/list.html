@@ -9,18 +9,18 @@
       <h1 class="hero-title">
         <span class="terminal-prompt">~ $&nbsp;</span><span>ghostmon host list</span><span class="terminal-cursor">▊</span>
       </h1>
-      <div class="hero-sub">Hosts collect metrics as items with time-series history.</div>
+      <div class="hero-sub">{{ t("tpl.hostsCollectMetricsAsItemsWithTimeSeries") }}</div>
     </div>
 
     <div class="toolbar">
-      <div><h2>Hosts<span class="count">{{ overview|length }} total{% if problem_hosts %} · {{ problem_hosts }} with problems{% endif %}</span></h2></div>
-      <div><a href="/hosts/new" class="btn-new">+ New host</a></div>
+      <div><h2>{{ t("tpl.hosts") }}<span class="count">{{ overview|length }} total{% if problem_hosts %} · {{ problem_hosts }} with problems{% endif %}</span></h2></div>
+      <div><a href="/hosts/new" class="btn-new">{{ t("tpl.newHost") }}</a></div>
     </div>
 
     {% if overview %}
     <table class="table">
       <thead>
-        <tr><th>Name</th><th>Items</th><th>Health</th><th>Description</th><th>Enabled</th></tr>
+        <tr><th>{{ t("tpl.name") }}</th><th>{{ t("tpl.items") }}</th><th>{{ t("tpl.health") }}</th><th>{{ t("tpl.description") }}</th><th>{{ t("tpl.enabled") }}</th></tr>
       </thead>
       <tbody>
         {% for v in overview %}
@@ -39,9 +39,9 @@
     </table>
     {% else %}
     <div class="empty">
-      <h3>No hosts yet</h3>
-      <p>Create a host, add metric items, and push values to build history.</p>
-      <p><a href="/hosts/new" class="btn-new">+ New host</a></p>
+      <h3>{{ t("tpl.noHostsYet") }}</h3>
+      <p>{{ t("tpl.createAHostAddMetricItemsAndPushValuesTo") }}</p>
+      <p><a href="/hosts/new" class="btn-new">{{ t("tpl.newHost") }}</a></p>
     </div>
     {% endif %}
   </div>

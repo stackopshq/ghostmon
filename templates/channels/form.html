@@ -21,13 +21,13 @@
     <div class="card">
       <form method="post" action="{% if channel %}/channels/{{ channel.id }}{% else %}/channels/new{% endif %}" class="stacked">
         <label class="field">
-          <span>Name</span>
+          <span>{{ t("tpl.name") }}</span>
           <input type="text" name="name" required maxlength="255"
                  value="{{ form.name if form else (channel.name if channel else '') }}">
         </label>
 
         <label class="field">
-          <span>Type</span>
+          <span>{{ t("tpl.type") }}</span>
           <select name="type" required>
             {% for t in channel_types %}
             <option value="{{ t }}" {% if (form and form.type == t) or (not form and channel and channel.type.value == t) %}selected{% endif %}>{{ t }}</option>
@@ -36,9 +36,9 @@
         </label>
 
         <fieldset class="field-group">
-          <legend>Email config (used when type = email)</legend>
+          <legend>{{ t("tpl.emailConfigUsedWhenTypeEmail") }}</legend>
           <label class="field">
-            <span>To address</span>
+            <span>{{ t("tpl.toAddress") }}</span>
             <input type="email" name="email_to"
                    value="{{ form.email_to if form else (channel.config.get('to') if channel and channel.type.value == 'email' else '') }}"
                    placeholder="oncall@example.com">
@@ -46,9 +46,9 @@
         </fieldset>
 
         <fieldset class="field-group">
-          <legend>Webhook config (used when type = webhook)</legend>
+          <legend>{{ t("tpl.webhookConfigUsedWhenTypeWebhook") }}</legend>
           <label class="field">
-            <span>URL</span>
+            <span>{{ t("tpl.url") }}</span>
             <input type="url" name="webhook_url"
                    value="{{ form.webhook_url if form else (channel.config.get('url') if channel and channel.type.value == 'webhook' else '') }}"
                    placeholder="https://hooks.example.com/incoming">
@@ -64,11 +64,11 @@
         <label class="field inline">
           <input type="checkbox" name="is_enabled"
                  {% if (form and form.is_enabled) or (not form and (channel is none or channel.is_enabled)) %}checked{% endif %}>
-          <span>Enabled</span>
+          <span>{{ t("tpl.enabled") }}</span>
         </label>
 
         <div class="form-actions">
-          <a href="/channels" class="btn-new btn-muted">Cancel</a>
+          <a href="/channels" class="btn-new btn-muted">{{ t("tpl.cancel") }}</a>
           <button type="submit" class="btn-primary">{% if channel %}Save{% else %}Create{% endif %}</button>
         </div>
       </form>
@@ -76,7 +76,7 @@
       {% if channel %}
       <form method="post" action="/channels/{{ channel.id }}/delete" class="form-inline form-danger"
             data-confirm="Delete channel {{ channel.name }}?">
-        <button type="submit" class="btn-danger">Delete channel</button>
+        <button type="submit" class="btn-danger">{{ t("tpl.deleteChannel") }}</button>
       </form>
       {% endif %}
     </div>

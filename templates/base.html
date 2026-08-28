@@ -90,7 +90,7 @@
       <span class="btn-new btn-muted" style="cursor: default;">{{ current_user.email }}</span>
       <a href="/logout" class="btn-new btn-muted">{{ t("base.signOut") }}</a>
       {% else %}
-      <a href="/login" class="btn-new">Sign in</a>
+      <a href="/login" class="btn-new">{{ t("tpl.signIn") }}</a>
       {% endif %}
       {% endblock %}
     </div>

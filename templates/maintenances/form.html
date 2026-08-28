@@ -7,7 +7,7 @@
   <div class="container">
     <div class="hero">
       <h1 class="hero-title">
-        <span class="terminal-prompt">~ $&nbsp;</span>{% if maintenance %}<span>edit window</span>{% else %}<span>new maintenance window</span>{% endif %}<span class="terminal-cursor">▊</span>
+        <span class="terminal-prompt">~ $&nbsp;</span>{% if maintenance %}<span>{{ t("tpl.editWindow") }}</span>{% else %}<span>{{ t("tpl.newMaintenanceWindow") }}</span>{% endif %}<span class="terminal-cursor">▊</span>
       </h1>
     </div>
 
@@ -18,18 +18,18 @@
     <div class="card">
       <form method="post" action="{% if maintenance %}/maintenances/{{ maintenance.id }}{% else %}/maintenances/new{% endif %}" class="stacked">
         <label class="field">
-          <span>Title</span>
+          <span>{{ t("tpl.title") }}</span>
           <input type="text" name="title" required maxlength="255"
                  value="{{ form.title if form else (maintenance.title if maintenance else '') }}">
         </label>
 
         <label class="field">
-          <span>Description (optional)</span>
+          <span>{{ t("tpl.descriptionOptional") }}</span>
           <textarea name="description" rows="3">{{ form.description if form else (maintenance.description if maintenance else '') }}</textarea>
         </label>
 
         <label class="field">
-          <span>Strategy</span>
+          <span>{{ t("tpl.strategy") }}</span>
           <select name="strategy" required>
             {% for s in strategies %}
             <option value="{{ s }}" {% if (form and form.strategy == s) or (not form and maintenance and maintenance.strategy.value == s) %}selected{% endif %}>{{ s }}</option>
@@ -38,15 +38,15 @@
         </label>
 
         <fieldset class="field-group">
-          <legend>One-off window (strategy = once)</legend>
+          <legend>{{ t("tpl.oneOffWindowStrategyOnce") }}</legend>
           <div class="field-row">
             <label class="field">
-              <span>Start (UTC)</span>
+              <span>{{ t("tpl.startUtc") }}</span>
               <input type="datetime-local" name="start_at"
                      value="{{ form.start_at if form else (maintenance.start_at.strftime('%Y-%m-%dT%H:%M') if maintenance and maintenance.start_at else '') }}">
             </label>
             <label class="field">
-              <span>End (UTC)</span>
+              <span>{{ t("tpl.endUtc") }}</span>
               <input type="datetime-local" name="end_at"
                      value="{{ form.end_at if form else (maintenance.end_at.strftime('%Y-%m-%dT%H:%M') if maintenance and maintenance.end_at else '') }}">
             </label>
@@ -54,20 +54,20 @@
         </fieldset>
 
         <fieldset class="field-group">
-          <legend>Recurring window (strategy = cron)</legend>
+          <legend>{{ t("tpl.recurringWindowStrategyCron") }}</legend>
           <div class="field-row">
             <label class="field">
-              <span>Cron expression (5 fields)</span>
+              <span>{{ t("tpl.cronExpression5Fields") }}</span>
               <input type="text" name="cron" placeholder="0 2 * * *"
                      value="{{ form.cron if form else (maintenance.cron if maintenance else '') }}">
             </label>
             <label class="field">
-              <span>Duration (minutes)</span>
+              <span>{{ t("tpl.durationMinutes") }}</span>
               <input type="number" name="duration_minutes" min="1" max="20160"
                      value="{{ form.duration_minutes if form else (maintenance.duration_minutes if maintenance else '') }}">
             </label>
             <label class="field">
-              <span>Timezone</span>
+              <span>{{ t("tpl.timezone") }}</span>
               <input type="text" name="timezone" maxlength="64"
                      value="{{ form.timezone if form else (maintenance.timezone if maintenance else 'UTC') }}"
                      placeholder="UTC">
@@ -78,11 +78,11 @@
         <label class="field inline">
           <input type="checkbox" name="is_active"
                  {% if (form and form.is_active) or (not form and (maintenance is none or maintenance.is_active)) %}checked{% endif %}>
-          <span>Enabled</span>
+          <span>{{ t("tpl.enabled") }}</span>
         </label>
 
         <div class="form-actions">
-          <a href="/maintenances" class="btn-new btn-muted">Cancel</a>
+          <a href="/maintenances" class="btn-new btn-muted">{{ t("tpl.cancel") }}</a>
           <button type="submit" class="btn-primary">{% if maintenance %}Save{% else %}Create{% endif %}</button>
         </div>
       </form>

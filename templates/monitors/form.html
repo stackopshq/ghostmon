@@ -18,13 +18,13 @@
     <div class="card">
       <form method="post" action="{% if monitor %}/monitors/{{ monitor.id }}{% else %}/monitors/new{% endif %}" class="stacked">
         <label class="field">
-          <span>Name</span>
+          <span>{{ t("tpl.name") }}</span>
           <input type="text" name="name" required maxlength="255"
                  value="{{ form.name if form else (monitor.name if monitor else '') }}">
         </label>
 
         <label class="field">
-          <span>Type</span>
+          <span>{{ t("tpl.type") }}</span>
           <select name="type" required>
             {% for t in monitor_types %}
             <option value="{{ t }}" {% if (form and form.type == t) or (not form and monitor and monitor.type.value == t) %}selected{% endif %}>{{ t }}</option>
@@ -33,7 +33,7 @@
         </label>
 
         <label class="field">
-          <span>URL / target</span>
+          <span>{{ t("tpl.urlTarget") }}</span>
           <input type="text" name="url" required maxlength="2048"
                  value="{{ form.url if form else (monitor.url if monitor else '') }}"
                  placeholder="https://example.com, or host:port for tcp/ssl">
@@ -41,17 +41,17 @@
 
         <div class="field-row">
           <label class="field">
-            <span>Interval (seconds)</span>
+            <span>{{ t("tpl.intervalSeconds") }}</span>
             <input type="number" name="interval" required min="10" max="86400"
                    value="{{ form.interval if form else (monitor.interval if monitor else 60) }}">
           </label>
           <label class="field">
-            <span>Retries before DOWN</span>
+            <span>{{ t("tpl.retriesBeforeDown") }}</span>
             <input type="number" name="retries" required min="0" max="10"
                    value="{{ form.retries if form else (monitor.retries if monitor else 2) }}">
           </label>
           <label class="field">
-            <span>Retry interval (seconds)</span>
+            <span>{{ t("tpl.retryIntervalSeconds") }}</span>
             <input type="number" name="retry_interval" required min="5" max="3600"
                    value="{{ form.retry_interval if form else (monitor.retry_interval if monitor else 20) }}">
           </label>
@@ -59,7 +59,7 @@
 
         {% if monitor %}
         <label class="field">
-          <span>Status</span>
+          <span>{{ t("tpl.status") }}</span>
           <select name="status" required>
             {% for s in monitor_statuses %}
             <option value="{{ s }}" {% if monitor.status.value == s %}selected{% endif %}>{{ s }}</option>
@@ -69,7 +69,7 @@
         {% endif %}
 
         <div class="form-actions">
-          <a href="{% if monitor %}/monitors/{{ monitor.id }}{% else %}/{% endif %}" class="btn-new btn-muted">Cancel</a>
+          <a href="{% if monitor %}/monitors/{{ monitor.id }}{% else %}/{% endif %}" class="btn-new btn-muted">{{ t("tpl.cancel") }}</a>
           <button type="submit" class="btn-primary">{% if monitor %}Save{% else %}Create{% endif %}</button>
         </div>
       </form>

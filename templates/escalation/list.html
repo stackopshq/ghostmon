@@ -7,10 +7,10 @@
   <div class="container">
     <div class="hero">
       <h1 class="hero-title">
-        <span class="terminal-prompt">~ $&nbsp;</span><span>escalation</span><span class="terminal-cursor">▊</span>
+        <span class="terminal-prompt">~ $&nbsp;</span><span>{{ t("tpl.escalation") }}</span><span class="terminal-cursor">▊</span>
       </h1>
       <div class="hero-sub">
-        Notify channels at increasing delays while a problem stays open and unacknowledged.
+        {{ t("tpl.notifyChannelsAtIncreasingDelaysWhileAPr") }}
       </div>
     </div>
 
@@ -18,10 +18,10 @@
     {% if flash %}<div class="flash flash-ok">{{ flash }}</div>{% endif %}
 
     <section class="card">
-      <h2>Policies <span class="count">{{ policies|length }}</span></h2>
+      <h2>{{ t("tpl.policies") }} <span class="count">{{ policies|length }}</span></h2>
       {% if policies %}
       <table class="table">
-        <thead><tr><th>Name</th><th>Enabled</th><th>Steps</th><th></th></tr></thead>
+        <thead><tr><th>{{ t("tpl.name") }}</th><th>{{ t("tpl.enabled") }}</th><th>{{ t("tpl.steps") }}</th><th></th></tr></thead>
         <tbody>
           {% for p in policies %}
           <tr>
@@ -33,7 +33,7 @@
             <td class="row-actions">
               <form method="post" action="/escalation/{{ p.id }}/delete" class="form-inline"
                     data-confirm="Delete policy {{ p.name }}?">
-                <button type="submit" class="btn-new btn-muted">Delete</button>
+                <button type="submit" class="btn-new btn-muted">{{ t("tpl.delete") }}</button>
               </form>
             </td>
           </tr>
@@ -41,25 +41,25 @@
         </tbody>
       </table>
       {% else %}
-      <p class="muted">No policy yet. The most recent enabled policy applies to your problems.</p>
+      <p class="muted">{{ t("tpl.noPolicyYetTheMostRecentEnabledPolicyApp") }}</p>
       {% endif %}
     </section>
 
     <section class="card" style="margin-top: 20px;">
-      <h2>New policy</h2>
+      <h2>{{ t("tpl.newPolicy") }}</h2>
       {% if channels %}
       <form method="post" action="/escalation/new" class="stacked">
         <div class="field-row">
           <label class="field">
-            <span>Name</span>
+            <span>{{ t("tpl.name") }}</span>
             <input type="text" name="name" required maxlength="255" placeholder="On-call ladder">
           </label>
           <label class="field inline">
             <input type="checkbox" name="is_enabled" checked>
-            <span>Enabled</span>
+            <span>{{ t("tpl.enabled") }}</span>
           </label>
         </div>
-        <p class="muted">Each step notifies a channel after the delay (in minutes) from when the problem opened. Leave a channel empty to skip the row. Set an <strong>action command</strong> to make a step auto-remediation: it POSTs the command + problem context to a <strong>webhook</strong> channel for an external runbook (the server never runs commands itself).</p>
+        <p class="muted">{{ t("tpl.eachStepNotifiesAChannelAfterTheDelayInM") }} <strong>{{ t("tpl.actionCommand") }}</strong> {{ t("tpl.toMakeAStepAutoRemediationItPostsTheComm") }} <strong>{{ t("tpl.webhook") }}</strong> {{ t("tpl.channelForAnExternalRunbookTheServerNeve") }}</p>
         {% for i in step_rows %}
         <div class="field-row">
           <label class="field">
@@ -67,24 +67,24 @@
             <input type="number" name="delay_minutes" min="0" max="10080" value="{{ i * 5 }}">
           </label>
           <label class="field">
-            <span>Channel</span>
+            <span>{{ t("tpl.channel") }}</span>
             <select name="channel_id">
-              <option value="">none</option>
+              <option value="">{{ t("tpl.none") }}</option>
               {% for c in channels %}<option value="{{ c.id }}">{{ c.name }} ({{ c.type.value }})</option>{% endfor %}
             </select>
           </label>
           <label class="field">
-            <span>Action command (optional, webhook only)</span>
+            <span>{{ t("tpl.actionCommandOptionalWebhookOnly") }}</span>
             <input type="text" name="action_command" maxlength="500" placeholder="e.g. restart nginx">
           </label>
         </div>
         {% endfor %}
         <div class="form-actions">
-          <button type="submit" class="btn-primary">Create policy</button>
+          <button type="submit" class="btn-primary">{{ t("tpl.createPolicy") }}</button>
         </div>
       </form>
       {% else %}
-      <p class="muted">Create a <a href="/channels">notification channel</a> first; escalation steps notify channels.</p>
+      <p class="muted">{{ t("tpl.createA") }} <a href="/channels">{{ t("tpl.notificationChannel") }}</a> {{ t("tpl.firstEscalationStepsNotifyChannels") }}</p>
       {% endif %}
     </section>
   </div>
