@@ -7,8 +7,8 @@ name = "ghostmon"
 version = "0.1.0"
 description = "GhostMonitor - Self-hosted infrastructure monitoring, a free Zabbix alternative"
 requires-python = ">=3.12"
-license = "MIT"
-license-files = ["LICENSE"]
+license = "Elastic-2.0"
+license-files = ["LICENSE", "NOTICE"]
 authors = [{ name = "StackOps HQ" }]
 dependencies = [
     "fastapi>=0.138.2",

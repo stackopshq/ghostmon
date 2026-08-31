@@ -34,6 +34,7 @@ COPY pyproject.toml ./
 COPY app ./app
 COPY migrations ./migrations
 COPY alembic.ini ./
+COPY LICENSE NOTICE ./
 
 # `static/` et `templates/` sont indispensables au DÉMARRAGE, pas seulement au
 # rendu : `create_app()` monte `StaticFiles(directory=…)`, qui lève

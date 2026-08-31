@@ -26,7 +26,7 @@
   <img alt="PostgreSQL" src="https://img.shields.io/badge/PostgreSQL-16-A3FF00?style=flat-square&logo=postgresql&logoColor=white">
   <img alt="Lint: Ruff" src="https://img.shields.io/badge/lint-ruff-A3FF00?style=flat-square&logo=ruff&logoColor=white">
   <img alt="Types: mypy strict" src="https://img.shields.io/badge/types-mypy%20strict-A3FF00?style=flat-square">
-  <img alt="License: MIT" src="https://img.shields.io/badge/license-MIT-A3FF00?style=flat-square">
+  <img alt="License: Elastic-2.0" src="https://img.shields.io/badge/license-Elastic--2.0-A3FF00?style=flat-square">
 </p>
 
 ---
@@ -264,4 +264,11 @@ for the target architecture and `CLAUDE.md` for a deeper walkthrough.
 
 ## License
 
-Released under the [MIT License](LICENSE). Copyright (c) 2026 StackOps HQ.
+[Elastic License 2.0](LICENSE). Read it, audit it, self-host it, modify it, run it for your own
+organisation. What it reserves is resale: you may not provide GhostMonitor to third parties as a hosted
+or managed service. That is *source available*, not open source in the OSI sense.
+
+GhostMonitor was MIT-licensed until 2026-08-31, and the change is not retroactive: see [NOTICE](NOTICE)
+and [ADR-0002](docs/adr/0002-elastic-license-v2.md).
+
+Copyright (c) 2026 StackOps HQ.
