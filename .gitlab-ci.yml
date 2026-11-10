@@ -1,0 +1,156 @@
+# ghostmon CI, ported from .github/workflows/ci.yml (run by Gitea Actions)
+# when the repository moved to GitLab.
+#
+# Every job runs on the group's own runners (core-run-03/04, rootless podman,
+# tag `linux`). main publishes ghcr.io/stackopshq/ghostmon:sha-<short> and
+# :main, as before; apollo-platform pins the sha tag, so publishing deploys
+# nothing. Credentials: GHCR_USERNAME / GHCR_TOKEN, protected group variables.
+#
+# Schedules are told apart by their description (the project allows no
+# pipeline variables): "Weekly security", "Weekly renovate".
+
+workflow:
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "schedule"
+    - if: $CI_PIPELINE_SOURCE == "web"
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+    - if: $CI_COMMIT_BRANCH && $CI_OPEN_MERGE_REQUESTS
+      when: never
+    - if: $CI_COMMIT_BRANCH
+
+stages:
+  - verify
+  - security
+  - publish
+
+default:
+  tags: [linux]
+  interruptible: true
+  timeout: 15m
+
+variables:
+  UV_IMAGE: ghcr.io/astral-sh/uv:0.11.8-python3.12-trixie
+  GITLEAKS_IMAGE: ghcr.io/gitleaks/gitleaks:v8.30.1
+  BUILDAH_IMAGE: quay.io/buildah/stable:v1.43.5
+  GHCR_IMAGE: ghcr.io/stackopshq/ghostmon
+  UV_CACHE_DIR: /tmp/uv-cache
+  UV_LINK_MODE: copy
+
+.code:
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "schedule"
+      when: never
+    - when: on_success
+
+.security:
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "schedule" && $CI_PIPELINE_SCHEDULE_DESCRIPTION != "Weekly security"
+      when: never
+    - when: on_success
+
+lint-type:
+  stage: verify
+  extends: [.code]
+  image: $UV_IMAGE
+  script:
+    - uv sync --extra dev
+    - uv run ruff format --check .
+    - uv run ruff check .
+    - uv run mypy app
+
+test:
+  stage: verify
+  extends: [.code]
+  image: $UV_IMAGE
+  services:
+    - name: docker.io/library/postgres:16-alpine
+      alias: postgres
+  variables:
+    POSTGRES_USER: ghostmon
+    POSTGRES_PASSWORD: ghostmon
+    POSTGRES_DB: ghostmon_test
+    DATABASE_URL: postgresql+asyncpg://ghostmon:ghostmon@postgres:5432/ghostmon_test
+  script:
+    - uv sync --extra dev
+    # An ephemeral secret: the app refuses to start without one.
+    - export APP_SECRET_KEY="$(python3 -c 'import secrets; print(secrets.token_hex(24))')"
+    - uv run pytest --cov=app --cov-report=term-missing
+
+pip-audit:
+  stage: security
+  extends: [.security]
+  needs: []
+  image: $UV_IMAGE
+  script:
+    - uv export --frozen --no-emit-project --format requirements-txt -o /tmp/requirements.txt
+    - uvx pip-audit -r /tmp/requirements.txt --strict
+
+gitleaks:
+  stage: security
+  extends: [.security]
+  needs: []
+  image:
+    name: $GITLEAKS_IMAGE
+    entrypoint: [""]
+  variables:
+    GIT_DEPTH: 0
+  script:
+    - gitleaks detect --source . --config .gitleaks.toml --no-banner --redact --exit-code 1
+
+# Merge requests build the image without publishing; main publishes it.
+image:build:
+  stage: publish
+  extends: [.code]
+  needs: [lint-type, test]
+  image: $BUILDAH_IMAGE
+  timeout: 30m
+  interruptible: false
+  variables:
+    STORAGE_DRIVER: vfs
+    BUILDAH_ISOLATION: chroot
+    BUILDAH_FORMAT: docker
+  script:
+    - SHORT="${CI_COMMIT_SHA:0:7}"
+    - >-
+      buildah build
+      --label org.opencontainers.image.source=https://github.com/stackopshq/ghostmon
+      --label org.opencontainers.image.revision="$CI_COMMIT_SHA"
+      -t "ghostmon:sha-$SHORT" .
+    - |
+      set -eu
+      if [ "${CI_COMMIT_BRANCH:-}" != "$CI_DEFAULT_BRANCH" ]; then
+        echo "not $CI_DEFAULT_BRANCH: built, not published"
+        exit 0
+      fi
+      if [ -z "${GHCR_USERNAME:-}" ] || [ -z "${GHCR_TOKEN:-}" ]; then
+        echo "GHCR_USERNAME / GHCR_TOKEN missing: built, NOT published"
+        exit 1
+      fi
+      trap 'buildah logout --all >/dev/null 2>&1 || true' EXIT
+      printf '%s' "$GHCR_TOKEN" | buildah login -u "$GHCR_USERNAME" --password-stdin ghcr.io
+      for tag in "sha-$SHORT" main; do
+        buildah tag "ghostmon:sha-$SHORT" "$GHCR_IMAGE:$tag"
+        buildah push "$GHCR_IMAGE:$tag"
+        echo "published $GHCR_IMAGE:$tag"
+      done
+
+renovate:
+  stage: verify
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "schedule" && $CI_PIPELINE_SCHEDULE_DESCRIPTION == "Weekly renovate" && $RENOVATE_TOKEN
+  needs: []
+  image:
+    name: docker.io/renovate/renovate:44.132.5
+    entrypoint: [""]
+  timeout: 30m
+  variables:
+    RENOVATE_PLATFORM: gitlab
+    RENOVATE_ENDPOINT: $CI_API_V4_URL
+    RENOVATE_REPOSITORIES: $CI_PROJECT_PATH
+    RENOVATE_AUTODISCOVER: "false"
+    RENOVATE_ONBOARDING: "false"
+    RENOVATE_REQUIRE_CONFIG: required
+    RENOVATE_GIT_AUTHOR: "Renovate Bot <renovate@stackops.ch>"
+    LOG_LEVEL: info
+  script:
+    - renovate
