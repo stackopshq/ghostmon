@@ -63,7 +63,7 @@ test:
   extends: [.code]
   image: $UV_IMAGE
   services:
-    - name: docker.io/library/postgres:16-alpine
+    - name: docker.io/library/postgres:18-alpine
       alias: postgres
   variables:
     POSTGRES_USER: ghostmon
